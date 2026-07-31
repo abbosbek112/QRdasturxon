@@ -21,8 +21,8 @@
   <table>
     <thead>
       <tr>
-        <th>Nomi</th><th>Manzil (slug)</th><th>Kategoriya</th>
-        <th>Taom</th><th>Holat</th><th class="col-actions"></th>
+        <th>Nomi</th><th>Manzil (slug)</th><th>Tarif</th>
+        <th>Kategoriya</th><th>Taom</th><th>Holat</th><th class="col-actions"></th>
       </tr>
     </thead>
     <tbody>
@@ -33,11 +33,36 @@
           {% if restaurant.phone %}<div class="muted small">{{ restaurant.phone }}</div>{% endif %}
         </td>
         <td><a href="/r/{{ restaurant.slug }}" target="_blank" rel="noopener">/r/{{ restaurant.slug }}</a></td>
+        <td>
+          <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/plan"
+                class="row" style="flex-wrap:nowrap; gap:.3rem">
+            {% include "partials/csrf.html" %}
+            <select name="plan" style="min-width:110px">
+              {% for option in plans %}
+                <option value="{{ option.value }}" {{ 'selected' if restaurant.plan == option }}>
+                  {{ limits[option].name }}
+                </option>
+              {% endfor %}
+            </select>
+            <input name="years" type="number" value="1" min="1" max="5" title="Necha yil"
+                   style="width:56px">
+            <button class="btn btn-sm" type="submit">OK</button>
+          </form>
+          <div class="muted small" style="margin-top:.2rem">
+            {% if restaurant.subscription_status.value == 'trial' %}
+              Sinov: {{ trial_days_left(restaurant) }} kun qoldi
+            {% elif restaurant.paid_until %}
+              {{ restaurant.paid_until.strftime('%d.%m.%Y') }} gacha
+            {% endif %}
+          </div>
+        </td>
         <td>{{ category_counts.get(restaurant.id, 0) }}</td>
         <td>{{ item_counts.get(restaurant.id, 0) }}</td>
         <td>
-          {% if restaurant.is_active %}<span class="badge badge-ok">Faol</span>
-          {% else %}<span class="badge badge-off">O'chiq</span>{% endif %}
+          {% if not restaurant.is_active %}<span class="badge badge-off">O'chiq</span>
+          {% elif restaurant.subscription_status.value == 'expired' %}<span class="badge badge-off">Muddati tugagan</span>
+          {% elif restaurant.subscription_status.value == 'trial' %}<span class="badge">Sinov</span>
+          {% else %}<span class="badge badge-ok">Faol</span>{% endif %}
         </td>
         <td>
           <div class="row" style="flex-wrap:nowrap; justify-content:flex-end">

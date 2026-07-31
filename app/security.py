@@ -1,14 +1,15 @@
 import secrets
-import time
+from datetime import datetime, timedelta
 from typing import Annotated
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 from fastapi import Depends, HTTPException, Request, status
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Role, User
+from app.models import LoginAttempt, Role, User, utcnow_naive
 
 _hasher = PasswordHasher()
 
@@ -94,21 +95,30 @@ def require_restaurant_admin(user: CurrentUser) -> User:
     return user
 
 
-_MAX_ATTEMPTS = 8
-_WINDOW_SECONDS = 300
-_attempts: dict[str, list[float]] = {}
+MAX_ATTEMPTS = 8
+WINDOW_SECONDS = 300
 
 
-def login_attempt_allowed(client_ip: str) -> bool:
-    now = time.monotonic()
-    recent = [ts for ts in _attempts.get(client_ip, []) if now - ts < _WINDOW_SECONDS]
-    _attempts[client_ip] = recent
-    return len(recent) < _MAX_ATTEMPTS
+def _window_start() -> datetime:
+    return utcnow_naive() - timedelta(seconds=WINDOW_SECONDS)
 
 
-def record_login_failure(client_ip: str) -> None:
-    _attempts.setdefault(client_ip, []).append(time.monotonic())
+def login_attempt_allowed(db: Session, client_ip: str) -> bool:
+    recent = db.scalar(
+        select(func.count())
+        .select_from(LoginAttempt)
+        .where(LoginAttempt.ip == client_ip, LoginAttempt.created_at >= _window_start())
+    )
+    return (recent or 0) < MAX_ATTEMPTS
 
 
-def clear_login_failures(client_ip: str) -> None:
-    _attempts.pop(client_ip, None)
+def record_login_failure(db: Session, client_ip: str) -> None:
+    db.add(LoginAttempt(ip=client_ip))
+    # Eskirgan yozuvlarni shu yerda tozalaymiz — alohida vazifa kerak bo'lmaydi
+    db.execute(delete(LoginAttempt).where(LoginAttempt.created_at < _window_start()))
+    db.commit()
+
+
+def clear_login_failures(db: Session, client_ip: str) -> None:
+    db.execute(delete(LoginAttempt).where(LoginAttempt.ip == client_ip))
+    db.commit()

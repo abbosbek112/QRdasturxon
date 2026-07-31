@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ro'yxatdan o'tish — QRdasturxon</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css?v={{ asset_v }}">
+</head>
+<body>
+<div class="login-shell">
+  <div class="card stack" style="width:100%; max-width:440px; box-shadow:var(--shadow-lg); padding:1.6rem">
+    <div class="center">
+      <a class="brand" href="/">QR<span>dasturxon</span></a>
+      <p class="muted small" style="margin-top:.15rem">
+        Restoraningizni ulang — <strong>{{ trial_days }} kun bepul</strong>, karta so'ralmaydi
+      </p>
+    </div>
+
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/signup" class="stack">
+      {% include "partials/csrf.html" %}
+
+      <div class="field">
+        <label for="name">Restoran nomi</label>
+        <input id="name" name="name" value="{{ form.get('name', '') }}" required autofocus
+               placeholder="Osh Markazi">
+      </div>
+
+      <div class="field">
+        <label for="slug">Menyu manzili</label>
+        <input id="slug" name="slug" value="{{ form.get('slug', '') }}" placeholder="osh-markazi">
+        <p class="hint">Menyu <code>qrdasturxon.uz/r/&lt;manzil&gt;</code> da ochiladi.
+          Bo'sh qoldirsangiz nomdan avtomatik yasaladi.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="username">Login</label>
+          <input id="username" name="username" value="{{ form.get('username', '') }}"
+                 required minlength="3" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="password">Parol</label>
+          <input id="password" name="password" type="password" required minlength="8"
+                 autocomplete="new-password">
+          <p class="hint">Kamida 8 belgi</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="phone">Telefon</label>
+          <input id="phone" name="phone" value="{{ form.get('phone', '') }}"
+                 placeholder="+998 90 123 45 67">
+        </div>
+        <div class="field">
+          <label for="email">Email (ixtiyoriy)</label>
+          <input id="email" name="email" type="email" value="{{ form.get('email', '') }}">
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit">Bepul boshlash</button>
+    </form>
+
+    <p class="center small muted" style="margin:0">
+      Hisobingiz bormi? <a href="/login">Kiring</a>
+    </p>
+  </div>
+</div>
+</body>
+</html>

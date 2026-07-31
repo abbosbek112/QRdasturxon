@@ -42,6 +42,38 @@ def test_category_is_created_with_translations(admin_client, db, tenant_a):
     assert category.sort_order == 1
 
 
+def test_item_ingredients_are_saved_and_editable(admin_client, db, tenant_a):
+    restaurant, _ = tenant_a
+    category = make_category(admin_client, db, restaurant.id)
+
+    admin_client.post(
+        "/admin/items",
+        data={
+            "csrf_token": csrf(admin_client, "/admin/items"),
+            "category_id": category.id,
+            "name_uz": "Osh",
+            "price": 38000,
+            "ingredients_uz": "Guruch, sabzi, zira",
+            "ingredients_ru": "Рис, морковь, зира",
+        },
+    )
+    item = db.query(MenuItem).filter_by(restaurant_id=restaurant.id).one()
+    assert item.ingredients == {"uz": "Guruch, sabzi, zira", "ru": "Рис, морковь, зира"}
+
+    admin_client.post(
+        f"/admin/items/{item.id}",
+        data={
+            "csrf_token": csrf(admin_client, f"/admin/items/{item.id}/edit"),
+            "category_id": category.id,
+            "name_uz": "Osh",
+            "price": 38000,
+            "ingredients_uz": "Guruch, qo'y go'shti",
+        },
+    )
+    db.refresh(item)
+    assert item.ingredients == {"uz": "Guruch, qo'y go'shti"}
+
+
 def test_item_upload_is_reencoded_to_webp(admin_client, db, tenant_a):
     restaurant, _ = tenant_a
     category = make_category(admin_client, db, restaurant.id)

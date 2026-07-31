@@ -1,18 +1,33 @@
 <!doctype html>
-<html lang="{{ lang }}">
+<html lang="{{ lang }}"{% if restaurant %} data-theme="{{ restaurant.theme }}"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="{{ restaurant.theme_color if restaurant else '#b45309' }}">
   <title>{% block title %}QRdasturxon{% endblock %}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/css/style.css">
-  {% if restaurant %}<style>:root { --accent: {{ restaurant.theme_color }}; }</style>{% endif %}
+  <link rel="stylesheet" href="/static/css/style.css?v={{ asset_v }}">
+  {% if restaurant %}
+    {# Uslub shrift, burchak va rangni birga belgilaydi #}
+    <style>:root { {{ theme_css(restaurant) }} }</style>
+  {% endif %}
 </head>
 <body>
 {% block body %}{% endblock %}
 <footer class="footer">
-  {% if restaurant %}<div class="footer-name">{{ restaurant.name }}</div>{% endif %}
+  {% if restaurant %}
+    <div class="footer-name">{{ restaurant.name }}</div>
+    {% if restaurant.instagram or restaurant.telegram %}
+      <div class="row" style="justify-content:center; margin:.6rem 0">
+        {% if restaurant.instagram %}
+          <a class="btn btn-sm" href="{{ restaurant.instagram }}" target="_blank" rel="noopener">Instagram</a>
+        {% endif %}
+        {% if restaurant.telegram %}
+          <a class="btn btn-sm" href="{{ restaurant.telegram }}" target="_blank" rel="noopener">Telegram</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
   <div>QRdasturxon</div>
 </footer>
 {% block scripts %}{% endblock %}

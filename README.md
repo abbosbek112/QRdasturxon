@@ -61,6 +61,14 @@ Bazani tayyorlang va tizim adminini yarating:
 .venv/bin/python -m pytest
 ```
 
+Jadvallar **migratsiyalar orqali** quriladi — shuning uchun har yugurishda
+migratsiyalar ham tekshiriladi. Prod Postgres bo'lgani uchun testlarni o'sha bazada
+ham yugurtirish mumkin:
+
+```bash
+TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost/qrdasturxon_test .venv/bin/python -m pytest
+```
+
 ## Sozlamalar (`.env`)
 
 | Kalit | Vazifasi |
@@ -97,10 +105,75 @@ Model o'zgartirilgandan keyin migratsiya yarating:
   cheklangan; fayl nomi UUID
 - Parollar argon2 bilan hashlanadi, login urinishlari IP bo'yicha cheklanadi
 
-## Ishlab chiqarishga chiqarish
+## Serverga chiqarish
 
-1. `.env` da `DEBUG=false`, haqiqiy `SECRET_KEY` va domenga mos `BASE_URL`
-2. HTTPS majburiy — sessiya cookie'si `Secure` bayrog'i bilan yuboriladi
-3. `media/` katalogini zaxiralashni unutmang — rasmlar bazada emas, diskda
-4. Yuklama oshsa `DATABASE_URL` ni Postgres'ga o'tkazing va `alembic upgrade head` ni
-   qayta ishga tushiring
+Docker Compose bilan uchta xizmat ko'tariladi: ilova, PostgreSQL va Caddy
+(HTTPS sertifikatini o'zi oladi va yangilab turadi).
+
+```bash
+cp .env.example .env
+python -c "import secrets; print(secrets.token_urlsafe(48))"   # SECRET_KEY uchun
+```
+
+`.env` da to'ldiring: `DEBUG=false`, `SECRET_KEY`, `BASE_URL`, `DOMAIN`,
+`POSTGRES_PASSWORD`. So'ng:
+
+```bash
+docker compose up -d --build
+```
+
+Migratsiyalar konteyner ishga tushganda avtomatik qo'llanadi. Birinchi superadminni
+yaratish:
+
+```bash
+docker compose exec app python -m scripts.create_superadmin
+```
+
+**`BASE_URL` — QR kod ichiga yoziladigan manzil.** Uni domenga chiqqandan keyin
+o'zgartirsangiz, chop etilgan QR kodlar eski manzilga ishora qilib qoladi.
+
+Ishga tushmasa: `docker compose logs -f app`.
+
+### Xavfsizlik tekshiruvi
+
+`DEBUG=false` bo'lganda standart yoki 32 belgidan qisqa `SECRET_KEY` bilan **server
+ataylab ko'tarilmaydi**. Bu xato emas — kalit zaif bo'lsa birov sessiyani soxtalashtirib
+admin bo'lib kira oladi.
+
+## Zaxira nusxa
+
+```bash
+./scripts/backup.sh              # ./backups ichiga
+./scripts/backup.sh /mnt/zaxira  # boshqa joyga
+```
+
+Baza (`pg_dump`) va yuklangan rasmlar alohida arxivga tushadi, 30 kundan eskilari
+o'chiriladi (`KEEP_DAYS` bilan o'zgartiriladi). Har kuni tunda ishlashi uchun:
+
+```bash
+0 3 * * * cd /srv/qrdasturxon && ./scripts/backup.sh >> /var/log/qrdasturxon-backup.log 2>&1
+```
+
+### Tiklash
+
+Zaxira nusxaning qiymati faqat tiklab ko'rilganda bilinadi — buni **oldindan sinab
+ko'ring**, kerak bo'lganda emas.
+
+```bash
+# Baza
+gunzip -c backups/db-20260731-030000.sql.gz | \
+  docker compose exec -T db psql -U qrdasturxon -d qrdasturxon
+
+# Rasmlar
+docker compose run --rm --no-deps --entrypoint sh \
+  -v "$(pwd)/backups:/backup" app -c "tar xzf /backup/media-20260731-030000.tar.gz -C /app"
+```
+
+## Statistika
+
+Admin bosh sahifasida oxirgi 30 kunlik ochilishlar grafigi va eng ko'p ochilgan
+taomlar ro'yxati chiqadi.
+
+Saqlanadigan narsa — faqat `(restoran, taom, sana, son)`. **IP, cookie yoki qurilma
+haqida hech narsa yozilmaydi**, shuning uchun bu "necha kishi" emas, "necha marta
+ochildi" degan ko'rsatkich. Sanalar UTC bo'yicha.

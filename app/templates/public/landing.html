@@ -1,0 +1,149 @@
+{% extends "public/base.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}QRdasturxon — kafe va qahvaxonalar uchun QR menyu{% endblock %}
+
+{% block body %}
+<header class="site-head">
+  <div class="site-head-inner">
+    <a class="brand" href="/">QR<span>dasturxon</span></a>
+    <nav class="site-nav">
+      <a href="#imkoniyatlar">Imkoniyatlar</a>
+      <a href="#qanday">Qanday ishlaydi</a>
+      <a href="#narxlar">Narxlar</a>
+    </nav>
+    <div class="row" style="gap:.4rem; flex-wrap:nowrap">
+      <a class="btn btn-sm" href="/login">Kirish</a>
+      <a class="btn btn-sm btn-primary" href="/signup">Boshlash</a>
+    </div>
+  </div>
+</header>
+
+<section class="lp-hero">
+  <div class="lp-wrap">
+    <p class="lp-eyebrow">{{ trial_days }} kun bepul · karta so'ralmaydi</p>
+    <h1 class="lp-title">Narx o'zgardi — menyu ham o'zgardi</h1>
+    <p class="lp-lead">
+      Qog'oz menyuni har safar qayta chop etish pul va vaqt. QRdasturxonda narxni
+      bir joyda tahrirlaysiz — stoldagi QR kod ortidagi menyu darrov yangilanadi.
+      Kafe, qahvaxona va shirinlik do'konlari uchun.
+    </p>
+    <div class="row" style="justify-content:center; gap:.6rem">
+      <a class="btn btn-primary" href="/signup">Bepul boshlash</a>
+      {% if demo_slug %}
+        <a class="btn" href="/r/{{ demo_slug }}">{{ ui.icon('external') }} Namunani ko'rish</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="lp-section" id="qanday">
+  <div class="lp-wrap">
+    <h2 class="lp-h2">Uch qadam</h2>
+    <div class="lp-steps">
+      <div class="lp-step">
+        <span class="lp-num">1</span>
+        <h3>Menyuni kiritasiz</h3>
+        <p class="muted small">Kategoriya, taom, narx va rasm. Uch tilda — mehmonlar uchun.</p>
+      </div>
+      <div class="lp-step">
+        <span class="lp-num">2</span>
+        <h3>QR kodni chop etasiz</h3>
+        <p class="muted small">Tayyor QR kodni stolga qo'yasiz. SVG — istalgan o'lchamda aniq chiqadi.</p>
+      </div>
+      <div class="lp-step">
+        <span class="lp-num">3</span>
+        <h3>Menyuni istagancha o'zgartirasiz</h3>
+        <p class="muted small">QR kod o'sha-o'sha. Qayta chop etish hech qachon kerak bo'lmaydi.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section lp-alt" id="imkoniyatlar">
+  <div class="lp-wrap">
+    <h2 class="lp-h2">Nimalar bor</h2>
+    <div class="lp-grid">
+      <div class="lp-card">
+        <h3>{{ ui.icon('wifi') }} Wi-Fi paroli menyuda</h3>
+        <p class="muted small">Mijoz menyuni ochgan — paroli ham o'sha yerda. Kuniga o'nlab marta so'raladigan savol yopiladi.</p>
+      </div>
+      <div class="lp-card">
+        <h3>{{ ui.icon('grid') }} Uch tilli menyu</h3>
+        <p class="muted small">Bir marta kiritasiz — mijoz o'z tilida ko'radi. Tarjima bo'lmasa o'zbekchasi chiqadi.</p>
+      </div>
+      <div class="lp-card">
+        <h3>{{ ui.icon('leaf') }} Taom belgilari</h3>
+        <p class="muted small">Halol, o'tkir, vegetarian va allergen ma'lumoti. Mijoz so'ramaydi, xodim vaqti tejaladi.</p>
+      </div>
+      <div class="lp-card">
+        <h3>{{ ui.icon('printer') }} Chop etish uchun menyu</h3>
+        <p class="muted small">Qog'oz menyu ham kerak bo'lsa — xuddi shu ma'lumotdan chiqariladi. Ikkitasini alohida yuritmaysiz.</p>
+      </div>
+      <div class="lp-card">
+        <h3>{{ ui.icon('home') }} Statistika</h3>
+        <p class="muted small">Menyu necha marta ochilgani va qaysi taom ko'proq qiziqtirgani.</p>
+      </div>
+      <div class="lp-card">
+        <h3>{{ ui.icon('settings') }} O'z ko'rinishingiz</h3>
+        <p class="muted small">Logo, muqova rasmi va kafeningizning asosiy rangi.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section" id="narxlar">
+  <div class="lp-wrap">
+    <h2 class="lp-h2">Narxlar</h2>
+    <p class="center muted" style="margin-bottom:1.5rem">
+      Yiliga bir marta to'laysiz. {{ trial_days }} kun bepul sinab ko'ring —
+      karta ma'lumoti so'ralmaydi.
+    </p>
+
+    <div class="lp-plans lp-plans-two">
+      {% for plan, limit in plans %}
+        <div class="lp-plan {{ 'lp-plan-best' if limit.price_yearly }}">
+          {% if limit.price_yearly %}<span class="lp-tag">Hammasi ochiq</span>{% endif %}
+          <h3>{{ limit.name }}</h3>
+          <p class="lp-price">
+            {% if limit.price_yearly %}
+              {{ limit.price_yearly | price }} <small class="muted">so'm/yil</small>
+            {% else %}
+              Bepul
+            {% endif %}
+          </p>
+          <ul class="lp-list">
+            <li>{{ (limit.max_items ~ ' ta taom') if limit.max_items else 'Cheksiz taom' }}</li>
+            <li>{{ (limit.max_categories ~ ' ta kategoriya') if limit.max_categories else 'Cheksiz kategoriya' }}</li>
+            <li>
+              {% if limit.languages | length > 1 %}Uch til (o'zbek, rus, ingliz)
+              {% else %}Faqat o'zbekcha{% endif %}
+            </li>
+            <li>Wi-Fi paroli va taom belgilari</li>
+            <li>{{ limit.stats_days }} kunlik statistika</li>
+            {% if limit.specials %}<li>Bugungi taklif bo'limi</li>{% endif %}
+            {% if limit.comments %}<li>Taomlarga mijoz izohlari</li>{% endif %}
+            {% if limit.printable %}<li>Chop etish uchun menyu</li>{% endif %}
+          </ul>
+          <a class="btn {{ 'btn-primary' if limit.price_yearly }} btn-block" href="/signup">
+            {% if limit.price_yearly %}Sinab ko'rish{% else %}Bepul boshlash{% endif %}
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+
+    <p class="center small muted" style="margin-top:1.25rem">
+      To'lov hozircha qo'lda qabul qilinadi — ro'yxatdan o'tganingizdan keyin biz bog'lanamiz.
+    </p>
+  </div>
+</section>
+
+<section class="lp-cta">
+  <div class="lp-wrap center">
+    <h2 class="lp-h2" style="margin-bottom:.4rem">Bugun boshlang</h2>
+    <p class="muted" style="margin-bottom:1.25rem">
+      Ro'yxatdan o'tish bir daqiqa. Menyuni kiritib, kechga QR kodni stolga qo'yasiz.
+    </p>
+    <a class="btn btn-primary" href="/signup">Kafemni ulash</a>
+  </div>
+</section>
+{% endblock %}

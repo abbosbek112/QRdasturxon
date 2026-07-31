@@ -1,0 +1,75 @@
+{# Taom tafsiloti. Ikki joyda ishlatiladi: to'liq sahifa (item.html) va bottom sheet. #}
+{% import "partials/icons.html" as ui %}
+
+{% if item.image %}
+  <img class="detail-img" src="/media/{{ item.image }}" alt="{{ tr(item.name, lang) }}" decoding="async">
+{% else %}
+  <div class="detail-ph">{{ ui.icon('plate') }}</div>
+{% endif %}
+
+<div class="detail-head">
+  <h1 class="detail-title">{{ tr(item.name, lang) }}</h1>
+  <p class="detail-place muted small">{{ restaurant.name }}</p>
+
+  <div class="detail-facts">
+    <span class="fact fact-price">{{ item.price | price }} <small>{{ restaurant.currency }}</small></span>
+    {% if item.prep_minutes %}
+      <span class="fact">{{ ui.icon('clock') }}{{ item.prep_minutes }} {{ t('min', lang) }}</span>
+    {% endif %}
+    {% if item.is_popular %}<span class="fact fact-hot">{{ t('popular', lang) }}</span>{% endif %}
+  </div>
+
+  {% include "public/_dish_marks.html" %}
+</div>
+
+{% set note = tr(item.description, lang) %}
+{% if note %}<p class="detail-note">{{ note }}</p>{% endif %}
+
+{% set parts = tr(item.ingredients, lang) %}
+{% if parts %}
+  <div class="detail-block">
+    <h2 class="detail-block-title">{{ ui.icon('leaf') }} {{ t('ingredients', lang) }}</h2>
+    <p class="muted">{{ parts }}</p>
+  </div>
+{% endif %}
+
+{% set warns = tr(item.allergens, lang) %}
+{% if warns %}
+  <div class="detail-block">
+    <h2 class="detail-block-title">{{ t('allergens', lang) }}</h2>
+    <p class="muted">{{ warns }}</p>
+  </div>
+{% endif %}
+
+{% if allow_comments %}
+  <div class="detail-block">
+    <h2 class="detail-block-title">{{ t('comments', lang) }}</h2>
+
+    {% if comment_sent %}
+      <p class="notice" style="margin-bottom:.75rem">{{ t('comment_pending', lang) }}</p>
+    {% endif %}
+
+    {% for comment in comments %}
+      <div class="comment">
+        <div class="comment-head">
+          <strong>{{ comment.author_name }}</strong>
+          <span class="muted small">{{ comment.created_at.strftime('%d.%m.%Y') }}</span>
+        </div>
+        <p class="muted small" style="margin:0">{{ comment.body }}</p>
+      </div>
+    {% else %}
+      {% if not comment_sent %}
+        <p class="muted small">{{ t('no_comments', lang) }}</p>
+      {% endif %}
+    {% endfor %}
+
+    <form method="post" class="stack-sm" style="margin-top:.9rem"
+          action="/r/{{ restaurant.slug }}/item/{{ item.id }}/comment">
+      {% include "partials/csrf.html" %}
+      <input name="author_name" maxlength="64" required placeholder="{{ t('your_name', lang) }}">
+      <textarea name="body" maxlength="500" required rows="2"
+                placeholder="{{ t('your_comment', lang) }}"></textarea>
+      <button class="btn btn-sm btn-primary" type="submit">{{ t('send', lang) }}</button>
+    </form>
+  </div>
+{% endif %}

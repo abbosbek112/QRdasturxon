@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ restaurant.name }} — menyu</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css?v={{ asset_v }}">
+</head>
+<body class="print-page">
+
+{# Chop etishda bu panel chiqmaydi #}
+<div class="print-bar no-print">
+  <div class="print-bar-inner">
+    <a class="btn btn-sm" href="/admin">← Boshqaruvga qaytish</a>
+    <div class="grow"></div>
+    <span class="muted small">Chop etish oynasida "Maqsad: PDF sifatida saqlash" ni tanlang</span>
+    <button class="btn btn-sm btn-primary" type="button" onclick="window.print()">Chop etish</button>
+  </div>
+</div>
+
+<main class="print-sheet">
+  <header class="print-head">
+    <h1>{{ restaurant.name }}</h1>
+    {% set about = tr(restaurant.description, 'uz') %}
+    {% if about %}<p class="print-sub">{{ about }}</p>{% endif %}
+    <p class="print-meta">
+      {% if restaurant.phone %}{{ restaurant.phone }}{% endif %}
+      {% if restaurant.working_hours %} · {{ restaurant.working_hours }}{% endif %}
+      {% set place = tr(restaurant.address, 'uz') %}
+      {% if place %} · {{ place }}{% endif %}
+    </p>
+  </header>
+
+  {% if not sections %}
+    <p class="muted">Menyu hozircha bo'sh.</p>
+  {% endif %}
+
+  <div class="print-cols">
+    {% for category, items in sections %}
+      <section class="print-cat">
+        <h2>{{ tr(category.name, 'uz') }}</h2>
+        {% for item in items %}
+          <div class="print-item">
+            <div class="print-item-head">
+              <span class="print-name">
+                {{ tr(item.name, 'uz') }}{% if item.is_spicy %} 🌶{% endif %}{% if item.is_vegetarian %} 🌿{% endif %}
+              </span>
+              <span class="print-dots"></span>
+              <span class="print-price">{{ item.price | price }}</span>
+            </div>
+            {% set note = tr(item.description, 'uz') %}
+            {% if note %}<div class="print-desc">{{ note }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </section>
+    {% endfor %}
+  </div>
+
+  <footer class="print-foot">
+    Narxlar {{ restaurant.currency }}da. To'liq menyu QR kod orqali.
+  </footer>
+</main>
+
+</body>
+</html>

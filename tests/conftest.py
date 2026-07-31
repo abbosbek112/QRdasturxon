@@ -2,23 +2,44 @@ import os
 import tempfile
 
 _tmp = tempfile.mkdtemp(prefix="qrdasturxon-test-")
-os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/test.db"
+# Prod Postgres'da ishlaydi, shuning uchun testlarni ham o'sha yerda yugurtirish mumkin:
+#   TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost/qrdasturxon_test pytest
+os.environ["DATABASE_URL"] = os.environ.get(
+    "TEST_DATABASE_URL", f"sqlite:///{_tmp}/test.db"
+)
 os.environ["MEDIA_DIR"] = f"{_tmp}/media"
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["BASE_URL"] = "http://testserver"
+os.environ["DEBUG"] = "true"
 
 import pytest  # noqa: E402
+from alembic import command  # noqa: E402
+from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.config import BASE_DIR  # noqa: E402
 from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Restaurant, Role, User  # noqa: E402
+from app.models import LoginAttempt, Restaurant, Role, User  # noqa: E402
 from app.security import hash_password  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _schema():
-    Base.metadata.create_all(engine)
+    """Jadvallarni migratsiyalar orqali quradi.
+
+    `Base.metadata.create_all` emas — shunda har test yugurishida migratsiyalar
+    ham tekshiriladi va "modelda bor, migratsiyada yo'q" holati darrov bilinadi.
+    """
+    config = Config(BASE_DIR / "alembic.ini")
+    config.set_main_option("script_location", str(BASE_DIR / "alembic"))
+    config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+
+    Base.metadata.drop_all(engine)  # oldingi yugurishdan qolgani bo'lsa
+    with engine.begin() as connection:
+        connection.exec_driver_sql("DROP TABLE IF EXISTS alembic_version")
+
+    command.upgrade(config, "head")
     yield
     Base.metadata.drop_all(engine)
 
@@ -32,7 +53,9 @@ def db():
 @pytest.fixture(autouse=True)
 def _clean_db(_schema):
     with SessionLocal() as session:
-        for model in (User, Restaurant):
+        # Restaurant o'chirilganda menu_views/categories/items kaskad bilan ketadi;
+        # login_attempts esa hech kimga bog'lanmagan, uni alohida tozalaymiz
+        for model in (LoginAttempt, User, Restaurant):
             session.query(model).delete()
         session.commit()
 

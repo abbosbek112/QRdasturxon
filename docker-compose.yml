@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-qrdasturxon}
+      POSTGRES_USER: ${POSTGRES_USER:-qrdasturxon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env faylida ko'rsatilsin}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Ilova baza tayyor bo'lgandan keyingina migratsiyani boshlashi kerak
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qrdasturxon}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qrdasturxon}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-qrdasturxon}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY .env faylida ko'rsatilsin}
+      BASE_URL: ${BASE_URL:?BASE_URL .env faylida ko'rsatilsin}
+      DEBUG: "false"
+      MEDIA_DIR: /app/media
+    volumes:
+      - media:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Haqiqiy domen qo'yilsa Caddy HTTPS sertifikatini o'zi oladi va yangilaydi
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:

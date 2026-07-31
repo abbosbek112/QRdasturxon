@@ -7,10 +7,20 @@ from app.config import settings
 
 is_sqlite = settings.database_url.startswith("sqlite")
 
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False} if is_sqlite else {},
-)
+if is_sqlite:
+    engine = create_engine(
+        settings.database_url, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(
+        settings.database_url,
+        # Baza qayta ishga tushgandan keyin ulanish "o'lik" bo'lib qolishi mumkin —
+        # pre_ping har foydalanishdan oldin uni jimgina tekshiradi
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=1800,
+    )
 
 if is_sqlite:
 

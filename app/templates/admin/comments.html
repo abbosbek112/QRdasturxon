@@ -1,0 +1,63 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Izohlar{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Izohlar</h1>
+  <p class="muted small">
+    Izoh siz tasdiqlagandan keyingina menyuda ko'rinadi. Tasdiqlamaganingiz
+    mijozga umuman ko'rinmaydi.
+  </p>
+</div>
+
+{% if not limits.comments %}
+  <div class="notice notice-warn">
+    <strong>Izohlar To'liq tarifda ishlaydi.</strong>
+    Hozirgi tarifingizda mijozlar izoh qoldira olmaydi.
+  </div>
+{% endif %}
+
+{% if not comments %}
+  <div class="empty">
+    <strong>Hozircha izoh yo'q</strong>
+    Mijozlar taom sahifasidan izoh qoldirganda ular shu yerda paydo bo'ladi.
+  </div>
+{% else %}
+  {% if pending %}
+    <p class="section-label">Tasdiqlanmaganlar ({{ pending }})</p>
+  {% endif %}
+
+  {% for comment in comments %}
+    <div class="editor-row">
+      <div class="spread" style="align-items:flex-start">
+        <div class="grow">
+          <div class="row" style="gap:.5rem">
+            <strong>{{ comment.author_name }}</strong>
+            <span class="muted small">{{ tr(comment.item.name, 'uz') }}</span>
+            <span class="muted small">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            {% if comment.is_approved %}
+              <span class="badge badge-ok">Menyuda</span>
+            {% else %}
+              <span class="badge badge-off">Kutmoqda</span>
+            {% endif %}
+          </div>
+          <p class="muted" style="margin:.35rem 0 0">{{ comment.body }}</p>
+        </div>
+        <div class="row" style="flex-wrap:nowrap">
+          {% if not comment.is_approved %}
+            <form method="post" action="/admin/comments/{{ comment.id }}/approve">
+              {% include "partials/csrf.html" %}
+              <button class="btn btn-sm btn-primary" type="submit">Tasdiqlash</button>
+            </form>
+          {% endif %}
+          <form method="post" action="/admin/comments/{{ comment.id }}/delete"
+                onsubmit="return confirm('Izoh o\'chirilsinmi?')">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}

@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ status_code }} — QRdasturxon</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css?v={{ asset_v }}">
 </head>
 <body>
 <div class="login-shell">
   <div class="center stack" style="max-width:340px">
-    <div style="font-family:var(--font-display); font-size:4rem; line-height:1; color:var(--accent-ink)">{{ status_code }}</div>
+    <div style="font-size:4rem; font-weight:700; letter-spacing:-.04em; line-height:1; color:var(--accent)">{{ status_code }}</div>
     <p class="muted">{{ message }}</p>
     <div><a class="btn" href="/">{{ t('back', lang) }}</a></div>
   </div>

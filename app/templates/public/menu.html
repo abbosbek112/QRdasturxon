@@ -17,17 +17,30 @@
         {% if about %}<p class="hero-sub clamp-2">{{ about }}</p>{% endif %}
       </div>
     </div>
+
+    {# Ish vaqti, telefon va manzil muqova ustida — mijoz birinchi ko'radigan joy #}
+    {% set place = tr(restaurant.address, lang) %}
+    {% if restaurant.working_hours or restaurant.phone or place %}
+      <div class="hero-meta">
+        {% if restaurant.working_hours %}<span>{{ ui.icon('clock') }}{{ restaurant.working_hours }}</span>{% endif %}
+        {% if restaurant.phone %}<a href="tel:{{ restaurant.phone }}">{{ ui.icon('phone') }}{{ restaurant.phone }}</a>{% endif %}
+        {% if place %}<span>{{ ui.icon('pin') }}{{ place }}</span>{% endif %}
+      </div>
+    {% endif %}
   </div>
 </header>
 
 <div class="sheet">
-  {% set place = tr(restaurant.address, lang) %}
-  {% if restaurant.working_hours or restaurant.phone or place %}
-    <div class="meta">
-      {% if restaurant.working_hours %}<span>{{ ui.icon('clock') }}{{ restaurant.working_hours }}</span>{% endif %}
-      {% if restaurant.phone %}<a href="tel:{{ restaurant.phone }}">{{ ui.icon('phone') }}{{ restaurant.phone }}</a>{% endif %}
-      {% if place %}<span>{{ ui.icon('pin') }}{{ place }}</span>{% endif %}
-    </div>
+  {% if restaurant.wifi_password %}
+    {# Eng ko'p so'raladigan narsa — shuning uchun varaqning birinchi qatorida.
+       Parol darrov ko'rinmaydi, bosilganda ochiladi. #}
+    <details class="wifi">
+      <summary>{{ ui.icon('wifi') }}{{ t('wifi', lang) }}</summary>
+      <div class="wifi-body">
+        {% if restaurant.wifi_name %}<div class="muted">{{ restaurant.wifi_name }}</div>{% endif %}
+        <code>{{ restaurant.wifi_password }}</code>
+      </div>
+    </details>
   {% endif %}
 
   {% if sections %}
@@ -56,33 +69,31 @@
       </div>
     {% endif %}
 
+    {% if specials %}
+      <h2 class="section-title"><span>{{ t('todays_special', lang) }}</span></h2>
+      <div class="dish-grid">
+        {% for item in specials %}{% include "public/_dish_card.html" %}{% endfor %}
+      </div>
+    {% endif %}
+
     {% for category, items in sections %}
       <h2 class="section-title" id="cat-{{ category.id }}"><span>{{ tr(category.name, lang) }}</span></h2>
       <div class="dish-grid">
-        {% for item in items %}
-          <a class="dish" href="/r/{{ restaurant.slug }}/item/{{ item.id }}{{ '?lang=' ~ lang if lang != 'uz' }}">
-            <div class="dish-media">
-              {% if item.image %}
-                <img src="/media/{{ item.image }}" alt="{{ tr(item.name, lang) }}" loading="lazy" decoding="async">
-              {% else %}
-                <div class="dish-ph">{{ ui.icon('plate') }}</div>
-              {% endif %}
-              <span class="price-pill">{{ item.price | price }} <small>{{ restaurant.currency }}</small></span>
-              {% if item.is_popular %}<span class="dish-tag">{{ t('popular', lang) }}</span>{% endif %}
-            </div>
-            <div class="dish-body">
-              <p class="dish-name clamp-2">{{ tr(item.name, lang) }}</p>
-              {% set note = tr(item.description, lang) %}
-              {% if note %}<p class="dish-desc clamp-2">{{ note }}</p>{% endif %}
-            </div>
-          </a>
-        {% endfor %}
+        {% for item in items %}{% include "public/_dish_card.html" %}{% endfor %}
       </div>
     {% endfor %}
   </div>
 </div>
+
+{# Taom tafsiloti shu oynada ochiladi. Mazmuni ?partial=1 orqali yuklanadi. #}
+<div class="sheet-overlay" id="sheetOverlay" hidden></div>
+<div class="sheet-panel" id="sheetPanel" role="dialog" aria-modal="true"
+     aria-label="{{ t('menu', lang) }}" hidden>
+  <button class="sheet-grip" type="button" id="sheetGrip" aria-label="{{ t('close', lang) }}"></button>
+  <div class="sheet-scroll" id="sheetBody"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-{% if sections %}<script src="/static/js/menu.js" defer></script>{% endif %}
+<script src="/static/js/menu.js?v={{ asset_v }}" defer></script>
 {% endblock %}

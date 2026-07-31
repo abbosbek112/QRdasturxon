@@ -1,0 +1,14 @@
+{$DOMAIN} {
+	reverse_proxy app:8000
+
+	# Rasmlar va CSS/JS o'zgarmaydi (nomida versiya bor) — uzoq keshlansin
+	@static path /static/* /media/*
+	header @static Cache-Control "public, max-age=2592000"
+
+	encode gzip zstd
+
+	log {
+		output stdout
+		format console
+	}
+}

@@ -1,7 +1,11 @@
+{# Tarif bitta tilga cheklasa, tanlagich umuman ko'rsatilmaydi #}
+{% set options = languages | default(LANGUAGES) %}
+{% if options | length > 1 %}
 <nav class="langs {{ langs_class | default('') }}" aria-label="Til">
-  {% for code, label in LANGUAGES.items() %}
+  {% for code, label in options.items() %}
     <a href="{{ request.url.include_query_params(lang=code) }}"
        class="{{ 'active' if code == lang }}"
        hreflang="{{ code }}" title="{{ label }}">{{ code | upper }}</a>
   {% endfor %}
 </nav>
+{% endif %}

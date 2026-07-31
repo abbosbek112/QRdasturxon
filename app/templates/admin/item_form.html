@@ -36,6 +36,14 @@
       </div>
     </div>
 
+    <div class="field" style="max-width:220px">
+      <label for="prep_minutes">Tayyorlanish vaqti (daqiqa)</label>
+      <input id="prep_minutes" name="prep_minutes" type="number" min="0" max="240"
+             value="{{ item.prep_minutes if item and item.prep_minutes else '' }}"
+             placeholder="15">
+      <p class="hint">Bo'sh qoldirsangiz menyuda ko'rsatilmaydi.</p>
+    </div>
+
     <div class="grid-3">
       <div class="field"><label>Nomi (uz)</label><input name="name_uz" required value="{{ item.name.get('uz', '') if item else '' }}"></div>
       <div class="field"><label>Nomi (ru)</label><input name="name_ru" value="{{ item.name.get('ru', '') if item else '' }}"></div>
@@ -46,6 +54,40 @@
       <div class="field"><label>Tavsif (uz)</label><textarea name="description_uz">{{ item.description.get('uz', '') if item else '' }}</textarea></div>
       <div class="field"><label>Tavsif (ru)</label><textarea name="description_ru">{{ item.description.get('ru', '') if item else '' }}</textarea></div>
       <div class="field"><label>Tavsif (en)</label><textarea name="description_en">{{ item.description.get('en', '') if item else '' }}</textarea></div>
+    </div>
+
+    <div class="grid-3">
+      <div class="field"><label>Tarkibi (uz)</label><textarea name="ingredients_uz">{{ item.ingredients.get('uz', '') if item else '' }}</textarea></div>
+      <div class="field"><label>Tarkibi (ru)</label><textarea name="ingredients_ru">{{ item.ingredients.get('ru', '') if item else '' }}</textarea></div>
+      <div class="field"><label>Tarkibi (en)</label><textarea name="ingredients_en">{{ item.ingredients.get('en', '') if item else '' }}</textarea></div>
+    </div>
+    <p class="hint">Tarkibi ixtiyoriy — masalan: "Guruch, qo'y go'shti, sabzi, piyoz, zira".</p>
+
+    <div class="grid-3">
+      <div class="field"><label>Allergenlar (uz)</label><input name="allergens_uz" value="{{ item.allergens.get('uz', '') if item else '' }}" placeholder="yong'oq, sut"></div>
+      <div class="field"><label>Allergenlar (ru)</label><input name="allergens_ru" value="{{ item.allergens.get('ru', '') if item else '' }}"></div>
+      <div class="field"><label>Allergenlar (en)</label><input name="allergens_en" value="{{ item.allergens.get('en', '') if item else '' }}"></div>
+    </div>
+  </div>
+
+  <div class="card stack">
+    <h2>Belgilar</h2>
+    <p class="hint" style="margin-top:-.5rem">
+      Menyuda taom yonida kichik nishon bo'lib chiqadi — mijoz so'ramaydi, xodim vaqti tejaladi.
+    </p>
+    <div class="row" style="gap:1.25rem">
+      <div class="check">
+        <input id="is_spicy" name="is_spicy" type="checkbox" value="true" {{ 'checked' if item and item.is_spicy }}>
+        <label for="is_spicy">O'tkir</label>
+      </div>
+      <div class="check">
+        <input id="is_vegetarian" name="is_vegetarian" type="checkbox" value="true" {{ 'checked' if item and item.is_vegetarian }}>
+        <label for="is_vegetarian">Vegetarian</label>
+      </div>
+      <div class="check">
+        <input id="is_halal" name="is_halal" type="checkbox" value="true" {{ 'checked' if item and item.is_halal }}>
+        <label for="is_halal">Halol</label>
+      </div>
     </div>
   </div>
 
@@ -71,6 +113,12 @@
         <input id="is_popular" name="is_popular" type="checkbox" value="true" {{ 'checked' if item and item.is_popular }}>
         <label for="is_popular">Ommabop</label>
       </div>
+      {% if limits.specials %}
+      <div class="check" style="padding-bottom:.6rem">
+        <input id="is_special" name="is_special" type="checkbox" value="true" {{ 'checked' if item and item.is_special }}>
+        <label for="is_special">Bugungi taklif</label>
+      </div>
+      {% endif %}
       {% if item %}
       <div class="check" style="padding-bottom:.6rem">
         <input id="is_available" name="is_available" type="checkbox" value="true" {{ 'checked' if item.is_available }}>

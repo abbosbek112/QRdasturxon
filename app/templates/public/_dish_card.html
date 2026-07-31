@@ -1,0 +1,22 @@
+{# Menyudagi bitta taom kartasi. Kategoriya bo'limlarida ham, "Bugungi taklif"da ham. #}
+{% import "partials/icons.html" as ui %}
+<a class="dish" href="/r/{{ restaurant.slug }}/item/{{ item.id }}{{ '?lang=' ~ lang if lang != 'uz' }}">
+  <div class="dish-media">
+    {% if item.image %}
+      <img src="/media/{{ item.image }}" alt="{{ tr(item.name, lang) }}" loading="lazy" decoding="async">
+    {% else %}
+      <div class="dish-ph">{{ ui.icon('plate') }}</div>
+    {% endif %}
+    <span class="price-pill">{{ item.price | price }} <small>{{ restaurant.currency }}</small></span>
+    {% if item.is_popular %}<span class="dish-tag">{{ t('popular', lang) }}</span>{% endif %}
+    {% if item.prep_minutes %}
+      <span class="time-pill">{{ ui.icon('clock') }}{{ item.prep_minutes }} {{ t('min', lang) }}</span>
+    {% endif %}
+  </div>
+  <div class="dish-body">
+    <p class="dish-name clamp-2">{{ tr(item.name, lang) }}</p>
+    {% set note = tr(item.description, lang) %}
+    {% if note %}<p class="dish-desc clamp-2">{{ note }}</p>{% endif %}
+    {% include "public/_dish_marks.html" %}
+  </div>
+</a>

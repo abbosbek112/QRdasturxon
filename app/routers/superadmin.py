@@ -1,14 +1,24 @@
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from slugify import slugify
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Category, MenuItem, Restaurant, Role, User
+from app.models import (
+    Category,
+    MenuItem,
+    Plan,
+    Restaurant,
+    SubscriptionStatus,
+    User,
+    utcnow_naive,
+)
+from app.plans import LIMITS, refresh_status, trial_days_left
 from app.security import hash_password, require_superadmin, verify_csrf
+from app.services.onboarding import clean_slug, create_restaurant_with_admin
 from app.templating import templates
 
 router = APIRouter(
@@ -18,23 +28,6 @@ router = APIRouter(
 )
 
 DbSession = Annotated[Session, Depends(get_db)]
-
-RESERVED_SLUGS = {"admin", "superadmin", "login", "logout", "static", "media", "healthz", "r", "api"}
-
-
-def clean_slug(raw: str, db: Session, exclude_id: int | None = None) -> str:
-    slug = slugify(raw)[:64]
-    if not slug:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Manzil (slug) noto'g'ri")
-    if slug in RESERVED_SLUGS:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"'{slug}' band so'z, boshqasini tanlang")
-    query = select(Restaurant.id).where(Restaurant.slug == slug)
-    if exclude_id is not None:
-        query = query.where(Restaurant.id != exclude_id)
-    if db.scalar(query):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"'{slug}' allaqachon band")
-    return slug
-
 
 def get_restaurant_or_404(db: Session, restaurant_id: int) -> Restaurant:
     restaurant = db.get(Restaurant, restaurant_id)
@@ -56,6 +49,10 @@ def dashboard(request: Request, db: DbSession):
             select(Category.restaurant_id, func.count(Category.id)).group_by(Category.restaurant_id)
         ).all()
     )
+    for restaurant in restaurants:
+        refresh_status(restaurant)
+    db.commit()
+
     return templates.TemplateResponse(
         request,
         "superadmin/dashboard.html",
@@ -63,8 +60,43 @@ def dashboard(request: Request, db: DbSession):
             "restaurants": restaurants,
             "item_counts": item_counts,
             "category_counts": category_counts,
+            "plans": list(Plan),
+            "limits": LIMITS,
+            "trial_days_left": trial_days_left,
         },
     )
+
+
+@router.post("/restaurants/{restaurant_id}/plan", dependencies=[Depends(verify_csrf)])
+def set_plan(
+    db: DbSession,
+    restaurant_id: int,
+    plan: Annotated[str, Form()],
+    years: Annotated[int, Form()] = 1,
+):
+    """Tarifni qo'lda o'zgartirish.
+
+    To'lov tizimi ulanmagunicha pul qo'lda qabul qilinadi, superadmin esa shu
+    yerdan obunani uzaytiradi. Muddat mavjud `paid_until` ustiga qo'shiladi —
+    erta to'lagan restoran kunini yo'qotmasin.
+    """
+    restaurant = get_restaurant_or_404(db, restaurant_id)
+    try:
+        restaurant.plan = Plan(plan)
+    except ValueError:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Bunday tarif yo'q")
+
+    if restaurant.plan is Plan.free:
+        restaurant.subscription_status = SubscriptionStatus.active
+        restaurant.paid_until = None
+    else:
+        years = max(1, min(years, 5))
+        start = max(restaurant.paid_until or utcnow_naive(), utcnow_naive())
+        restaurant.paid_until = start + timedelta(days=365 * years)
+        restaurant.subscription_status = SubscriptionStatus.active
+
+    db.commit()
+    return RedirectResponse("/superadmin", status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/restaurants/new")
@@ -84,31 +116,15 @@ def create_restaurant(
     phone: Annotated[str, Form()] = "",
     admin_email: Annotated[str, Form()] = "",
 ):
-    name = name.strip()
-    if not name:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Restoran nomi bo'sh bo'lmasin")
-
-    username = admin_username.strip().lower()
-    if len(username) < 3:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Login kamida 3 belgidan iborat bo'lsin")
-    if len(admin_password) < 8:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Parol kamida 8 belgidan iborat bo'lsin")
-    if db.scalar(select(User.id).where(User.username == username)):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"'{username}' logini band")
-
-    restaurant = Restaurant(name=name, slug=clean_slug(slug or name, db), phone=phone.strip() or None)
-    db.add(restaurant)
-    db.flush()
-    db.add(
-        User(
-            username=username,
-            email=admin_email.strip() or None,
-            password_hash=hash_password(admin_password),
-            role=Role.restaurant_admin,
-            restaurant_id=restaurant.id,
-        )
+    create_restaurant_with_admin(
+        db,
+        name=name,
+        slug=slug,
+        username=admin_username,
+        password=admin_password,
+        email=admin_email,
+        phone=phone,
     )
-    db.commit()
     return RedirectResponse("/superadmin", status.HTTP_303_SEE_OTHER)
 
 

@@ -39,18 +39,59 @@
   </div>
 
   <div class="card stack">
-    <h2>Ko'rinish</h2>
+    <h2>Wi-Fi</h2>
+    <p class="hint" style="margin-top:-.5rem">
+      Mijoz menyuni ochganda parolni ham shu yerdan ko'radi — kuniga o'nlab marta
+      so'raladigan savol yopiladi. Bo'sh qoldirsangiz menyuda ko'rinmaydi.
+    </p>
+    <div class="grid-2">
+      <div class="field">
+        <label for="wifi_name">Tarmoq nomi</label>
+        <input id="wifi_name" name="wifi_name" value="{{ restaurant.wifi_name or '' }}" placeholder="Kafe_WiFi">
+      </div>
+      <div class="field">
+        <label for="wifi_password">Parol</label>
+        <input id="wifi_password" name="wifi_password" value="{{ restaurant.wifi_password or '' }}">
+      </div>
+    </div>
+  </div>
+
+  <div class="card stack">
+    <h2>Menyu uslubi</h2>
+    <p class="hint" style="margin-top:-.5rem">
+      Uslub shrift, burchak yumaloqligi va sukut bo'yicha rangni birga o'zgartiradi.
+      Tanlaganingizdan keyin rangni o'zingizga moslashtirishingiz mumkin.
+    </p>
+    <div class="theme-picker">
+      {% for key, preset in THEMES.items() %}
+        <label class="theme-option {{ 'is-active' if restaurant.theme == key }}">
+          <input type="radio" name="theme" value="{{ key }}"
+                 data-accent="{{ preset.accent }}"
+                 {{ 'checked' if restaurant.theme == key }}>
+          <span class="theme-swatch" style="background:{{ preset.accent }}"></span>
+          <span class="theme-text">
+            <strong style="font-family:{{ preset.font_head }}">{{ preset.name }}</strong>
+            <span class="muted small">{{ preset.hint }}</span>
+          </span>
+        </label>
+      {% endfor %}
+    </div>
+
     <div class="grid-2">
       <div class="field">
         <label for="theme_color">Asosiy rang</label>
         <input id="theme_color" name="theme_color" type="color" value="{{ restaurant.theme_color }}">
-        <p class="hint">Menyudagi narxlar, tugmalar va muqova shu rangda bo'ladi.</p>
+        <p class="hint">Uslub tanlaganingizda avtomatik o'zgaradi, keyin o'zgartirsangiz shu qoladi.</p>
       </div>
       <div class="field">
         <label for="currency">Valyuta belgisi</label>
         <input id="currency" name="currency" value="{{ restaurant.currency }}">
       </div>
     </div>
+  </div>
+
+  <div class="card stack">
+    <h2>Rasmlar</h2>
     <div class="grid-2">
       <div class="field">
         <label for="logo">Logo</label>

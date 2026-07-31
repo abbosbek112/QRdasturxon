@@ -1,0 +1,250 @@
+import html
+from datetime import timedelta
+
+import pytest
+
+from app.models import (
+    Category,
+    MenuItem,
+    Plan,
+    Restaurant,
+    SubscriptionStatus,
+    User,
+    utcnow_naive,
+)
+from app.plans import LIMITS, TRIAL_DAYS, effective_plan, limits_for, trial_days_left
+
+from tests.conftest import csrf, login
+
+
+def signup(client, **overrides):
+    data = {
+        "csrf_token": csrf(client, "/signup"),
+        "name": "Yangi Kafe",
+        "slug": "yangi-kafe",
+        "username": "yangikafe",
+        "password": "parol12345",
+        "phone": "+998901112233",
+        "email": "",
+    }
+    data.update(overrides)
+    return client.post("/signup", data=data)
+
+
+# --- ro'yxatdan o'tish ---
+
+def test_signup_creates_restaurant_admin_and_trial(client, db):
+    response = signup(client)
+    assert response.status_code == 200  # /admin ga ergashadi
+
+    restaurant = db.query(Restaurant).filter_by(slug="yangi-kafe").one()
+    assert restaurant.subscription_status is SubscriptionStatus.trial
+    assert restaurant.trial_ends_at is not None
+    assert trial_days_left(restaurant) == TRIAL_DAYS
+
+    user = db.query(User).filter_by(username="yangikafe").one()
+    assert user.restaurant_id == restaurant.id
+
+
+def test_signup_logs_the_owner_straight_in(client, db):
+    signup(client)
+    # Qayta login qilmasdan admin panel ochilishi kerak
+    assert "Yangi Kafe" in client.get("/admin").text
+
+
+def test_signup_rejects_a_taken_username(client, db, tenant_a):
+    response = signup(client, username="osh")
+    assert response.status_code == 400
+    assert "band" in html.unescape(response.text)
+    assert db.query(Restaurant).filter_by(slug="yangi-kafe").first() is None
+
+
+def test_signup_rejects_a_taken_slug(client, db, tenant_a):
+    restaurant, _ = tenant_a
+    response = signup(client, slug=restaurant.slug, username="boshqa")
+    assert response.status_code == 400
+    assert "band" in html.unescape(response.text)
+
+
+def test_signup_rejects_reserved_slugs(client, db):
+    response = signup(client, slug="admin")
+    assert response.status_code == 400
+    assert "band so'z" in html.unescape(response.text)
+
+
+def test_signup_keeps_the_form_filled_after_an_error(client, db, tenant_a):
+    """Xatodan keyin hamma maydonni qaytadan yozdirish — eng tez ketkazadigan narsa."""
+    response = signup(client, username="osh")
+    assert "Yangi Kafe" in response.text
+    assert "+998901112233" in response.text
+
+
+def test_signup_rejects_a_short_password(client, db):
+    response = signup(client, password="qisqa")
+    assert response.status_code == 400
+    assert db.query(Restaurant).count() == 0
+
+
+# --- tarif cheklovlari ---
+
+@pytest.fixture
+def free_tenant(db, tenant_a):
+    restaurant, _ = tenant_a
+    restaurant.plan = Plan.free
+    restaurant.subscription_status = SubscriptionStatus.active
+    db.commit()
+    return restaurant
+
+
+def test_free_plan_stops_at_the_category_limit(client, db, free_tenant):
+    login(client, "osh", "adminpass123")
+    limit = LIMITS[Plan.free].max_categories
+
+    for index in range(limit):
+        client.post(
+            "/admin/categories",
+            data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": f"Bo'lim {index}"},
+        )
+    assert db.query(Category).count() == limit
+
+    blocked = client.post(
+        "/admin/categories",
+        data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ortiqcha"},
+    )
+    assert blocked.status_code == 400
+    assert db.query(Category).count() == limit
+
+
+def test_free_plan_stops_at_the_item_limit(client, db, free_tenant):
+    category = Category(restaurant_id=free_tenant.id, name={"uz": "Bo'lim"})
+    db.add(category)
+    db.commit()
+
+    limit = LIMITS[Plan.free].max_items
+    db.add_all(
+        MenuItem(
+            restaurant_id=free_tenant.id,
+            category_id=category.id,
+            name={"uz": f"Taom {i}"},
+            price=1000,
+        )
+        for i in range(limit)
+    )
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    blocked = client.post(
+        "/admin/items",
+        data={
+            "csrf_token": csrf(client, "/admin/items"),
+            "category_id": category.id,
+            "name_uz": "Ortiqcha taom",
+            "price": 5000,
+        },
+    )
+    assert blocked.status_code == 400
+    assert db.query(MenuItem).count() == limit
+
+
+def test_free_plan_menu_shows_only_uzbek(client, db, free_tenant):
+    category = Category(restaurant_id=free_tenant.id, name={"uz": "Issiq", "ru": "Горячее"})
+    db.add(category)
+    db.flush()
+    db.add(
+        MenuItem(
+            restaurant_id=free_tenant.id,
+            category_id=category.id,
+            name={"uz": "Osh", "ru": "Плов"},
+            price=38000,
+        )
+    )
+    db.commit()
+
+    body = client.get(f"/r/{free_tenant.slug}?lang=ru").text
+    assert "Плов" not in body  # tarjima bazada bor, lekin tarif ko'rsatmaydi
+    assert "Osh" in body
+
+
+def test_paid_plan_shows_every_language(client, db, tenant_a):
+    restaurant, _ = tenant_a
+    restaurant.plan = Plan.full
+    restaurant.subscription_status = SubscriptionStatus.active
+    category = Category(restaurant_id=restaurant.id, name={"uz": "Issiq", "ru": "Горячее"})
+    db.add(category)
+    db.flush()
+    db.add(
+        MenuItem(
+            restaurant_id=restaurant.id,
+            category_id=category.id,
+            name={"uz": "Osh", "ru": "Плов"},
+            price=38000,
+        )
+    )
+    db.commit()
+
+    assert "Плов" in client.get(f"/r/{restaurant.slug}?lang=ru").text
+
+
+# --- sinov muddati ---
+
+def test_trial_gives_full_features(db, tenant_a):
+    restaurant, _ = tenant_a
+    restaurant.subscription_status = SubscriptionStatus.trial
+    restaurant.trial_ends_at = utcnow_naive() + timedelta(days=3)
+    assert effective_plan(restaurant) is Plan.full
+    assert limits_for(restaurant).max_items == LIMITS[Plan.full].max_items
+
+
+def test_expired_trial_drops_to_free_but_keeps_the_menu_online(client, db, tenant_a):
+    """Obuna tugagani mijozning menyusini o'chirib qo'ymasligi kerak."""
+    restaurant, _ = tenant_a
+    restaurant.subscription_status = SubscriptionStatus.trial
+    restaurant.trial_ends_at = utcnow_naive() - timedelta(minutes=1)
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    client.get("/admin")  # holat shu yerda yangilanadi
+
+    db.refresh(restaurant)
+    assert restaurant.subscription_status is SubscriptionStatus.expired
+    assert effective_plan(restaurant) is Plan.free
+    assert client.get(f"/r/{restaurant.slug}").status_code == 200
+
+
+def test_expired_paid_subscription_also_drops_to_free(db, tenant_a):
+    restaurant, _ = tenant_a
+    restaurant.plan = Plan.full
+    restaurant.subscription_status = SubscriptionStatus.active
+    restaurant.paid_until = utcnow_naive() - timedelta(days=1)
+    db.commit()
+
+    from app.plans import refresh_status
+
+    assert refresh_status(restaurant) is True
+    assert effective_plan(restaurant) is Plan.free
+
+
+# --- superadmin tarifni boshqaradi ---
+
+def test_superadmin_can_grant_a_paid_plan(client, db, tenant_a, superadmin):
+    restaurant, _ = tenant_a
+    login(client, "root", "rootpass123")
+
+    client.post(
+        f"/superadmin/restaurants/{restaurant.id}/plan",
+        data={"csrf_token": csrf(client, "/superadmin"), "plan": "full", "years": 2},
+    )
+    db.refresh(restaurant)
+    assert restaurant.plan is Plan.full
+    assert restaurant.subscription_status is SubscriptionStatus.active
+    assert restaurant.paid_until > utcnow_naive() + timedelta(days=720)
+
+
+# --- landing ---
+
+def test_landing_page_lists_every_plan(client):
+    body = html.unescape(client.get("/").text)
+    for limits in LIMITS.values():
+        assert limits.name in body
+    assert "600 000" in body  # yillik narx ko'rinishi
+    assert "/signup" in body

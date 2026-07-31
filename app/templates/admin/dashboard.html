@@ -15,17 +15,119 @@
   <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} Yangi taom</a>
 </div>
 
+{% set pending = steps | rejectattr('done') | list %}
+{% if pending %}
+  <div class="setup">
+    <div class="setup-head">
+      <div>
+        <h2>Menyuni ishga tushiramiz</h2>
+        <p class="muted small" style="margin:0">
+          {{ steps | selectattr('done') | list | length }} / {{ steps | length }} bajarildi —
+          qolgan qadamlarni ketma-ket bajaring.
+        </p>
+      </div>
+      <div class="setup-progress" aria-hidden="true">
+        {% for step in steps %}<span class="{{ 'is-done' if step.done }}"></span>{% endfor %}
+      </div>
+    </div>
+
+    <ol class="setup-list">
+      {% for step in steps %}
+        <li class="setup-step {{ 'is-done' if step.done }}">
+          <span class="setup-mark">{% if step.done %}{{ ui.icon('check') }}{% else %}{{ loop.index }}{% endif %}</span>
+          <div class="grow">
+            <strong>{{ step.title }}</strong>
+            <p class="muted small" style="margin:0">{{ step.detail }}</p>
+          </div>
+          {% if not step.done %}
+            <a class="btn btn-sm {{ 'btn-primary' if step == pending[0] }}" href="{{ step.action_url }}">
+              {{ step.action_label }}
+            </a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+
+    <p class="hint" style="margin-top:.75rem">
+      Uchalasi bajarilgach bu ro'yxat o'zi yo'qoladi va QR kodni chop etishga o'tasiz.
+    </p>
+  </div>
+{% endif %}
+
+{% if restaurant.subscription_status.value == 'trial' %}
+  <div class="notice">
+    <strong>Sinov muddati: {{ trial_days }} kun qoldi.</strong>
+    Hozir Standard tarif imkoniyatlari ochiq. Muddat tugagach Bepul darajaga o'tasiz
+    — menyu ishlayveradi, faqat cheklovlar qattiqlashadi.
+  </div>
+{% elif restaurant.subscription_status.value == 'expired' %}
+  <div class="notice notice-warn">
+    <strong>Obuna muddati tugagan.</strong>
+    Menyungiz ishlayapti, lekin Bepul tarif cheklovlari amal qiladi
+    ({{ limits.max_items }} taom, faqat o'zbekcha). Davom ettirish uchun biz bilan bog'laning.
+  </div>
+{% endif %}
+
 <div class="stat-grid">
+  <div class="stat"><b>{{ views_total }}</b><span>{{ limits.stats_days }} kunda ochilgan</span></div>
   <div class="stat"><b>{{ category_count }}</b><span>Kategoriya</span></div>
   <div class="stat"><b>{{ item_count }}</b><span>Taom</span></div>
   <div class="stat"><b>{{ hidden_count }}</b><span>Yashirilgan taom</span></div>
 </div>
+
+<p class="section-label">Menyu ochilishi — oxirgi {{ chart_days }} kun</p>
+<div class="card">
+  {% if views_total %}
+    <div class="chart" role="img"
+         aria-label="Oxirgi {{ chart_days }} kunlik ochilishlar grafigi">
+      {% for day, count in daily_views %}
+        <div class="chart-col" title="{{ day.strftime('%d.%m') }} — {{ count }} marta">
+          <div class="chart-bar" style="height:{{ (count / views_peak * 100) | round(1) }}%"></div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="spread small muted" style="margin-top:.5rem">
+      <span>{{ daily_views[0][0].strftime('%d.%m') }}</span>
+      <span>Eng yuqori kun: {{ views_peak }}</span>
+      <span>{{ daily_views[-1][0].strftime('%d.%m') }}</span>
+    </div>
+  {% else %}
+    <p class="muted small" style="margin:0">
+      Hozircha ochilish yo'q. QR kodni stolga qo'ygandan keyin bu yerda kunlik grafik chiqadi.
+    </p>
+  {% endif %}
+  <p class="hint">
+    Bu — menyu necha marta ochilgani. Bir mijoz bir necha marta ochsa, har biri sanaladi.
+  </p>
+</div>
+
+{% if top_items %}
+<p class="section-label">Eng ko'p ochilgan taomlar</p>
+<div class="table-card">
+  <table>
+    <tbody>
+      {% for item, count in top_items %}
+      <tr>
+        <td style="width:1%; padding-left:1rem; color:var(--ink-3)">{{ loop.index }}</td>
+        <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
+        <td style="width:1%; padding-right:1rem; text-align:right; white-space:nowrap">
+          {{ count }} marta
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 
 <p class="section-label">Tez havolalar</p>
 <div class="row">
   <a class="btn" href="/admin/categories">{{ ui.icon('grid') }} Kategoriyalar</a>
   <a class="btn" href="/admin/items">{{ ui.icon('list') }} Taomlar</a>
   <a class="btn" href="/admin/qr">{{ ui.icon('qr') }} QR kod</a>
+  {% if limits.printable %}
+    <a class="btn" href="/admin/menu/print">{{ ui.icon('printer') }} Chop etish uchun menyu</a>
+  {% endif %}
   <a class="btn" href="/admin/settings">{{ ui.icon('settings') }} Sozlamalar</a>
 </div>
 {% endblock %}
