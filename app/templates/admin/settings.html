@@ -1,0 +1,75 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Sozlamalar{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Restoran sozlamalari</h1>
+  <p class="muted small">Bu ma'lumotlar mijoz ko'radigan menyu sahifasining yuqorisida chiqadi.</p>
+</div>
+
+<form method="post" action="/admin/settings" enctype="multipart/form-data" class="stack" style="max-width:780px">
+  {% include "partials/csrf.html" %}
+
+  <div class="card stack">
+    <h2>Asosiy</h2>
+    <div class="field">
+      <label for="name">Restoran nomi</label>
+      <input id="name" name="name" value="{{ restaurant.name }}" required>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label>Tavsif (uz)</label><textarea name="description_uz">{{ restaurant.description.get('uz', '') }}</textarea></div>
+      <div class="field"><label>Tavsif (ru)</label><textarea name="description_ru">{{ restaurant.description.get('ru', '') }}</textarea></div>
+      <div class="field"><label>Tavsif (en)</label><textarea name="description_en">{{ restaurant.description.get('en', '') }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card stack">
+    <h2>Aloqa</h2>
+    <div class="grid-2">
+      <div class="field"><label for="phone">Telefon</label><input id="phone" name="phone" value="{{ restaurant.phone or '' }}"></div>
+      <div class="field"><label for="working_hours">Ish vaqti</label><input id="working_hours" name="working_hours" value="{{ restaurant.working_hours or '' }}" placeholder="09:00 – 23:00"></div>
+      <div class="field"><label for="instagram">Instagram havolasi</label><input id="instagram" name="instagram" value="{{ restaurant.instagram or '' }}"></div>
+      <div class="field"><label for="telegram">Telegram havolasi</label><input id="telegram" name="telegram" value="{{ restaurant.telegram or '' }}"></div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label>Manzil (uz)</label><input name="address_uz" value="{{ restaurant.address.get('uz', '') }}"></div>
+      <div class="field"><label>Manzil (ru)</label><input name="address_ru" value="{{ restaurant.address.get('ru', '') }}"></div>
+      <div class="field"><label>Manzil (en)</label><input name="address_en" value="{{ restaurant.address.get('en', '') }}"></div>
+    </div>
+  </div>
+
+  <div class="card stack">
+    <h2>Ko'rinish</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="theme_color">Asosiy rang</label>
+        <input id="theme_color" name="theme_color" type="color" value="{{ restaurant.theme_color }}">
+        <p class="hint">Menyudagi narxlar, tugmalar va muqova shu rangda bo'ladi.</p>
+      </div>
+      <div class="field">
+        <label for="currency">Valyuta belgisi</label>
+        <input id="currency" name="currency" value="{{ restaurant.currency }}">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="logo">Logo</label>
+        {% if restaurant.logo %}
+          <img src="/media/{{ restaurant.logo }}" alt="" style="width:64px;height:64px;border-radius:var(--r-md);object-fit:cover;margin-bottom:.5rem">
+        {% endif %}
+        <input id="logo" name="logo" type="file" accept="image/*">
+      </div>
+      <div class="field">
+        <label for="cover_image">Muqova rasmi</label>
+        {% if restaurant.cover_image %}
+          <img src="/media/{{ restaurant.cover_image }}" alt="" style="width:100%;max-width:220px;aspect-ratio:16/7;border-radius:var(--r-md);object-fit:cover;margin-bottom:.5rem">
+        {% endif %}
+        <input id="cover_image" name="cover_image" type="file" accept="image/*">
+        <p class="hint">Keng rasm tanlang — menyu tepasida to'liq enlikda chiqadi.</p>
+      </div>
+    </div>
+  </div>
+
+  <div><button class="btn btn-primary" type="submit">Saqlash</button></div>
+</form>
+{% endblock %}

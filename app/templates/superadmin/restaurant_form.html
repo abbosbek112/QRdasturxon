@@ -1,0 +1,52 @@
+{% extends "superadmin/_shell.html" %}
+{% block title %}{{ 'Restoranni tahrirlash' if restaurant else 'Yangi restoran' }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Restoranni tahrirlash' if restaurant else 'Yangi restoran' }}</h1>
+  {% if not restaurant %}
+    <p class="muted small">Restoran bilan birga uning admin hisobi ham yaratiladi.</p>
+  {% endif %}
+</div>
+
+<form method="post" class="stack" style="max-width:560px"
+      action="{{ '/superadmin/restaurants/' ~ restaurant.id if restaurant else '/superadmin/restaurants' }}">
+  {% include "partials/csrf.html" %}
+
+  <div class="card stack">
+    <h2>Restoran</h2>
+    <div class="field">
+      <label for="name">Nomi</label>
+      <input id="name" name="name" required value="{{ restaurant.name if restaurant else '' }}">
+    </div>
+    <div class="field">
+      <label for="slug">Manzil (slug)</label>
+      <input id="slug" name="slug" value="{{ restaurant.slug if restaurant else '' }}" placeholder="osh-markazi">
+      <p class="hint">Menyu manzili <code>/r/&lt;slug&gt;</code> ko'rinishida bo'ladi. Bo'sh qoldirilsa nomdan avtomatik yasaladi.</p>
+    </div>
+    <div class="field">
+      <label for="phone">Telefon</label>
+      <input id="phone" name="phone" value="{{ restaurant.phone if restaurant and restaurant.phone else '' }}">
+    </div>
+  </div>
+
+  {% if not restaurant %}
+  <div class="card stack">
+    <h2>Restoran admini</h2>
+    <div class="grid-2">
+      <div class="field"><label for="admin_username">Login</label><input id="admin_username" name="admin_username" required minlength="3"></div>
+      <div class="field"><label for="admin_password">Parol</label><input id="admin_password" name="admin_password" type="password" required minlength="8"></div>
+    </div>
+    <div class="field">
+      <label for="admin_email">Email (ixtiyoriy)</label>
+      <input id="admin_email" name="admin_email" type="email">
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row">
+    <button class="btn btn-primary" type="submit">Saqlash</button>
+    <a class="btn btn-ghost" href="/superadmin">Bekor qilish</a>
+  </div>
+</form>
+{% endblock %}

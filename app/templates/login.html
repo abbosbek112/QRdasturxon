@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Kirish — QRdasturxon</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="login-shell">
+  <div class="login-card card stack">
+    <div class="center">
+      <div class="brand">QR<span>dasturxon</span></div>
+      <p class="muted small" style="margin-top:.15rem">Boshqaruv paneliga kirish</p>
+    </div>
+
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/login" class="stack">
+      {% include "partials/csrf.html" %}
+      <div class="field">
+        <label for="username">Login</label>
+        <input id="username" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Parol</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Kirish</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

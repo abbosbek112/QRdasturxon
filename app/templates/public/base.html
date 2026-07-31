@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="{{ restaurant.theme_color if restaurant else '#b45309' }}">
+  <title>{% block title %}QRdasturxon{% endblock %}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% if restaurant %}<style>:root { --accent: {{ restaurant.theme_color }}; }</style>{% endif %}
+</head>
+<body>
+{% block body %}{% endblock %}
+<footer class="footer">
+  {% if restaurant %}<div class="footer-name">{{ restaurant.name }}</div>{% endif %}
+  <div>QRdasturxon</div>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

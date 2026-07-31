@@ -1,0 +1,30 @@
+{% extends "public/base.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}QRdasturxon{% endblock %}
+
+{% block body %}
+<div class="login-shell" style="align-content:center">
+  <div class="wrap stack" style="max-width:520px">
+    <div class="center">
+      <h1 class="brand" style="font-size:var(--text-3xl)">QR<span>dasturxon</span></h1>
+      <p class="muted">Restoranlar uchun raqamli QR-menyu</p>
+    </div>
+
+    {% if restaurants %}
+      <div class="card">
+        <h2>Restoranlar</h2>
+        <div class="stack-sm">
+          {% for place in restaurants %}
+            <div class="spread" style="gap:.75rem">
+              <span>{{ place.name }}</span>
+              <a class="btn btn-sm" href="/r/{{ place.slug }}">{{ t('menu', lang) }} {{ ui.icon('external') }}</a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="center"><a class="btn" href="/login">Boshqaruv paneli</a></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "admin/_shell.html" %}
+{% block title %}{{ 'Taomni tahrirlash' if item else 'Yangi taom' }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Taomni tahrirlash' if item else 'Yangi taom' }}</h1>
+  <p class="muted small">Faqat o'zbekcha nom majburiy — qolgan tillar bo'sh qolsa menyuda o'zbekchasi ko'rinadi.</p>
+</div>
+
+{% if not categories %}
+  <div class="empty">
+    <strong>Avval kategoriya kerak</strong>
+    <a href="/admin/categories">Kategoriya qo'shing</a>, keyin taom yarata olasiz.
+  </div>
+{% else %}
+<form method="post" enctype="multipart/form-data" class="stack" style="max-width:780px"
+      action="{{ '/admin/items/' ~ item.id if item else '/admin/items' }}">
+  {% include "partials/csrf.html" %}
+
+  <div class="card stack">
+    <div class="grid-2">
+      <div class="field">
+        <label for="category_id">Kategoriya</label>
+        <select id="category_id" name="category_id" required>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {{ 'selected' if item and item.category_id == category.id }}>
+              {{ tr(category.name, 'uz') }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="price">Narx ({{ restaurant.currency }})</label>
+        <input id="price" name="price" type="number" step="500" min="0" required
+               value="{{ item.price | int if item else '' }}">
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="field"><label>Nomi (uz)</label><input name="name_uz" required value="{{ item.name.get('uz', '') if item else '' }}"></div>
+      <div class="field"><label>Nomi (ru)</label><input name="name_ru" value="{{ item.name.get('ru', '') if item else '' }}"></div>
+      <div class="field"><label>Nomi (en)</label><input name="name_en" value="{{ item.name.get('en', '') if item else '' }}"></div>
+    </div>
+
+    <div class="grid-3">
+      <div class="field"><label>Tavsif (uz)</label><textarea name="description_uz">{{ item.description.get('uz', '') if item else '' }}</textarea></div>
+      <div class="field"><label>Tavsif (ru)</label><textarea name="description_ru">{{ item.description.get('ru', '') if item else '' }}</textarea></div>
+      <div class="field"><label>Tavsif (en)</label><textarea name="description_en">{{ item.description.get('en', '') if item else '' }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card stack">
+    <h2>Rasm va ko'rinish</h2>
+    <div class="field">
+      {% if item and item.image %}
+        <img src="/media/{{ item.image }}" alt=""
+             style="width:120px;height:120px;border-radius:var(--r-md);object-fit:cover;margin-bottom:.6rem">
+        <div class="check" style="margin-bottom:.6rem">
+          <input id="remove_image" name="remove_image" type="checkbox" value="true">
+          <label for="remove_image">Rasmni o'chirish</label>
+        </div>
+      {% endif %}
+      <label for="image">{{ 'Rasmni almashtirish' if item and item.image else 'Rasm' }}</label>
+      <input id="image" name="image" type="file" accept="image/*">
+      <p class="hint">JPEG, PNG, WEBP yoki GIF — 5 MB gacha. Rasm avtomatik WebP formatiga o'giriladi.</p>
+    </div>
+
+    <div class="row" style="align-items:flex-end">
+      <div class="field" style="width:110px"><label>Tartib</label><input name="sort_order" type="number" value="{{ item.sort_order if item else 0 }}"></div>
+      <div class="check" style="padding-bottom:.6rem">
+        <input id="is_popular" name="is_popular" type="checkbox" value="true" {{ 'checked' if item and item.is_popular }}>
+        <label for="is_popular">Ommabop</label>
+      </div>
+      {% if item %}
+      <div class="check" style="padding-bottom:.6rem">
+        <input id="is_available" name="is_available" type="checkbox" value="true" {{ 'checked' if item.is_available }}>
+        <label for="is_available">Menyuda ko'rsatilsin</label>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="btn btn-primary" type="submit">Saqlash</button>
+    <a class="btn btn-ghost" href="/admin/items">Bekor qilish</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

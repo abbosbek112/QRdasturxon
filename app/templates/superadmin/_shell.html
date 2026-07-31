@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block brand_href %}/superadmin{% endblock %}
+{% block nav %}
+  {% import "partials/icons.html" as ui %}
+  {% set path = request.url.path %}
+  <a href="/superadmin" class="{{ 'active' if path == '/superadmin' or path.startswith('/superadmin/restaurants') }}">{{ ui.icon('store') }} Restoranlar</a>
+  <a href="/superadmin/users" class="{{ 'active' if path.startswith('/superadmin/users') }}">{{ ui.icon('users') }} Foydalanuvchilar</a>
+{% endblock %}

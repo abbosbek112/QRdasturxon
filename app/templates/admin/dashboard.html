@@ -1,0 +1,31 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="page-head spread">
+  <div>
+    <h1>{{ restaurant.name }}</h1>
+    <div class="row small" style="gap:.6rem">
+      {% if restaurant.is_active %}<span class="badge badge-ok">Faol</span>
+      {% else %}<span class="badge badge-off">Faol emas</span>{% endif %}
+      <a href="{{ menu_url }}" target="_blank" rel="noopener">{{ menu_url }} {{ ui.icon('external') }}</a>
+    </div>
+  </div>
+  <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} Yangi taom</a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><b>{{ category_count }}</b><span>Kategoriya</span></div>
+  <div class="stat"><b>{{ item_count }}</b><span>Taom</span></div>
+  <div class="stat"><b>{{ hidden_count }}</b><span>Yashirilgan taom</span></div>
+</div>
+
+<p class="section-label">Tez havolalar</p>
+<div class="row">
+  <a class="btn" href="/admin/categories">{{ ui.icon('grid') }} Kategoriyalar</a>
+  <a class="btn" href="/admin/items">{{ ui.icon('list') }} Taomlar</a>
+  <a class="btn" href="/admin/qr">{{ ui.icon('qr') }} QR kod</a>
+  <a class="btn" href="/admin/settings">{{ ui.icon('settings') }} Sozlamalar</a>
+</div>
+{% endblock %}

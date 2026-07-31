@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+jinja2
+python-multipart
+pydantic-settings
+itsdangerous
+argon2-cffi
+pillow
+qrcode[pil]
+python-slugify
+pytest
+httpx

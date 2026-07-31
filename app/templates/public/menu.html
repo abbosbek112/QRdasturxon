@@ -1,0 +1,88 @@
+{% extends "public/base.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ restaurant.name }} — {{ t('menu', lang) }}{% endblock %}
+
+{% block body %}
+<header class="hero {{ 'hero-photo' if restaurant.cover_image else 'hero-flat' }}"
+        {% if restaurant.cover_image %}style="background-image:url('/media/{{ restaurant.cover_image }}')"{% endif %}>
+  <div class="hero-inner">
+    <div class="hero-top">{% include "public/_langs.html" %}</div>
+    <div class="hero-body">
+      {% if restaurant.logo %}
+        <img class="hero-logo" src="/media/{{ restaurant.logo }}" alt="">
+      {% endif %}
+      <div class="grow">
+        <h1 class="hero-title">{{ restaurant.name }}</h1>
+        {% set about = tr(restaurant.description, lang) %}
+        {% if about %}<p class="hero-sub clamp-2">{{ about }}</p>{% endif %}
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="sheet">
+  {% set place = tr(restaurant.address, lang) %}
+  {% if restaurant.working_hours or restaurant.phone or place %}
+    <div class="meta">
+      {% if restaurant.working_hours %}<span>{{ ui.icon('clock') }}{{ restaurant.working_hours }}</span>{% endif %}
+      {% if restaurant.phone %}<a href="tel:{{ restaurant.phone }}">{{ ui.icon('phone') }}{{ restaurant.phone }}</a>{% endif %}
+      {% if place %}<span>{{ ui.icon('pin') }}{{ place }}</span>{% endif %}
+    </div>
+  {% endif %}
+
+  {% if sections %}
+    <nav class="chips" aria-label="{{ t('menu', lang) }}">
+      <div class="chips-inner" id="catnav">
+        {% for category, items in sections %}
+          <a class="chip" href="#cat-{{ category.id }}">{{ tr(category.name, lang) }}</a>
+        {% endfor %}
+      </div>
+    </nav>
+  {% endif %}
+
+  <form class="search" method="get" action="/r/{{ restaurant.slug }}" role="search">
+    <div class="search-box">
+      {{ ui.icon('search') }}
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ t('search_placeholder', lang) }}"
+             aria-label="{{ t('search_placeholder', lang) }}">
+    </div>
+    {% if lang != 'uz' %}<input type="hidden" name="lang" value="{{ lang }}">{% endif %}
+  </form>
+
+  <div class="wrap">
+    {% if not sections %}
+      <div class="empty" style="margin-top:1.5rem">
+        <strong>{{ t('no_results', lang) if q else t('empty_menu', lang) }}</strong>
+      </div>
+    {% endif %}
+
+    {% for category, items in sections %}
+      <h2 class="section-title" id="cat-{{ category.id }}"><span>{{ tr(category.name, lang) }}</span></h2>
+      <div class="dish-grid">
+        {% for item in items %}
+          <a class="dish" href="/r/{{ restaurant.slug }}/item/{{ item.id }}{{ '?lang=' ~ lang if lang != 'uz' }}">
+            <div class="dish-media">
+              {% if item.image %}
+                <img src="/media/{{ item.image }}" alt="{{ tr(item.name, lang) }}" loading="lazy" decoding="async">
+              {% else %}
+                <div class="dish-ph">{{ ui.icon('plate') }}</div>
+              {% endif %}
+              <span class="price-pill">{{ item.price | price }} <small>{{ restaurant.currency }}</small></span>
+              {% if item.is_popular %}<span class="dish-tag">{{ t('popular', lang) }}</span>{% endif %}
+            </div>
+            <div class="dish-body">
+              <p class="dish-name clamp-2">{{ tr(item.name, lang) }}</p>
+              {% set note = tr(item.description, lang) %}
+              {% if note %}<p class="dish-desc clamp-2">{{ note }}</p>{% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if sections %}<script src="/static/js/menu.js" defer></script>{% endif %}
+{% endblock %}

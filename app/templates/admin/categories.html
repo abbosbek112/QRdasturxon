@@ -1,0 +1,65 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}Kategoriyalar{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Kategoriyalar</h1>
+  <p class="muted small">Menyudagi bo'limlar. Tartib raqami kichigi yuqorida turadi.</p>
+</div>
+
+<div class="card stack">
+  <h2>Yangi kategoriya</h2>
+  <form method="post" action="/admin/categories" class="stack">
+    {% include "partials/csrf.html" %}
+    <div class="grid-3">
+      <div class="field"><label>Nomi (uz)</label><input name="name_uz" required></div>
+      <div class="field"><label>Nomi (ru)</label><input name="name_ru"></div>
+      <div class="field"><label>Nomi (en)</label><input name="name_en"></div>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <div class="field" style="width:110px"><label>Tartib</label><input name="sort_order" type="number" value="0"></div>
+      <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} Qo'shish</button>
+    </div>
+  </form>
+</div>
+
+{% if not categories %}
+  <div class="empty" style="margin-top:1rem">
+    <strong>Hali kategoriya yo'q</strong>
+    Yuqoridagi forma orqali birinchisini qo'shing.
+  </div>
+{% else %}
+<p class="section-label">Mavjud kategoriyalar</p>
+<div>
+  {% for category in categories %}
+  <div class="editor-row">
+    <form method="post" action="/admin/categories/{{ category.id }}" class="stack">
+      {% include "partials/csrf.html" %}
+      <div class="grid-3">
+        <div class="field"><label>Nomi (uz)</label><input name="name_uz" value="{{ category.name.get('uz', '') }}" required></div>
+        <div class="field"><label>Nomi (ru)</label><input name="name_ru" value="{{ category.name.get('ru', '') }}"></div>
+        <div class="field"><label>Nomi (en)</label><input name="name_en" value="{{ category.name.get('en', '') }}"></div>
+      </div>
+      <div class="spread">
+        <div class="row" style="align-items:flex-end">
+          <div class="field" style="width:100px"><label>Tartib</label><input name="sort_order" type="number" value="{{ category.sort_order }}"></div>
+          <div class="check" style="padding-bottom:.6rem">
+            <input id="active-{{ category.id }}" name="is_active" type="checkbox" value="true" {{ 'checked' if category.is_active }}>
+            <label for="active-{{ category.id }}">Menyuda ko'rsatilsin</label>
+          </div>
+          <span class="muted small" style="padding-bottom:.65rem">{{ category.items | length }} ta taom</span>
+        </div>
+        <button class="btn btn-primary btn-sm" type="submit">Saqlash</button>
+      </div>
+    </form>
+    <form method="post" action="/admin/categories/{{ category.id }}/delete" style="margin-top:.8rem"
+          onsubmit="return confirm('Kategoriya va uning barcha taomlari o\'chiriladi. Davom etasizmi?')">
+      {% include "partials/csrf.html" %}
+      <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

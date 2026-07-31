@@ -1,0 +1,21 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}QR kod{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>QR kod</h1>
+  <p class="muted small">Stolga qo'yish uchun chop eting — mijoz skanerlab menyuni ochadi.</p>
+</div>
+
+<div class="card center stack" style="max-width:420px">
+  <div><span class="qr-preview"><img src="/admin/qr.png" alt="QR kod"></span></div>
+  <div><span class="qr-url">{{ menu_url }}</span></div>
+  <div class="row" style="justify-content:center">
+    <a class="btn btn-primary" href="/admin/qr.png" download>{{ ui.icon('download') }} PNG</a>
+    <a class="btn" href="/admin/qr.svg" download>{{ ui.icon('download') }} SVG</a>
+    <a class="btn" href="{{ menu_url }}" target="_blank" rel="noopener">{{ ui.icon('external') }} Ochish</a>
+  </div>
+  <p class="hint">Chop etish uchun SVG'ni tanlang — u sifatini yo'qotmasdan istalgan o'lchamga kattalashadi.</p>
+</div>
+{% endblock %}

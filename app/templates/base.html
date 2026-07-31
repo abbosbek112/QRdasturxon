@@ -1,0 +1,29 @@
+{% import "partials/icons.html" as ui %}
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block title %}Boshqaruv{% endblock %} — QRdasturxon</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="app">
+<aside class="sidebar">
+  <div class="sidebar-inner">
+    <a class="brand" href="{% block brand_href %}/admin{% endblock %}">QR<span>dasturxon</span></a>
+    <nav class="nav">{% block nav %}{% endblock %}</nav>
+    <form method="post" action="/logout">
+      {% include "partials/csrf.html" %}
+      <button class="btn btn-sm btn-block" type="submit">{{ ui.icon('logout') }} Chiqish</button>
+    </form>
+  </div>
+</aside>
+<main class="app-main">
+  <div class="app-inner">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+</body>
+</html>

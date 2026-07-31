@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block brand_href %}/admin{% endblock %}
+{% block nav %}
+  {% import "partials/icons.html" as ui %}
+  {% set path = request.url.path %}
+  <a href="/admin" class="{{ 'active' if path == '/admin' }}">{{ ui.icon('home') }} Bosh sahifa</a>
+  <a href="/admin/categories" class="{{ 'active' if path.startswith('/admin/categories') }}">{{ ui.icon('grid') }} Kategoriyalar</a>
+  <a href="/admin/items" class="{{ 'active' if path.startswith('/admin/items') }}">{{ ui.icon('list') }} Taomlar</a>
+  <a href="/admin/qr" class="{{ 'active' if path.startswith('/admin/qr') }}">{{ ui.icon('qr') }} QR kod</a>
+  <a href="/admin/settings" class="{{ 'active' if path.startswith('/admin/settings') }}">{{ ui.icon('settings') }} Sozlamalar</a>
+{% endblock %}

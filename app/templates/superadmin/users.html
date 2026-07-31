@@ -1,0 +1,46 @@
+{% extends "superadmin/_shell.html" %}
+{% block title %}Foydalanuvchilar{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Foydalanuvchilar</h1>
+  <p class="muted small">Parolni bu yerdan tiklash mumkin — eski parolni bilish shart emas.</p>
+</div>
+
+<div class="table-card table-scroll">
+  <table>
+    <thead>
+      <tr><th>Login</th><th>Rol</th><th>Restoran</th><th>Holat</th><th>Yangi parol</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>
+          <strong>{{ user.username }}</strong>
+          {% if user.email %}<div class="muted small">{{ user.email }}</div>{% endif %}
+        </td>
+        <td class="muted">{{ 'Tizim admini' if user.role.value == 'superadmin' else 'Restoran admini' }}</td>
+        <td class="muted">{{ user.restaurant.name if user.restaurant else '—' }}</td>
+        <td>
+          {% if user.is_active %}<span class="badge badge-ok">Faol</span>
+          {% else %}<span class="badge badge-off">Bloklangan</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="/superadmin/users/{{ user.id }}/password" class="row" style="flex-wrap:nowrap">
+            {% include "partials/csrf.html" %}
+            <input name="new_password" type="password" minlength="8" required placeholder="kamida 8 belgi" style="min-width:150px">
+            <button class="btn btn-sm" type="submit">O'zgartirish</button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="/superadmin/users/{{ user.id }}/toggle">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-sm" type="submit">{{ 'Bloklash' if user.is_active else 'Tiklash' }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "superadmin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}Restoranlar{% endblock %}
+
+{% block content %}
+<div class="page-head spread">
+  <div>
+    <h1>Restoranlar</h1>
+    <p class="muted small">Tizimdagi barcha restoranlar va ularning menyu hajmi.</p>
+  </div>
+  <a class="btn btn-primary" href="/superadmin/restaurants/new">{{ ui.icon('plus') }} Yangi restoran</a>
+</div>
+
+{% if not restaurants %}
+  <div class="empty">
+    <strong>Hali restoran yo'q</strong>
+    Birinchi restoranni qo'shing — u bilan birga admin hisobi ham yaratiladi.
+  </div>
+{% else %}
+<div class="table-card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Nomi</th><th>Manzil (slug)</th><th>Kategoriya</th>
+        <th>Taom</th><th>Holat</th><th class="col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for restaurant in restaurants %}
+      <tr>
+        <td>
+          <strong>{{ restaurant.name }}</strong>
+          {% if restaurant.phone %}<div class="muted small">{{ restaurant.phone }}</div>{% endif %}
+        </td>
+        <td><a href="/r/{{ restaurant.slug }}" target="_blank" rel="noopener">/r/{{ restaurant.slug }}</a></td>
+        <td>{{ category_counts.get(restaurant.id, 0) }}</td>
+        <td>{{ item_counts.get(restaurant.id, 0) }}</td>
+        <td>
+          {% if restaurant.is_active %}<span class="badge badge-ok">Faol</span>
+          {% else %}<span class="badge badge-off">O'chiq</span>{% endif %}
+        </td>
+        <td>
+          <div class="row" style="flex-wrap:nowrap; justify-content:flex-end">
+            <a class="btn btn-sm" href="/superadmin/restaurants/{{ restaurant.id }}/edit">Tahrirlash</a>
+            <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/toggle">
+              {% include "partials/csrf.html" %}
+              <button class="btn btn-sm" type="submit">{{ "O'chirish" if restaurant.is_active else 'Yoqish' }}</button>
+            </form>
+            <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/delete"
+                  onsubmit="return confirm('{{ restaurant.name }} va uning butun menyusi butunlay o\'chiriladi. Davom etasizmi?')">
+              {% include "partials/csrf.html" %}
+              <button class="btn btn-danger btn-sm" type="submit">Butunlay o'chirish</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
