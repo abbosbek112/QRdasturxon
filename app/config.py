@@ -21,6 +21,16 @@ class Settings(BaseSettings):
     # Sessiya cookie'si shuncha vaqtdan keyin kuchini yo'qotadi
     session_max_age: int = 60 * 60 * 24 * 14
 
+    # Reklama sahifasida ko'rsatiladigan aloqa — kodga tegmasdan o'zgartirish uchun
+    contact_phone: str = "+998 94 227 34 07"
+    contact_telegram: str = "odam_dev"
+
+    @property
+    def contact_phone_href(self) -> str:
+        """tel: havolasi uchun faqat raqamlar va bosh + belgisi."""
+        digits = "".join(ch for ch in self.contact_phone if ch.isdigit())
+        return f"+{digits}"
+
     @property
     def media_path(self) -> Path:
         path = Path(self.media_dir)

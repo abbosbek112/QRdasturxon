@@ -1,7 +1,7 @@
 from fastapi.templating import Jinja2Templates
 
 from app import themes
-from app.config import BASE_DIR
+from app.config import BASE_DIR, settings
 from app.i18n import LANGUAGES, t, tr
 from app.security import csrf_token
 
@@ -41,6 +41,11 @@ templates.env.globals.update(
     asset_v=_asset_version(),
     theme_css=theme_css,
     THEMES=themes.THEMES,
+    CONTACT={
+        "phone": settings.contact_phone,
+        "phone_href": settings.contact_phone_href,
+        "telegram": settings.contact_telegram,
+    },
 )
 
 

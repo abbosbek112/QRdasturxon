@@ -248,3 +248,57 @@ def test_landing_page_lists_every_plan(client):
         assert limits.name in body
     assert "600 000" in body  # yillik narx ko'rinishi
     assert "/signup" in body
+
+
+# --- yangi restoran uchun yo'l-yo'riq ---
+
+def test_a_fresh_restaurant_sees_the_setup_checklist(client, db):
+    signup(client)
+    body = html.unescape(client.get("/admin").text)
+    assert "Menyuni ishga tushiramiz" in body
+    assert "0 / 3 bajarildi" in body
+
+
+def test_the_checklist_ticks_off_each_finished_step(client, db, tenant_a):
+    restaurant, _ = tenant_a
+    login(client, "osh", "adminpass123")
+
+    client.post(
+        "/admin/categories",
+        data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ichimliklar"},
+    )
+    assert "1 / 3 bajarildi" in html.unescape(client.get("/admin").text)
+
+
+def test_the_checklist_disappears_once_everything_is_done(client, db, tenant_a):
+    """Ro'yxat abadiy turib qolmasligi kerak — ish tugagach yo'qolsin."""
+    restaurant, _ = tenant_a
+    category = Category(restaurant_id=restaurant.id, name={"uz": "Ichimliklar"})
+    db.add(category)
+    db.flush()
+    db.add(
+        MenuItem(
+            restaurant_id=restaurant.id,
+            category_id=category.id,
+            name={"uz": "Kapuchino"},
+            price=25000,
+        )
+    )
+    restaurant.working_hours = "08:00 – 22:00"
+    restaurant.phone = "+998901112233"
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    assert "Menyuni ishga tushiramiz" not in html.unescape(client.get("/admin").text)
+
+
+def test_the_checklist_comes_back_if_the_menu_is_emptied(client, db, tenant_a):
+    """Holat alohida ustunda emas — ma'lumotdan hisoblanadi, ya'ni haqiqatga ergashadi."""
+    restaurant, _ = tenant_a
+    restaurant.working_hours = "08:00 – 22:00"
+    restaurant.phone = "+998901112233"
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    body = html.unescape(client.get("/admin").text)
+    assert "1 / 3 bajarildi" in body

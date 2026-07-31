@@ -10,6 +10,7 @@
       <a href="#imkoniyatlar">Imkoniyatlar</a>
       <a href="#qanday">Qanday ishlaydi</a>
       <a href="#narxlar">Narxlar</a>
+      <a href="#aloqa">Aloqa</a>
     </nav>
     <div class="row" style="gap:.4rem; flex-wrap:nowrap">
       <a class="btn btn-sm" href="/login">Kirish</a>
@@ -132,18 +133,25 @@
     </div>
 
     <p class="center small muted" style="margin-top:1.25rem">
-      To'lov hozircha qo'lda qabul qilinadi — ro'yxatdan o'tganingizdan keyin biz bog'lanamiz.
+      To'lov qo'lda qabul qilinadi — ro'yxatdan o'tganingizdan keyin biz bog'lanamiz.
     </p>
   </div>
 </section>
 
-<section class="lp-cta">
+<section class="lp-cta" id="aloqa">
   <div class="lp-wrap center">
     <h2 class="lp-h2" style="margin-bottom:.4rem">Bugun boshlang</h2>
     <p class="muted" style="margin-bottom:1.25rem">
       Ro'yxatdan o'tish bir daqiqa. Menyuni kiritib, kechga QR kodni stolga qo'yasiz.
+      Savol bo'lsa qo'ng'iroq qiling — menyuni kiritishda ham yordam beramiz.
     </p>
-    <a class="btn btn-primary" href="/signup">Kafemni ulash</a>
+    <div class="row" style="justify-content:center; gap:.6rem">
+      <a class="btn btn-primary" href="/signup">Kafemni ulash</a>
+      <a class="btn" href="tel:{{ CONTACT.phone_href }}">{{ ui.icon('phone') }} {{ CONTACT.phone }}</a>
+      <a class="btn" href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">
+        {{ ui.icon('chat') }} @{{ CONTACT.telegram }}
+      </a>
+    </div>
   </div>
 </section>
 {% endblock %}

@@ -1,22 +1,69 @@
 # QRdasturxon
 
-Restoranlar uchun ko'p ijarali (multi-tenant) QR-menyu tizimi. Mijoz stoldagi QR kodni
-skanerlaydi va telefonida restoran menyusini o'zbek, rus yoki ingliz tilida ko'radi.
-Buyurtma va to'lov yo'q — bu faqat menyu ko'rsatish tizimi.
+Kafe va restoranlar uchun ko'p ijarali (multi-tenant) QR-menyu platformasi. Mijoz
+stoldagi QR kodni skanerlaydi va telefonida menyuni o'zbek, rus yoki ingliz tilida
+ko'radi.
+
+**Buyurtma va to'lov ataylab yo'q.** QR orqali buyurtma berishni ko'p kafe
+pandemiyadan keyin tashlab yubordi: ofitsiant qimmat emas, dasturxon madaniyati
+kuchli. Menyu-only mahsulot esa ancha arzon va ishonchli — bir kishi olib borishi mumkin.
 
 **Rollar**
 
 | Rol | Nima qiladi |
 |---|---|
-| Tizim admini (superadmin) | Restoranlarni va ularning admin hisoblarini yaratadi |
-| Restoran admini | O'z restorani menyusini, sozlamalarini va QR kodini boshqaradi |
+| Tizim admini (superadmin) | Restoranlarni ko'radi, tariflarni beradi va uzaytiradi |
+| Restoran admini | O'z menyusi, sozlamalari, izohlari va QR kodini boshqaradi |
 | Mijoz | Ro'yxatdan o'tmaydi — QR orqali menyuni ko'radi |
+
+Restoran o'zi `/signup` orqali ro'yxatdan o'tadi va **7 kun bepul** sinov oladi.
+
+## Imkoniyatlar
+
+**Menyu (mijoz ko'radigan tomon)**
+
+- Uch tilli menyu; tarjima bo'lmasa o'zbekchaga qaytadi
+- Taomga bosilganda sahifa almashmaydi — pastdan **oyna** chiqadi (sudrab,
+  overlay bosib, `Escape` yoki "orqaga" tugmasi bilan yopiladi). JS ishlamasa
+  havola oddiy sahifa bo'lib ochiladi
+- **Wi-Fi paroli** menyuning tepasida, bosilganda ochiladi
+- Taom belgilari: o'tkir, vegetarian, halol; allergenlar; tayyorlanish vaqti
+- **Bugungi taklif** — kategoriyalardan yuqoridagi alohida bo'lim
+- Mijoz izohlari — restoran tasdiqlagandan keyin ko'rinadi
+- To'rtta **uslub** (Zamonaviy, Klassik, Issiq, Minimal) — palitra, shrift va
+  burchak yumaloqligini birga o'zgartiradi
+
+**Boshqaruv paneli**
+
+- Yangi restoran uchun uch qadamli yo'l-yo'riq; bajarilgach o'zi yo'qoladi
+- QR kod: PNG va chop etishga tayyor SVG
+- **Chop etish uchun menyu** — brauzerdan "PDF saqlash" qilinadigan A4 varaq
+- Statistika: kunlik ochilishlar grafigi va eng ko'p ko'rilgan taomlar
+
+## Tariflar
+
+Yiliga bir marta to'lanadi. To'lov tizimi ulanmagan — pul qo'lda qabul qilinadi,
+superadmin panelidan obuna uzaytiriladi.
+
+| | Bepul | To'liq (600 000 so'm/yil) |
+|---|---|---|
+| Taom / kategoriya | 20 / 3 | cheksiz |
+| Tillar | faqat o'zbekcha | uz + ru + en |
+| Statistika | 7 kun | 365 kun |
+| Wi-Fi, taom belgilari | bor | bor |
+| Bugungi taklif, izohlar, chop etish | yo'q | bor |
+
+**Obuna tugasa mijoz menyusi ochiq qoladi** — faqat admin tomonidagi cheklovlar
+qattiqlashadi. Stoldagi QR kodni ishlamay qo'yish restoranga ham, mijoziga ham
+zarar, to'lovni esa tezlashtirmaydi.
 
 ## Texnologiyalar
 
-FastAPI · Jinja2 · SQLAlchemy 2 + Alembic · SQLite · Pillow · qrcode · argon2
+FastAPI · Jinja2 · SQLAlchemy 2 + Alembic · PostgreSQL (lokalda SQLite) ·
+Pillow · qrcode · argon2
 
-Tashqi CDN yoki frontend build-step yo'q — loyiha internetdan mustaqil ishlaydi.
+Tashqi CDN, frontend build-step va JS kutubxonasi yo'q — butun mijoz tomoni
+40 qatorlik vanilla JS.
 
 ## O'rnatish
 
@@ -78,14 +125,28 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost/qrdasturxon_test .ven
 | `BASE_URL` | **QR kod ichiga shu manzil yoziladi** — domenga chiqishdan oldin o'zgartiring |
 | `MEDIA_DIR` | Yuklangan rasmlar katalogi (standart `media/`) |
 | `DEBUG` | `false` bo'lganda sessiya cookie'si faqat HTTPS orqali yuboriladi |
+| `CONTACT_PHONE` | Reklama sahifasida ko'rsatiladigan telefon |
+| `CONTACT_TELEGRAM` | Telegram foydalanuvchi nomi (`@` siz) |
 
 ## Ma'lumotlar modeli
 
-`users` · `restaurants` · `categories` · `menu_items`
+`users` · `restaurants` · `categories` · `menu_items` · `item_comments` ·
+`menu_views` · `login_attempts`
 
-Tarjima qilinadigan maydonlar (`name`, `description`, `address`) JSON ustunlarida
-`{"uz": "...", "ru": "...", "en": "..."}` ko'rinishida saqlanadi. Tanlangan tilda matn
-bo'lmasa o'zbekchaga qaytadi (`app/i18n.py` dagi `tr()`).
+Tarjima qilinadigan maydonlar (`name`, `description`, `ingredients`, `allergens`,
+`address`) JSON ustunlarida `{"uz": "...", "ru": "...", "en": "..."}` ko'rinishida
+saqlanadi — Postgres'da **JSONB**. Tanlangan tilda matn bo'lmasa o'zbekchaga
+qaytadi (`app/i18n.py` dagi `tr()`).
+
+Muhim modullar:
+
+| Fayl | Nima uchun |
+|---|---|
+| `app/plans.py` | Tariflar, cheklovlar, sinov muddati |
+| `app/themes.py` | Uslub to'plamlari (palitra, shrift, burchak) |
+| `app/services/onboarding.py` | Restoran yaratish va uch qadamli yo'l-yo'riq |
+| `app/services/stats.py` | Kunlik ochilishlar hisobi |
+| `app/services/comments.py` | Izohlar va spamdan himoya |
 
 Til quyidagi tartibda aniqlanadi: `?lang=` → cookie → brauzerning `Accept-Language`
 sarlavhasi → o'zbekcha.
@@ -103,7 +164,14 @@ Model o'zgartirilgandan keyin migratsiya yarating:
 - Barcha holat o'zgartiruvchi formalarda CSRF token
 - Yuklangan rasm Pillow orqali majburiy qayta kodlanadi (WebP), hajmi 5 MB bilan
   cheklangan; fayl nomi UUID
-- Parollar argon2 bilan hashlanadi, login urinishlari IP bo'yicha cheklanadi
+- Parollar argon2 bilan hashlanadi. Login urinishlari IP bo'yicha **bazada**
+  hisoblanadi — server qayta ishga tushsa ham cheklov kuchida qoladi va bir nechta
+  ishchi jarayon bitta hisobni ko'radi
+- Javob sarlavhalarida CSP (`script-src 'self'` — inline JS umuman yo'q),
+  `X-Frame-Options`, `nosniff`, `Referrer-Policy`
+- `DEBUG=false` bo'lganda zaif yoki standart `SECRET_KEY` bilan **server
+  ko'tarilmaydi** — bu ataylab, kalit ma'lum bo'lsa sessiyani soxtalashtirish mumkin
+- Izohlar restoran tasdiqlagunicha ko'rinmaydi; bitta IP bir taomga kuniga bitta izoh
 
 ## Serverga chiqarish
 
@@ -126,8 +194,13 @@ Migratsiyalar konteyner ishga tushganda avtomatik qo'llanadi. Birinchi superadmi
 yaratish:
 
 ```bash
-docker compose exec app python -m scripts.create_superadmin
+docker compose exec -T \
+  -e SUPERADMIN_USERNAME=root -e SUPERADMIN_PASSWORD='uzun-parol' \
+  app python -m scripts.create_superadmin
 ```
+
+Skript interaktiv ham ishlaydi, lekin Docker ichida terminal bo'lmagani uchun
+login va parolni muhit o'zgaruvchilari orqali berish kerak.
 
 **`BASE_URL` — QR kod ichiga yoziladigan manzil.** Uni domenga chiqqandan keyin
 o'zgartirsangiz, chop etilgan QR kodlar eski manzilga ishora qilib qoladi.

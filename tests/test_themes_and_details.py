@@ -66,14 +66,18 @@ def test_theme_fonts_are_not_html_escaped(client, db, cafe):
 
 
 def test_a_broken_accent_falls_back_instead_of_injecting_css(client, db, cafe):
-    """Rang <style> ichiga tushadi — u yerdan chiqib ketishga yo'l qo'ymaymiz."""
+    """Rang <style> ichiga tushadi — u yerdan chiqib ketishga yo'l qo'ymaymiz.
+
+    Ustun VARCHAR(9) — uzun hujum satri baribir sig'maydi. Lekin `</style>`
+    atigi 8 belgi, ya'ni sig'adi: himoya shuning uchun kerak.
+    """
     restaurant, _ = cafe
-    restaurant.theme_color = "red; } </style><script>alert(1)</script>"
+    restaurant.theme_color = "</style>"
     db.commit()
 
-    body = client.get(f"/r/{restaurant.slug}").text
-    assert "<script>alert(1)</script>" not in body
-    assert f"--accent:{themes.THEMES[restaurant.theme].accent}" in body
+    head = client.get(f"/r/{restaurant.slug}").text.split("</head>")[0]
+    assert "--accent:</style>" not in head
+    assert f"--accent:{themes.THEMES[restaurant.theme].accent}" in head
 
 
 def test_unknown_theme_falls_back_to_default(db, cafe):

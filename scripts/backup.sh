@@ -22,8 +22,9 @@ docker compose exec -T db pg_dump \
   | gzip > "$DEST/db-$STAMP.sql.gz"
 
 echo "[$(date +%H:%M:%S)] Rasmlar saqlanmoqda..."
-docker compose run --rm --no-deps --entrypoint sh -v "$(cd "$DEST" && pwd):/backup" app \
-  -c "tar czf /backup/media-$STAMP.tar.gz -C /app media"
+# Arxiv konteyner ichida emas, oqim orqali host tomonda yoziladi: konteyner
+# root bo'lmagan foydalanuvchi ostida ishlaydi va host kataloglariga yoza olmaydi.
+docker compose exec -T app tar czf - -C /app media > "$DEST/media-$STAMP.tar.gz"
 
 # Bo'sh yoki juda kichik fayl — zaxira ishlamaganini bildiradi
 for file in "$DEST/db-$STAMP.sql.gz" "$DEST/media-$STAMP.tar.gz"; do

@@ -1,9 +1,21 @@
 """Tizim admini (superadmin) hisobini yaratadi.
 
-Ishlatish:  .venv/bin/python -m scripts.create_superadmin
+Ikki xil ishlatiladi:
+
+  Interaktiv (lokalda):
+      .venv/bin/python -m scripts.create_superadmin
+
+  Muhit o'zgaruvchilari bilan (serverda, Docker ichida):
+      docker compose exec -T \\
+        -e SUPERADMIN_USERNAME=root -e SUPERADMIN_PASSWORD='...' \\
+        app python -m scripts.create_superadmin
+
+Ikkinchi yo'l kerak, chunki `docker compose exec -T` da terminal bo'lmaydi va
+`input()` darrov xato beradi.
 """
 
 import getpass
+import os
 import sys
 
 from sqlalchemy import select
@@ -12,11 +24,34 @@ from app.database import SessionLocal
 from app.models import Role, User
 from app.security import hash_password
 
+MIN_USERNAME = 3
+MIN_PASSWORD = 8
+
+
+def _read_username() -> str:
+    value = os.environ.get("SUPERADMIN_USERNAME")
+    if value is None:
+        value = input("Login: ")
+    return value.strip().lower()
+
+
+def _read_password() -> str | None:
+    """Parolni oladi. Interaktiv rejimda ikki marta so'raydi."""
+    value = os.environ.get("SUPERADMIN_PASSWORD")
+    if value is not None:
+        return value
+
+    password = getpass.getpass("Parol: ")
+    if password != getpass.getpass("Parolni takrorlang: "):
+        print("Parollar mos kelmadi.")
+        return None
+    return password
+
 
 def main() -> int:
-    username = input("Login: ").strip().lower()
-    if len(username) < 3:
-        print("Login kamida 3 belgidan iborat bo'lsin.")
+    username = _read_username()
+    if len(username) < MIN_USERNAME:
+        print(f"Login kamida {MIN_USERNAME} belgidan iborat bo'lsin.")
         return 1
 
     with SessionLocal() as db:
@@ -24,12 +59,11 @@ def main() -> int:
             print(f"'{username}' logini allaqachon band.")
             return 1
 
-        password = getpass.getpass("Parol: ")
-        if len(password) < 8:
-            print("Parol kamida 8 belgidan iborat bo'lsin.")
+        password = _read_password()
+        if password is None:
             return 1
-        if password != getpass.getpass("Parolni takrorlang: "):
-            print("Parollar mos kelmadi.")
+        if len(password) < MIN_PASSWORD:
+            print(f"Parol kamida {MIN_PASSWORD} belgidan iborat bo'lsin.")
             return 1
 
         db.add(
