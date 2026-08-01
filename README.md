@@ -205,6 +205,45 @@ login va parolni muhit o'zgaruvchilari orqali berish kerak.
 **`BASE_URL` — QR kod ichiga yoziladigan manzil.** Uni domenga chiqqandan keyin
 o'zgartirsangiz, chop etilgan QR kodlar eski manzilga ishora qilib qoladi.
 
+### Oracle Cloud (Always Free)
+
+Ampere A1 instansi (4 CPU / 24 GB) muddatsiz bepul va bu loyihaga ortig'i bilan
+yetadi. Lekin Oracle'da uchta tuzoq bor — ular boshqa provayderlarda uchramaydi.
+
+**1. Always Free faqat "home region"da ishlaydi.** Region ro'yxatdan o'tishda
+tanlanadi va **keyin o'zgartirilmaydi**. Instance o'sha regionda yaratilishi kerak.
+
+**2. "Out of host capacity"** — ARM instansda tez-tez chiqadi va bu xato emas,
+o'sha paytda joy yo'qligini bildiradi. Boshqa Availability Domain'ni tanlang,
+2 CPU / 12 GB bilan urinib ko'ring yoki bir necha soatdan keyin qayta urining.
+
+**3. Ikki qavatli firewall — eng ko'p vaqt yeydigan joy.** Portni faqat bulut
+darajasida ochib qo'yish yetarli emas, operatsion tizimda ham ochish kerak.
+
+Bulut darajasi — VCN → Subnet → Security List → *Add Ingress Rules*:
+`0.0.0.0/0` uchun TCP **80** va **443**.
+
+Operatsion tizim darajasi (Oracle'ning Ubuntu image'i SSH'dan boshqa hammasini
+bloklaydi):
+
+```bash
+sudo iptables -I INPUT 6 -p tcp --dport 80 -m state --state NEW -j ACCEPT
+sudo iptables -I INPUT 6 -p tcp --dport 443 -m state --state NEW -j ACCEPT
+sudo netfilter-persistent save
+```
+
+`sudo iptables -L INPUT --line-numbers` bilan tekshiring: ACCEPT qatorlari
+REJECT'dan **yuqorida** turishi kerak.
+
+**ARM haqida.** Image serverning o'zida quriladi, shuning uchun aarch64 avtomatik
+hal bo'ladi — `python`, `postgres` va `caddy` image'lari ko'p arxitekturali.
+Agar `pip install` bosqichida kutilmagan build xatosi chiqsa, biror paketning
+aarch64 wheel'i yo'q degani: `Dockerfile` ning builder bosqichiga `build-essential`
+qo'shish kifoya.
+
+Docker o'rnatgandan keyin **SSH'dan chiqib qayta kiring** — `docker` guruhi
+a'zoligi shundan keyin kuchga kiradi.
+
 Ishga tushmasa: `docker compose logs -f app`.
 
 ### Xavfsizlik tekshiruvi
