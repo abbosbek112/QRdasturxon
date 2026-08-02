@@ -14,7 +14,7 @@ from app.models import (
 )
 from app.plans import LIMITS, TRIAL_DAYS, effective_plan, limits_for, trial_days_left
 
-from tests.conftest import csrf, login
+from tests.conftest import csrf, login, make_restaurant
 
 
 def signup(client, **overrides):
@@ -195,19 +195,62 @@ def test_trial_gives_full_features(db, tenant_a):
     assert limits_for(restaurant).max_items == LIMITS[Plan.full].max_items
 
 
-def test_expired_trial_drops_to_free_but_keeps_the_menu_online(client, db, tenant_a):
-    """Obuna tugagani mijozning menyusini o'chirib qo'ymasligi kerak."""
+def test_expired_trial_closes_the_menu(client, db, tenant_a):
+    """Sinov tugagach QR kod ishlamay qolishi kerak — bepul rejim cho'zilmaydi."""
     restaurant, _ = tenant_a
-    restaurant.subscription_status = SubscriptionStatus.trial
+    restaurant.trial_ends_at = utcnow_naive() - timedelta(minutes=1)
+    db.commit()
+
+    response = client.get(f"/r/{restaurant.slug}")
+    assert response.status_code == 503
+    assert "Menyu vaqtincha yopiq" in response.text
+    # Mijozga tarif haqida gapirilmaydi — u aybdor emas
+    assert "tarif" not in response.text.lower()
+
+
+def test_the_menu_closes_even_if_the_owner_never_logs_in(client, db, tenant_a):
+    """Eng muhim tarmoq: holat bazada emas, sanadan hisoblanadi.
+
+    `refresh_status()` faqat panelga kirilganda ishlaydi. Agar menyu shu
+    saqlangan holatga qarasa, egasi panelga kirmay qo'yish bilan sinovni
+    cheksiz cho'zib yuborardi.
+    """
+    restaurant, _ = tenant_a
+    restaurant.trial_ends_at = utcnow_naive() - timedelta(days=30)
+    db.commit()
+
+    # Bazadagi holat hamon "trial" — hech kim yangilamagan
+    assert restaurant.subscription_status is SubscriptionStatus.trial
+    assert client.get(f"/r/{restaurant.slug}").status_code == 503
+
+
+def test_the_owner_still_reaches_the_panel_after_expiry(client, db, tenant_a):
+    """Menyu yopiladi, hisob esa yopilmaydi — ma'lumot ham joyida qoladi."""
+    restaurant, _ = tenant_a
     restaurant.trial_ends_at = utcnow_naive() - timedelta(minutes=1)
     db.commit()
 
     login(client, "osh", "adminpass123")
-    client.get("/admin")  # holat shu yerda yangilanadi
+    panel = client.get("/admin")
+    assert panel.status_code == 200
+    assert "Menyungiz hozir yopiq" in html.unescape(panel.text)
 
     db.refresh(restaurant)
     assert restaurant.subscription_status is SubscriptionStatus.expired
     assert effective_plan(restaurant) is Plan.free
+
+
+def test_paying_reopens_the_menu(client, db, tenant_a):
+    """To'lovdan keyin menyu o'sha zahoti qayta ochilishi kerak."""
+    restaurant, _ = tenant_a
+    restaurant.trial_ends_at = utcnow_naive() - timedelta(days=1)
+    db.commit()
+    assert client.get(f"/r/{restaurant.slug}").status_code == 503
+
+    restaurant.plan = Plan.full
+    restaurant.subscription_status = SubscriptionStatus.active
+    restaurant.paid_until = utcnow_naive() + timedelta(days=365)
+    db.commit()
     assert client.get(f"/r/{restaurant.slug}").status_code == 200
 
 
@@ -246,8 +289,29 @@ def test_landing_page_lists_every_plan(client):
     body = html.unescape(client.get("/").text)
     for limits in LIMITS.values():
         assert limits.name in body
-    assert "600 000" in body  # yillik narx ko'rinishi
+    assert "500 000" in body  # yillik narx ko'rinishi
     assert "/signup" in body
+
+
+def test_landing_shows_the_configured_demo(client, db, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "demo_slug", "namuna")
+    make_restaurant(db, slug="namuna", username="namunaadmin")
+    assert "/r/namuna" in client.get("/").text
+
+
+def test_landing_never_offers_someone_elses_menu_as_the_demo(client, db, tenant_a):
+    """Namuna sozlamada ko'rsatilgan menyu bo'lishi kerak.
+
+    Avval eng eski restoran olinardi — ya'ni haqiqiy mijozning menyusi
+    saytda "namuna" bo'lib turardi. Namuna bazada bo'lmasa havola umuman
+    chiqmasligi kerak.
+    """
+    restaurant, _ = tenant_a
+    body = client.get("/").text
+    assert f"/r/{restaurant.slug}" not in body
+    assert "Namunani ko'rish" not in html.unescape(body)
 
 
 # --- yangi restoran uchun yo'l-yo'riq ---

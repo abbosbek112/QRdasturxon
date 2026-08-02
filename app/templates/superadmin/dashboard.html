@@ -2,80 +2,123 @@
 {% import "partials/icons.html" as ui %}
 {% block title %}Restoranlar{% endblock %}
 
+{% set status_badges = {
+  'sinov': ('badge', 'Sinov'),
+  'faol': ('badge badge-ok', "To'lagan"),
+  'tugagan': ('badge badge-off', 'Muddati tugagan'),
+  'bloklangan': ('badge badge-off', 'Bloklangan'),
+} %}
+
 {% block content %}
 <div class="page-head spread">
   <div>
     <h1>Restoranlar</h1>
-    <p class="muted small">Tizimdagi barcha restoranlar va ularning menyu hajmi.</p>
+    <p class="muted small">Platformadagi hamma restoran, ularning yuki va obunasi.</p>
   </div>
   <a class="btn btn-primary" href="/superadmin/restaurants/new">{{ ui.icon('plus') }} Yangi restoran</a>
 </div>
 
+{# Platforma ko'rsatkichlari — oxirgi 30 kun #}
+<div class="stat-grid">
+  <div class="stat">
+    <b>{{ totals.restaurants }}</b>
+    <span>Restoran</span>
+  </div>
+  <div class="stat">
+    <b>{{ totals.live }}</b>
+    <span>Menyusi ochiq</span>
+  </div>
+  <div class="stat">
+    <b>{{ totals.menu_opens }}</b>
+    <span>30 kunda ochilgan</span>
+  </div>
+  <div class="stat">
+    <b>{{ totals.item_opens }}</b>
+    <span>Taom ko'rilgan</span>
+  </div>
+  <div class="stat">
+    <b>{{ totals.pending_comments }}</b>
+    <span>Izoh kutmoqda</span>
+  </div>
+</div>
+
+{#
+  Qidiruv va saralash oddiy GET forma: tanlangan holat manzilda qoladi,
+  sahifani yangilasa ham yo'qolmaydi va havolasini ulashsa ham bo'ladi.
+#}
+<form method="get" action="/superadmin" class="card filter-bar" style="margin-top:1rem">
+  <div class="search-box grow">
+    {{ ui.icon('search') }}
+    <input type="search" name="q" value="{{ q }}" placeholder="Nomi yoki manzili bo'yicha qidirish">
+  </div>
+  <select name="status_filter" aria-label="Holat">
+    {% for key, label in status_filters.items() %}
+      <option value="{{ key }}" {{ 'selected' if status_filter == key }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="sort" aria-label="Saralash">
+    {% for key, label in sorts.items() %}
+      <option value="{{ key }}" {{ 'selected' if sort == key }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn" type="submit">Ko'rsatish</button>
+  {% if q or status_filter != 'hammasi' or sort != 'yangi' %}
+    <a class="btn btn-ghost btn-sm" href="/superadmin">Tozalash</a>
+  {% endif %}
+</form>
+
 {% if not restaurants %}
-  <div class="empty">
-    <strong>Hali restoran yo'q</strong>
-    Birinchi restoranni qo'shing — u bilan birga admin hisobi ham yaratiladi.
+  <div class="empty" style="margin-top:1rem">
+    {% if q or status_filter != 'hammasi' %}
+      <strong>Hech narsa topilmadi</strong>
+      Qidiruvni yoki holat filtrini o'zgartirib ko'ring.
+    {% else %}
+      <strong>Hali restoran yo'q</strong>
+      Birinchi restoranni qo'shing — u bilan birga admin hisobi ham yaratiladi.
+    {% endif %}
   </div>
 {% else %}
-<div class="table-card table-scroll">
+<div class="table-card table-scroll" style="margin-top:1rem">
   <table>
     <thead>
       <tr>
-        <th>Nomi</th><th>Manzil (slug)</th><th>Tarif</th>
-        <th>Kategoriya</th><th>Taom</th><th>Holat</th><th class="col-actions"></th>
+        <th>Nomi</th><th>Holat</th><th>Tugaydi</th>
+        <th>30 kun</th><th>Menyu</th><th class="col-actions"></th>
       </tr>
     </thead>
     <tbody>
       {% for restaurant in restaurants %}
+      {% set key = status_key(restaurant) %}
+      {% set ends = ends_at(restaurant) %}
       <tr>
         <td>
-          <strong>{{ restaurant.name }}</strong>
-          {% if restaurant.phone %}<div class="muted small">{{ restaurant.phone }}</div>{% endif %}
+          <a href="/superadmin/restaurants/{{ restaurant.id }}"><strong>{{ restaurant.name }}</strong></a>
+          <div class="muted small">/r/{{ restaurant.slug }}</div>
         </td>
-        <td><a href="/r/{{ restaurant.slug }}" target="_blank" rel="noopener">/r/{{ restaurant.slug }}</a></td>
         <td>
-          <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/plan"
-                class="row" style="flex-wrap:nowrap; gap:.3rem">
-            {% include "partials/csrf.html" %}
-            <select name="plan" style="min-width:110px">
-              {% for option in plans %}
-                <option value="{{ option.value }}" {{ 'selected' if restaurant.plan == option }}>
-                  {{ limits[option].name }}
-                </option>
-              {% endfor %}
-            </select>
-            <input name="years" type="number" value="1" min="1" max="5" title="Necha yil"
-                   style="width:56px">
-            <button class="btn btn-sm" type="submit">OK</button>
-          </form>
-          <div class="muted small" style="margin-top:.2rem">
-            {% if restaurant.subscription_status.value == 'trial' %}
-              Sinov: {{ trial_days_left(restaurant) }} kun qoldi
-            {% elif restaurant.paid_until %}
-              {{ restaurant.paid_until.strftime('%d.%m.%Y') }} gacha
-            {% endif %}
-          </div>
+          {% set style, label = status_badges[key] %}
+          <span class="{{ style }}">{{ label }}</span>
         </td>
-        <td>{{ category_counts.get(restaurant.id, 0) }}</td>
-        <td>{{ item_counts.get(restaurant.id, 0) }}</td>
-        <td>
-          {% if not restaurant.is_active %}<span class="badge badge-off">O'chiq</span>
-          {% elif restaurant.subscription_status.value == 'expired' %}<span class="badge badge-off">Muddati tugagan</span>
-          {% elif restaurant.subscription_status.value == 'trial' %}<span class="badge">Sinov</span>
-          {% else %}<span class="badge badge-ok">Faol</span>{% endif %}
+        <td class="muted small">
+          {% if key == 'sinov' %}
+            {{ trial_days_left(restaurant) }} kun qoldi
+          {% elif ends %}
+            {{ ends.strftime('%d.%m.%Y') }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td><strong>{{ views.get(restaurant.id, 0) }}</strong></td>
+        <td class="muted small">
+          {{ category_counts.get(restaurant.id, 0) }} bo'lim ·
+          {{ item_counts.get(restaurant.id, 0) }} taom
         </td>
         <td>
           <div class="row" style="flex-wrap:nowrap; justify-content:flex-end">
-            <a class="btn btn-sm" href="/superadmin/restaurants/{{ restaurant.id }}/edit">Tahrirlash</a>
-            <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/toggle">
-              {% include "partials/csrf.html" %}
-              <button class="btn btn-sm" type="submit">{{ "O'chirish" if restaurant.is_active else 'Yoqish' }}</button>
-            </form>
-            <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/delete"
-                  onsubmit="return confirm('{{ restaurant.name }} va uning butun menyusi butunlay o\'chiriladi. Davom etasizmi?')">
-              {% include "partials/csrf.html" %}
-              <button class="btn btn-danger btn-sm" type="submit">Butunlay o'chirish</button>
-            </form>
+            <a class="btn btn-sm" href="/superadmin/restaurants/{{ restaurant.id }}">Ochish</a>
+            <a class="btn btn-sm" href="/r/{{ restaurant.slug }}" target="_blank" rel="noopener">
+              {{ ui.icon('external') }} Menyu
+            </a>
           </div>
         </td>
       </tr>
@@ -83,5 +126,6 @@
     </tbody>
   </table>
 </div>
+<p class="hint">{{ restaurants | length }} ta restoran ko'rsatilyapti. Batafsil boshqarish uchun nomini bosing.</p>
 {% endif %}
 {% endblock %}

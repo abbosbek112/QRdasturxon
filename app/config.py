@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     contact_phone: str = "+998 94 227 34 07"
     contact_telegram: str = "odam_dev"
 
+    # "Namunani ko'rish" qaysi menyuni ochadi. Aniq ko'rsatilmasa eng eski
+    # restoran tanlanardi — ya'ni haqiqiy mijozning menyusi namuna bo'lib
+    # qolardi. scripts/seed_demo.py shu slug bilan restoran quradi.
+    demo_slug: str = "bodom"
+
     @property
     def contact_phone_href(self) -> str:
         """tel: havolasi uchun faqat raqamlar va bosh + belgisi."""

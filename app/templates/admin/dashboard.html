@@ -57,14 +57,16 @@
 {% if restaurant.subscription_status.value == 'trial' %}
   <div class="notice">
     <strong>Sinov muddati: {{ trial_days }} kun qoldi.</strong>
-    Hozir Standard tarif imkoniyatlari ochiq. Muddat tugagach Bepul darajaga o'tasiz
-    — menyu ishlayveradi, faqat cheklovlar qattiqlashadi.
+    Hozir To'liq tarif imkoniyatlari ochiq. Muddat tugagach menyu yopiladi —
+    QR kodni skanerlagan mijoz uni ko'rmaydi. Davom ettirish uchun
+    <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
   </div>
 {% elif restaurant.subscription_status.value == 'expired' %}
   <div class="notice notice-warn">
-    <strong>Obuna muddati tugagan.</strong>
-    Menyungiz ishlayapti, lekin Bepul tarif cheklovlari amal qiladi
-    ({{ limits.max_items }} taom, faqat o'zbekcha). Davom ettirish uchun biz bilan bog'laning.
+    <strong>Menyungiz hozir yopiq.</strong>
+    QR kodni skanerlagan mijoz menyuni ko'ra olmayapti. Ma'lumotlaringiz
+    joyida turibdi — to'lov tasdiqlangach menyu o'sha zahoti ochiladi.
+    <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
   </div>
 {% endif %}
 

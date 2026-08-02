@@ -2,56 +2,126 @@
 {% import "partials/icons.html" as ui %}
 {% block title %}QRdasturxon — kafe va qahvaxonalar uchun QR menyu{% endblock %}
 
+{% block head %}
+  {# defer YO'Q: `js` klassi birinchi chizishdan oldin tushishi kerak,
+     aks holda mazmun ko'rinib, keyin yashirinib, keyin qayta chiqardi #}
+  <script src="/static/js/landing.js?v={{ asset_v }}"></script>
+{% endblock %}
+
 {% block body %}
 <header class="site-head">
   <div class="site-head-inner">
     <a class="brand" href="/">QR<span>dasturxon</span></a>
     <nav class="site-nav">
-      <a href="#imkoniyatlar">Imkoniyatlar</a>
       <a href="#qanday">Qanday ishlaydi</a>
+      <a href="#imkoniyatlar">Imkoniyatlar</a>
       <a href="#narxlar">Narxlar</a>
       <a href="#aloqa">Aloqa</a>
     </nav>
-    <div class="row" style="gap:.4rem; flex-wrap:nowrap">
-      <a class="btn btn-sm" href="/login">Kirish</a>
+    <div class="site-head-cta">
+      <a class="btn btn-sm btn-ghost" href="/login">Kirish</a>
       <a class="btn btn-sm btn-primary" href="/signup">Boshlash</a>
     </div>
   </div>
 </header>
 
 <section class="lp-hero">
-  <div class="lp-wrap">
-    <p class="lp-eyebrow">{{ trial_days }} kun bepul · karta so'ralmaydi</p>
-    <h1 class="lp-title">Narx o'zgardi — menyu ham o'zgardi</h1>
-    <p class="lp-lead">
-      Qog'oz menyuni har safar qayta chop etish pul va vaqt. QRdasturxonda narxni
-      bir joyda tahrirlaysiz — stoldagi QR kod ortidagi menyu darrov yangilanadi.
-      Kafe, qahvaxona va shirinlik do'konlari uchun.
-    </p>
-    <div class="row" style="justify-content:center; gap:.6rem">
-      <a class="btn btn-primary" href="/signup">Bepul boshlash</a>
-      {% if demo_slug %}
-        <a class="btn" href="/r/{{ demo_slug }}">{{ ui.icon('external') }} Namunani ko'rish</a>
-      {% endif %}
+  <div class="lp-wrap lp-hero-grid">
+    <div class="lp-hero-text">
+      <p class="lp-eyebrow" data-reveal><span class="lp-dot"></span>{{ trial_days }} kun bepul · karta so'ralmaydi</p>
+      {# Sarlavha qatorma-qator ko'tarilib chiqadi: har bir qator
+         overflow:hidden ichida, ichkarisi pastdan suriladi #}
+      <h1 class="lp-title" data-reveal="lines">
+        <span class="lp-line"><span class="lp-line-in">Kafengiz menyusi —</span></span>
+        <span class="lp-line"><span class="lp-line-in lp-grad">mijoz telefonida</span></span>
+      </h1>
+      <p class="lp-lead" data-reveal>
+        Stolga QR kod qo'yasiz, mijoz skanerlaydi — menyu telefonida ochiladi.
+        Narx o'zgarsa bitta joyda tahrirlaysiz, qayta chop etish yo'q.
+      </p>
+      <div class="lp-actions" data-reveal data-stagger>
+        <a class="btn btn-primary btn-xl" href="/signup">Bepul boshlash</a>
+        {% if demo_slug %}
+          <a class="btn btn-xl" href="/r/{{ demo_slug }}">{{ ui.icon('external') }} Namunani ko'rish</a>
+        {% endif %}
+      </div>
+      <p class="lp-fine" data-reveal>Kafe, qahvaxona va shirinlik do'konlari uchun · Dastur o'rnatish shart emas</p>
+    </div>
+
+    {#
+      Mahsulot ko'rinishi — sof CSS va HTML, birorta rasm yuklanmaydi.
+      Narxlar namuna menyusi (scripts/seed_demo.py) bilan bir xil, chunki
+      "Namunani ko'rish" tugmasini bosgan odam xuddi shu raqamlarni ko'radi.
+      Ro'yxat ikki marta chiziladi: pastki nusxa yuqoridagining aynan o'zi,
+      shuning uchun aylanma animatsiya uzilishsiz qaytadi.
+    #}
+    {# Rasmlar static: scripts/demo_art.py chizadi, bazaga bog'liq emas #}
+    {% set demo_dishes = [
+      ('osh', '45 000', 'Osh', "Qo'y go'shti bilan"),
+      ('lagmon', '38 000', "Lag'mon", "Qo'lda cho'zilgan"),
+      ('somsa', '15 000', 'Somsa', 'Tandirdan'),
+      ('norin', '42 000', 'Norin', "Qo'lda kesilgan"),
+      ('mastava', '28 000', 'Mastava', "Issiq sho'rva"),
+      ('kapuchino', '25 000', 'Kapuchino', 'Ikki qavat'),
+    ] %}
+    <div class="lp-shot" data-reveal="scale" aria-hidden="true">
+      <div class="phone-float">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="ph-hero">
+              <div class="ph-langs"><span class="on">UZ</span><span>RU</span><span>EN</span></div>
+              <div class="ph-brand">
+                <span class="ph-logo"></span>
+                <span class="ph-name"><b>Bodom Kafe</b><i>Qahva va uy taomlari</i></span>
+              </div>
+              <div class="ph-meta"><span>09:00 – 23:00</span><span>Wi-Fi</span></div>
+            </div>
+            <div class="ph-sheet">
+              <div class="ph-chips"><span class="on">Issiq taomlar</span><span>Salatlar</span><span>Shirinlik</span></div>
+              <p class="ph-sec">Issiq taomlar</p>
+              <div class="ph-scroll">
+                <div class="ph-track">
+                  {% for _ in range(2) %}
+                    {% for key, price, name, note in demo_dishes %}
+                      <span class="ph-dish">
+                        <span class="ph-img">
+                          <img src="/static/img/dish-{{ key }}.webp?v={{ asset_v }}" alt="" decoding="async">
+                          <span class="ph-price">{{ price }}</span>
+                        </span>
+                        <b>{{ name }}</b><i>{{ note }}</i>
+                      </span>
+                    {% endfor %}
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
+<div class="lp-wrap"><hr class="beam"></div>
+
 <section class="lp-section" id="qanday">
   <div class="lp-wrap">
-    <h2 class="lp-h2">Uch qadam</h2>
-    <div class="lp-steps">
-      <div class="lp-step">
+    <header class="lp-head" data-reveal>
+      <p class="lp-kicker"><span class="lp-num-badge">01</span>Qanday ishlaydi</p>
+      <h2 class="lp-h2">Uch qadam, bir kunda</h2>
+    </header>
+    <div class="lp-steps" data-stagger>
+      <div class="lp-panel lp-step" data-reveal>
         <span class="lp-num">1</span>
         <h3>Menyuni kiritasiz</h3>
         <p class="muted small">Kategoriya, taom, narx va rasm. Uch tilda — mehmonlar uchun.</p>
       </div>
-      <div class="lp-step">
+      <div class="lp-panel lp-step" data-reveal>
         <span class="lp-num">2</span>
         <h3>QR kodni chop etasiz</h3>
         <p class="muted small">Tayyor QR kodni stolga qo'yasiz. SVG — istalgan o'lchamda aniq chiqadi.</p>
       </div>
-      <div class="lp-step">
+      <div class="lp-panel lp-step" data-reveal>
         <span class="lp-num">3</span>
         <h3>Menyuni istagancha o'zgartirasiz</h3>
         <p class="muted small">QR kod o'sha-o'sha. Qayta chop etish hech qachon kerak bo'lmaydi.</p>
@@ -60,97 +130,263 @@
   </div>
 </section>
 
-<section class="lp-section lp-alt" id="imkoniyatlar">
+{#
+  Ko'rgazma. Har bir maket mahsulotning O'Z CSS klasslaridan yig'iladi
+  (.chart, .stat, .meter, .stars-show, .dish, .badge) — ya'ni admin panel
+  yoki menyu dizayni o'zgarsa bu yerdagi maketlar ham o'zi bilan o'zgaradi
+  va sahifa eskirib, yolg'on gapirib qolmaydi.
+#}
+<section class="lp-section" id="imkoniyatlar">
   <div class="lp-wrap">
-    <h2 class="lp-h2">Nimalar bor</h2>
-    <div class="lp-grid">
-      <div class="lp-card">
-        <h3>{{ ui.icon('wifi') }} Wi-Fi paroli menyuda</h3>
+    <header class="lp-head" data-reveal>
+      <p class="lp-kicker"><span class="lp-num-badge">02</span>Imkoniyatlar</p>
+      <h2 class="lp-h2">Ichkarida nima bor</h2>
+      <p class="lp-sub">Aytib o'tirmaymiz — ko'rsatamiz.</p>
+    </header>
+
+    {# --- 1. Statistika --- #}
+    <div class="show-row">
+      <div class="show-text" data-reveal="right">
+        <p class="lp-kicker">Statistika</p>
+        <h3>Qaysi taom ishlayapti — raqam bilan</h3>
+        <p class="muted">
+          Menyu necha marta ochilgani kunma-kun ko'rinadi. Qaysi taom ko'proq
+          qiziqtirgani ro'yxatda turadi. Kun, hafta, oy yoki o'zingiz tanlagan
+          sana oralig'i bo'yicha.
+        </p>
+        <p class="muted small">Bu menyudan nima olib tashlash kerakligini ham ko'rsatadi.</p>
+      </div>
+      <div class="lp-panel show-panel" data-reveal="left" aria-hidden="true">
+        <div class="show-stats">
+          <div class="stat"><b data-count="4 202">0</b><span>Menyu ochilgan</span></div>
+          <div class="stat"><b data-count="85">0</b><span>Eng yuqori kun</span></div>
+          <div class="stat"><b>4.7</b><span>O'rtacha baho</span></div>
+        </div>
+        <div class="chart show-chart">
+          {% for height in [46, 58, 52, 34, 38, 55, 88, 70, 82, 48, 51, 40, 42, 76, 74, 84, 39, 57, 56, 44, 79, 52, 66, 55, 54, 53, 50, 80, 92, 95] %}
+            <div class="chart-col"><div class="chart-bar" style="height:{{ height }}%"></div></div>
+          {% endfor %}
+        </div>
+        <ul class="show-top">
+          {% for name, count, width, stars in [('Osh', '675', 100, 5), ("Lag'mon", '459', 68, 4), ('Norin', '316', 47, 4)] %}
+            <li>
+              <span class="show-top-name">{{ name }}</span>
+              <span class="meter"><span style="width:{{ width }}%"></span></span>
+              <span class="show-top-count">{{ count }}</span>
+              <span class="stars-show small">
+                {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= stars }}">★</span>{% endfor -%}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    {# --- 2. Uslublar. Kartalar THEMES bo'yicha aylanadi: yangi uslub
+           qo'shilsa bu yerga hech narsa yozish shart emas. --- #}
+    <div class="show-row show-flip">
+      <div class="show-text" data-reveal="right">
+        <p class="lp-kicker">Uslublar</p>
+        <h3>Menyu sizning ko'rinishingizda</h3>
+        <p class="muted">
+          Bitta bosishda butun menyu uslubi o'zgaradi — shrift, burchaklar,
+          soyalar va rang birga. Keyin asosiy rangni o'zingizga moslaysiz.
+        </p>
+        <p class="muted small">Quyidagi to'rt karta — aynan menyudagi ko'rinish.</p>
+      </div>
+      {#
+        Palitra style="..." atributiga sig'maydi: uslub shriftlari ichida
+        qo'shtirnoq bor ("Iowan Old Style"), u atributni o'sha yerda uzib
+        qo'yadi va undan keyingi o'zgaruvchilar yo'qoladi. Shuning uchun
+        menyu sahifasidagidek <style> bloki — element ichida qo'shtirnoq
+        bemalol yashaydi.
+      #}
+      <style>
+        {%- for theme in THEMES.values() %}
+        .show-theme[data-theme="{{ theme.key }}"] { {{ css_variables(theme) }} }
+        {%- endfor %}
+      </style>
+      <div class="show-themes" data-stagger aria-hidden="true">
+        {% for theme in THEMES.values() %}
+          <div class="show-theme" data-reveal="scale" data-theme="{{ theme.key }}">
+            <span class="dish">
+              <span class="dish-media">
+                <img src="/static/img/dish-osh.webp?v={{ asset_v }}" alt="" decoding="async">
+                <span class="price-pill">45 000 <small>so'm</small></span>
+              </span>
+              <span class="dish-body">
+                <span class="dish-name">Osh</span>
+                <span class="dish-desc">Qo'y go'shti bilan</span>
+              </span>
+            </span>
+            <p class="show-theme-name">{{ theme.name }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# --- 3. Izoh va baho --- #}
+    <div class="show-row">
+      <div class="show-text" data-reveal="right">
+        <p class="lp-kicker">Izoh va baho</p>
+        <h3>Mijoz fikri — lekin sizning ruxsatingiz bilan</h3>
+        <p class="muted">
+          Mijoz taomga izoh qoldiradi va yulduz qo'yadi. Lekin u menyuda
+          <strong>faqat siz tasdiqlaganingizdan keyin</strong> ko'rinadi.
+        </p>
+        <p class="muted small">Ya'ni "yomon izoh chiqib qoladi" degan xavotir yo'q.</p>
+      </div>
+      <div class="lp-panel show-panel" data-reveal="left" aria-hidden="true">
+        <div class="show-comment">
+          <div class="show-comment-head">
+            <strong>Sardor</strong>
+            <span class="stars-show small"><span class="on">★</span><span class="on">★</span><span class="on">★</span><span class="on">★</span><span class="on">★</span></span>
+            <span class="badge badge-ok">Menyuda</span>
+          </div>
+          <p class="muted small">Choyxona oshidan qolishmaydi. Sabzisi ham xuddi kerakligicha.</p>
+        </div>
+        <div class="show-comment is-waiting">
+          <div class="show-comment-head">
+            <strong>Noma'lum</strong>
+            <span class="stars-show small"><span class="on">★</span><span class="on">★</span><span>★</span><span>★</span><span>★</span></span>
+            <span class="badge badge-off">Kutmoqda</span>
+          </div>
+          <p class="muted small">Bu izohni mijoz hali ko'rmayapti — qaroringizni kutyapti.</p>
+        </div>
+      </div>
+    </div>
+
+    {# --- 4. QR kod. Bezak emas: skanerlansa namuna menyusi ochiladi. --- #}
+    {% if demo_qr %}
+      <div class="show-row show-flip">
+        <div class="show-text" data-reveal="right">
+          <p class="lp-kicker">QR kod</p>
+          <h3>Chop eting va stolga qo'ying</h3>
+          <p class="muted">
+            QR kod tayyor holda beriladi. SVG — istalgan o'lchamda aniq chiqadi.
+            Menyuni keyin necha marta o'zgartirsangiz ham QR kod o'sha-o'sha.
+          </p>
+          <p class="muted small">
+            Qog'oz menyu kerak bo'lsa — xuddi shu ma'lumotdan chop etiladi.
+          </p>
+        </div>
+        <div class="show-qr-wrap" data-reveal="scale">
+          <div class="lp-panel show-qr">
+            <div class="show-qr-code">{{ demo_qr | safe }}</div>
+            <p class="muted small">Telefoningiz bilan skanerlang — namuna menyu ochiladi</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {# Qolgan imkoniyatlar — ixcham, sahifa cho'zilib ketmasin #}
+    <p class="section-label show-more-label">Yana nimalar bor</p>
+    <div class="lp-grid show-more" data-stagger>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('wifi') }}</span>
+        <h3>Wi-Fi paroli menyuda</h3>
         <p class="muted small">Mijoz menyuni ochgan — paroli ham o'sha yerda. Kuniga o'nlab marta so'raladigan savol yopiladi.</p>
       </div>
-      <div class="lp-card">
-        <h3>{{ ui.icon('grid') }} Uch tilli menyu</h3>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('grid') }}</span>
+        <h3>Uch tilli menyu</h3>
         <p class="muted small">Bir marta kiritasiz — mijoz o'z tilida ko'radi. Tarjima bo'lmasa o'zbekchasi chiqadi.</p>
       </div>
-      <div class="lp-card">
-        <h3>{{ ui.icon('leaf') }} Taom belgilari</h3>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('leaf') }}</span>
+        <h3>Taom belgilari</h3>
         <p class="muted small">Halol, o'tkir, vegetarian va allergen ma'lumoti. Mijoz so'ramaydi, xodim vaqti tejaladi.</p>
-      </div>
-      <div class="lp-card">
-        <h3>{{ ui.icon('printer') }} Chop etish uchun menyu</h3>
-        <p class="muted small">Qog'oz menyu ham kerak bo'lsa — xuddi shu ma'lumotdan chiqariladi. Ikkitasini alohida yuritmaysiz.</p>
-      </div>
-      <div class="lp-card">
-        <h3>{{ ui.icon('home') }} Statistika</h3>
-        <p class="muted small">Menyu necha marta ochilgani va qaysi taom ko'proq qiziqtirgani.</p>
-      </div>
-      <div class="lp-card">
-        <h3>{{ ui.icon('settings') }} O'z ko'rinishingiz</h3>
-        <p class="muted small">Logo, muqova rasmi va kafeningizning asosiy rangi.</p>
       </div>
     </div>
   </div>
 </section>
 
+<div class="lp-wrap"><hr class="beam"></div>
+
 <section class="lp-section" id="narxlar">
   <div class="lp-wrap">
-    <h2 class="lp-h2">Narxlar</h2>
-    <p class="center muted" style="margin-bottom:1.5rem">
-      Yiliga bir marta to'laysiz. {{ trial_days }} kun bepul sinab ko'ring —
-      karta ma'lumoti so'ralmaydi.
-    </p>
+    <header class="lp-head" data-reveal>
+      <p class="lp-kicker"><span class="lp-num-badge">03</span>Narxlar</p>
+      <h2 class="lp-h2">Yiliga bir marta to'laysiz</h2>
+      <p class="lp-sub">
+        {{ trial_days }} kun bepul sinab ko'ring — karta so'ralmaydi. Muddat
+        tugagach menyu yopiladi, ma'lumotlaringiz esa saqlanib qoladi.
+      </p>
+    </header>
 
-    <div class="lp-plans lp-plans-two">
+    <div class="lp-plans lp-plans-two" data-stagger>
       {% for plan, limit in plans %}
-        <div class="lp-plan {{ 'lp-plan-best' if limit.price_yearly }}">
+        <div class="lp-panel lp-plan {{ 'lp-plan-best' if limit.price_yearly }}" data-reveal="scale">
           {% if limit.price_yearly %}<span class="lp-tag">Hammasi ochiq</span>{% endif %}
           <h3>{{ limit.name }}</h3>
+          {# Bepul tarifning nomi ham "Bepul" — narx qatorida uni takrorlamaymiz #}
           <p class="lp-price">
-            {% if limit.price_yearly %}
-              {{ limit.price_yearly | price }} <small class="muted">so'm/yil</small>
-            {% else %}
-              Bepul
-            {% endif %}
+            {{ limit.price_yearly | price }} <small class="muted">so'm/yil</small>
           </p>
           <ul class="lp-list">
-            <li>{{ (limit.max_items ~ ' ta taom') if limit.max_items else 'Cheksiz taom' }}</li>
-            <li>{{ (limit.max_categories ~ ' ta kategoriya') if limit.max_categories else 'Cheksiz kategoriya' }}</li>
-            <li>
-              {% if limit.languages | length > 1 %}Uch til (o'zbek, rus, ingliz)
-              {% else %}Faqat o'zbekcha{% endif %}
-            </li>
-            <li>Wi-Fi paroli va taom belgilari</li>
-            <li>{{ limit.stats_days }} kunlik statistika</li>
-            {% if limit.specials %}<li>Bugungi taklif bo'limi</li>{% endif %}
-            {% if limit.comments %}<li>Taomlarga mijoz izohlari</li>{% endif %}
-            {% if limit.printable %}<li>Chop etish uchun menyu</li>{% endif %}
+            <li>{{ ui.icon('check') }}<span>{{ (limit.max_items ~ ' ta taom') if limit.max_items else 'Cheksiz taom' }}</span></li>
+            <li>{{ ui.icon('check') }}<span>{{ (limit.max_categories ~ ' ta kategoriya') if limit.max_categories else 'Cheksiz kategoriya' }}</span></li>
+            <li>{{ ui.icon('check') }}<span>
+              {%- if limit.languages | length > 1 %}Uch til (o'zbek, rus, ingliz)
+              {%- else %}Faqat o'zbekcha{% endif -%}
+            </span></li>
+            <li>{{ ui.icon('check') }}<span>Wi-Fi paroli va taom belgilari</span></li>
+            <li>{{ ui.icon('check') }}<span>{{ limit.stats_days }} kunlik statistika</span></li>
+            {% if limit.specials %}<li>{{ ui.icon('check') }}<span>Bugungi taklif bo'limi</span></li>{% endif %}
+            {% if limit.comments %}<li>{{ ui.icon('check') }}<span>Taomlarga mijoz izohlari</span></li>{% endif %}
+            {% if limit.printable %}<li>{{ ui.icon('check') }}<span>Chop etish uchun menyu</span></li>{% endif %}
+            {% if limit.price_yearly %}<li>{{ ui.icon('check') }}<span>To'lov — Telegram orqali</span></li>{% endif %}
           </ul>
-          <a class="btn {{ 'btn-primary' if limit.price_yearly }} btn-block" href="/signup">
-            {% if limit.price_yearly %}Sinab ko'rish{% else %}Bepul boshlash{% endif %}
-          </a>
+          {# Sotib olish uchun bog'lanish kerak — pullik karta Telegramga
+             olib boradi, bepuli esa ro'yxatdan o'tkazadi #}
+          {% if limit.price_yearly %}
+            <a class="btn btn-primary btn-block" href="https://t.me/{{ CONTACT.telegram }}"
+               target="_blank" rel="noopener">{{ ui.icon('chat') }} Sotib olish</a>
+          {% else %}
+            <a class="btn btn-block" href="/signup">{{ trial_days }} kun bepul boshlash</a>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
 
-    <p class="center small muted" style="margin-top:1.25rem">
-      To'lov qo'lda qabul qilinadi — ro'yxatdan o'tganingizdan keyin biz bog'lanamiz.
-    </p>
+    <div class="lp-panel lp-pay" data-reveal>
+      <div class="lp-pay-text">
+        <p class="lp-kicker">To'lov qanday bo'ladi</p>
+        <ol class="lp-pay-steps">
+          <li><span>1</span> Ro'yxatdan o'tasiz — {{ trial_days }} kun hamma imkoniyat ochiq, karta so'ralmaydi</li>
+          <li><span>2</span> Davom ettirmoqchi bo'lsangiz Telegramdan yozasiz</li>
+          <li><span>3</span> To'lovni o'tkazasiz — tarifingiz o'sha kuni ochiladi</li>
+        </ol>
+      </div>
+      <a class="btn btn-primary btn-xl" href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">
+        {{ ui.icon('chat') }} Telegramdan yozish
+      </a>
+    </div>
   </div>
 </section>
 
-<section class="lp-cta" id="aloqa">
-  <div class="lp-wrap center">
-    <h2 class="lp-h2" style="margin-bottom:.4rem">Bugun boshlang</h2>
-    <p class="muted" style="margin-bottom:1.25rem">
-      Ro'yxatdan o'tish bir daqiqa. Menyuni kiritib, kechga QR kodni stolga qo'yasiz.
-      Savol bo'lsa qo'ng'iroq qiling — menyuni kiritishda ham yordam beramiz.
-    </p>
-    <div class="row" style="justify-content:center; gap:.6rem">
-      <a class="btn btn-primary" href="/signup">Kafemni ulash</a>
-      <a class="btn" href="tel:{{ CONTACT.phone_href }}">{{ ui.icon('phone') }} {{ CONTACT.phone }}</a>
-      <a class="btn" href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">
-        {{ ui.icon('chat') }} @{{ CONTACT.telegram }}
-      </a>
+{#
+  Yagona qorong'i bo'lim. Butun sahifa oq bo'lgani uchun bu yer ko'zga
+  darrov tashlanadi va oxirgi chaqiriqni kuchaytiradi. Ranglar shu bo'lim
+  ichida qayta belgilanadi — tugma, sarlavha va matn o'zi moslashadi,
+  chunki hammasi bir xil o'zgaruvchilardan foydalanadi.
+#}
+<section class="lp-section lp-dark" id="aloqa">
+  <div class="lp-wrap">
+    <div class="lp-cta" data-reveal>
+      <p class="lp-kicker">Boshlash</p>
+      <h2 class="lp-h2">Kechqurun stolda QR kod turadi</h2>
+      <p class="lp-sub">
+        Ro'yxatdan o'tish bir daqiqa. Menyuni kiritib, kechga QR kodni stolga qo'yasiz.
+        Savol bo'lsa qo'ng'iroq qiling — menyuni kiritishda ham yordam beramiz.
+      </p>
+      <div class="lp-actions" data-reveal data-stagger>
+        <a class="btn btn-primary btn-xl" href="/signup">Kafemni ulash</a>
+        <a class="btn btn-xl" href="tel:{{ CONTACT.phone_href }}">{{ ui.icon('phone') }} {{ CONTACT.phone }}</a>
+        <a class="btn btn-xl" href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">
+          {{ ui.icon('chat') }} @{{ CONTACT.telegram }}
+        </a>
+      </div>
     </div>
   </div>
 </section>

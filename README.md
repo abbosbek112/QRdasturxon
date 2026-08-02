@@ -42,10 +42,10 @@ Restoran o'zi `/signup` orqali ro'yxatdan o'tadi va **7 kun bepul** sinov oladi.
 
 ## Tariflar
 
-Yiliga bir marta to'lanadi. To'lov tizimi ulanmagan — pul qo'lda qabul qilinadi,
-superadmin panelidan obuna uzaytiriladi.
+Yiliga bir marta to'lanadi. To'lov tizimi ulanmagan — restoran Telegram orqali
+bog'lanadi, pul qo'lda qabul qilinadi, superadmin panelidan obuna uzaytiriladi.
 
-| | Bepul | To'liq (600 000 so'm/yil) |
+| | Bepul | To'liq (500 000 so'm/yil) |
 |---|---|---|
 | Taom / kategoriya | 20 / 3 | cheksiz |
 | Tillar | faqat o'zbekcha | uz + ru + en |
@@ -53,9 +53,23 @@ superadmin panelidan obuna uzaytiriladi.
 | Wi-Fi, taom belgilari | bor | bor |
 | Bugungi taklif, izohlar, chop etish | yo'q | bor |
 
-**Obuna tugasa mijoz menyusi ochiq qoladi** — faqat admin tomonidagi cheklovlar
-qattiqlashadi. Stoldagi QR kodni ishlamay qo'yish restoranga ham, mijoziga ham
-zarar, to'lovni esa tezlashtirmaydi.
+### Muddat tugagach nima bo'ladi
+
+Bepul rejim — **7 kunlik sinov**, undan nariga cho'zilmaydi. Muddat tugasa:
+
+* stoldagi QR kod ishlamaydi — mijoz "menyu vaqtincha yopiq" sahifasini ko'radi
+  (HTTP 503, ya'ni "vaqtincha", shuning uchun qidiruv tizimi sahifani o'chirmaydi);
+* restoran egasi hisobiga bemalol kiradi, menyusi va rasmlari joyida turadi;
+* obuna uzaytirilgach menyu o'sha zahoti qayta ochiladi.
+
+Ochiq-yopiqlikni `plans.menu_is_live()` hal qiladi va u **sanaga** qaraydi,
+bazadagi holatga emas. Sabab: `refresh_status()` faqat egasi panelga kirganda
+ishlaydi, ya'ni holatga qarasak panelga kirmaslik sinovni cheksiz cho'zish
+yo'liga aylanardi.
+
+> Buning narxi bor: xato sahifasini restoranning aybsiz mijozi ko'radi. Shu
+> sababli o'sha sahifada tarif ham, qarz ham tilga olinmaydi — faqat menyu
+> vaqtincha yopiqligi aytiladi.
 
 ## Texnologiyalar
 
@@ -102,6 +116,96 @@ Bazani tayyorlang va tizim adminini yarating:
 - Menyu: `http://localhost:8000/r/<slug>`
 - Boshqaruv paneli: `http://localhost:8000/login`
 
+## Namuna menyu
+
+Bosh sahifadagi "Namunani ko'rish" havolasi `DEMO_SLUG` sozlamasidagi menyuni
+ochadi. Uni quyidagi buyruq to'ldirib beradi — 5 kategoriya, 10 ta taom,
+rasmlar, izohlar va Wi-Fi paroligacha:
+
+```bash
+.venv/bin/python -m scripts.seed_demo
+```
+
+Qayta yugurtirsa bo'ladi: eski namuna butunlay o'chirilib, yangisi quriladi.
+Faqat `DEMO_SLUG`ga tegadi, boshqa restoranlarga umuman tegmaydi.
+
+Rasmlar `scripts/demo_art.py` da Pillow bilan chiziladi — internetdan hech narsa
+yuklanmaydi. Bular foto emas, illyustratsiya; haqiqiy foto qo'yilsa menyu
+chiroyliroq chiqadi va uni admin paneldan almashtirsa bo'ladi.
+
+> Bu sozlama qo'shilishidan oldin namuna sifatida **eng eski restoran**
+> ko'rsatilardi — ya'ni saytga kelgan odam haqiqiy mijozning menyusini namuna
+> deb ko'rardi. `DEMO_SLUG` shuning uchun kerak.
+
+### Bosh sahifadagi ko'rgazma
+
+Imkoniyatlar bo'limi mahsulotni **ko'rsatadi**: statistika paneli, to'rt uslub,
+izoh va yulduz, QR kod. Hamma maket mahsulotning o'z klasslaridan yig'iladi
+(`.chart`, `.stat`, `.meter`, `.stars-show`, `.dish`, `.badge`) — dizayn
+o'zgarsa ko'rgazma ham o'zi bilan o'zgaradi va eskirib qolmaydi.
+
+Uslub kartalari `THEMES` bo'yicha aylanadi va palitrani `css_variables()` dan
+oladi, ya'ni yangi uslub qo'shilsa bosh sahifaga hech narsa yozish shart emas.
+
+> Palitra `<style>` blokiga chiqariladi, `style="..."` atributiga emas: uslub
+> shriftlari ichida qo'shtirnoq bor (`"Iowan Old Style"`) va u atributni o'sha
+> yerda uzib qo'yadi — natijada burchak radiusi va shrift qo'llanmay qoladi.
+
+QR kod bezak emas: `qr.svg_markup()` namuna menyusi uchun **ishlaydigan** kod
+yasaydi, uni ekrandan skanerlasa menyu ochiladi. Natija `lru_cache` bilan
+saqlanadi. Namuna restoran bo'lmasa QR umuman chizilmaydi.
+
+### Havola kartochkasi
+
+Havola Telegram yoki Facebookka tashlanganda chiqadigan ko'rinish
+(`public/base.html`, `<head>` ichida). Mahsulot aynan Telegram orqali
+sotilgani uchun bu bevosita mijozga ta'sir qiladi.
+
+| Sahifa | Nom | Rasm |
+|---|---|---|
+| Bosh sahifa | mahsulot nomi | `static/img/og.jpg` |
+| Menyu `/r/<slug>` | **restoran nomi** | uning muqovasi |
+| Taom sahifasi | taom + restoran | taom rasmi |
+
+Menyu havolasini restoran o'z mijozlariga tarqatadi — o'sha yerda
+QRdasturxon emas, restoranning o'zi ko'rinishi kerak. Muqova bo'lmasa
+standart kartochkaga qaytadi.
+
+Kartochka rasmi `scripts/demo_art.py` da **bir marta** chiziladi va static
+fayl bo'lib qoladi:
+
+```bash
+.venv/bin/python -m scripts.demo_art
+```
+
+Ish paytida chizilmaydi, chunki Docker konteynerida shrift yo'q va bo'lishi
+ham shart emas. Manzillar mutlaq (`BASE_URL`) — nisbiy yo'lni na Telegram,
+na Facebook tanimaydi.
+
+### Animatsiya
+
+`static/js/landing.js` — IntersectionObserver, ~90 qator, bog'liqliksiz.
+Element ekranga kirganda `is-in` klassi qo'yiladi va bir marta kuzatuvdan
+chiqariladi. Statistika raqamlari noldan o'sib chiqadi.
+
+Ikkita qoida:
+
+* **JS o'chsa sahifa to'liq ko'rinadi.** Yashirish faqat `html.js` ostida
+  ishlaydi, o'sha klassni esa shu faylning o'zi qo'yadi. Shuning uchun u
+  `<head>` da, `defer` siz ulanadi — aks holda mazmun ko'rinib, keyin
+  yashirinib, keyin qayta chiqardi.
+* **`prefers-reduced-motion`** yoqilgan bo'lsa hech narsa harakatlanmaydi;
+  JS ham, CSS ham buni alohida tekshiradi.
+
+Bo'limlarda `overflow-x: clip` bor: yon tomondan kirib keladigan elementlar
+animatsiyadan oldin o'ng chetdan oshib, gorizontal skroll hosil qilardi.
+`hidden` emas, `clip` — `hidden` skroll konteyneri yasab, ichidagi sticky
+sarlavhani buzardi.
+
+Oxirgi bo'lim (`.lp-dark`) — sahifadagi yagona qorong'i joy. Ranglar shu blok
+ichida qayta belgilanadi, ya'ni tugma va sarlavhalarga alohida qoida yozilmagan:
+hammasi bir xil o'zgaruvchilardan foydalanadi.
+
 ## Testlar
 
 ```bash
@@ -127,6 +231,7 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost/qrdasturxon_test .ven
 | `DEBUG` | `false` bo'lganda sessiya cookie'si faqat HTTPS orqali yuboriladi |
 | `CONTACT_PHONE` | Reklama sahifasida ko'rsatiladigan telefon |
 | `CONTACT_TELEGRAM` | Telegram foydalanuvchi nomi (`@` siz) |
+| `DEMO_SLUG` | "Namunani ko'rish" qaysi menyuni ochadi (standart `bodom`) |
 
 ## Ma'lumotlar modeli
 
@@ -280,6 +385,27 @@ gunzip -c backups/db-20260731-030000.sql.gz | \
 docker compose run --rm --no-deps --entrypoint sh \
   -v "$(pwd)/backups:/backup" app -c "tar xzf /backup/media-20260731-030000.tar.gz -C /app"
 ```
+
+## Analitika va baholar
+
+Mijoz izoh qoldirganda **1–5 yulduz** ham qo'yishi mumkin (ixtiyoriy). Baho
+faqat restoran tasdiqlagan izohlardan hisoblanadi; yulduzsiz izohlar
+o'rtachaga umuman qatnashmaydi.
+
+Ikkita analitika sahifasi bor va ikkalasi ham bir xil oraliq tanlagichdan
+foydalanadi — **bugun / 7 kun / 30 kun / 365 kun / ixtiyoriy sana**:
+
+| Sahifa | Kim ko'radi | Nima ko'rsatadi |
+|---|---|---|
+| `/admin/stats` | restoran egasi | kunlik grafik, eng ko'p ochilgan taomlar, eng yuqori baholilar |
+| `/superadmin/restaurants/<id>` | tizim admini | xuddi shu, ustiga obuna boshqaruvi va hisoblar |
+
+Tanlangan oraliq manzilda qoladi (`?period=…`), shuning uchun sahifani
+yangilasa ham yo'qolmaydi va havolasini ulashsa bo'ladi.
+
+Restoran egasi tarifi ruxsat etgan chuqurlikkacha ko'radi (bepulda 7 kun) —
+`stats.clamp_range()` uzunroq so'rovni o'zi qisqartiradi. Superadmin uchun bu
+cheklov qo'llanmaydi.
 
 ## Statistika
 

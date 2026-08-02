@@ -25,11 +25,32 @@
 {% set note = tr(item.description, lang) %}
 {% if note %}<p class="detail-note">{{ note }}</p>{% endif %}
 
+{#
+  Tarkib va allergen odatda vergul bilan yoziladi ("Guruch, sabzi, piyoz").
+  Shunda uni bitta uzun qatorga emas, alohida chiplarga bo'lamiz — ko'z bir
+  qarashda ajratadi. Lekin restoran gap qilib ham yozishi mumkin, o'shanda
+  chip xunuk chiqadi: shu sabab faqat bir nechta QISQA bo'lak bo'lsagina
+  bo'linadi, aks holda oddiy matn bo'lib qoladi.
+#}
+{% macro parts_list(text, extra='') %}
+  {% set pieces = text.split(',') | map('trim') | select | list %}
+  {% if pieces | length > 1 and pieces | map('length') | max <= 28 %}
+    {# Chip — yorliq, gap emas: birinchi harfi bosh harf bo'lgani tekis
+       ko'rinadi. Faqat birinchi harf, chunki `capitalize` qolganini kichik
+       qilib "Ko'k Rayhon" ni "Ko'k rayhon" ga aylantirib yuborardi. #}
+    <ul class="tags {{ extra }}">
+      {% for piece in pieces %}<li>{{ piece[0] | upper }}{{ piece[1:] }}</li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">{{ text }}</p>
+  {% endif %}
+{% endmacro %}
+
 {% set parts = tr(item.ingredients, lang) %}
 {% if parts %}
   <div class="detail-block">
     <h2 class="detail-block-title">{{ ui.icon('leaf') }} {{ t('ingredients', lang) }}</h2>
-    <p class="muted">{{ parts }}</p>
+    {{ parts_list(parts) }}
   </div>
 {% endif %}
 
@@ -37,7 +58,7 @@
 {% if warns %}
   <div class="detail-block">
     <h2 class="detail-block-title">{{ t('allergens', lang) }}</h2>
-    <p class="muted">{{ warns }}</p>
+    {{ parts_list(warns, 'tags-warn') }}
   </div>
 {% endif %}
 
@@ -49,10 +70,25 @@
       <p class="notice" style="margin-bottom:.75rem">{{ t('comment_pending', lang) }}</p>
     {% endif %}
 
+    {% if rating_avg %}
+      <p class="rate-summary">
+        <span class="stars-show" aria-hidden="true">
+          {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= rating_avg | round(0, 'common') | int }}">★</span>{% endfor -%}
+        </span>
+        <b>{{ rating_avg }}</b>
+        <span class="muted small">{{ rating_count }} ta baho</span>
+      </p>
+    {% endif %}
+
     {% for comment in comments %}
       <div class="comment">
         <div class="comment-head">
           <strong>{{ comment.author_name }}</strong>
+          {% if comment.rating %}
+            <span class="stars-show small" aria-label="{{ comment.rating }} / 5">
+              {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= comment.rating }}">★</span>{% endfor -%}
+            </span>
+          {% endif %}
           <span class="muted small">{{ comment.created_at.strftime('%d.%m.%Y') }}</span>
         </div>
         <p class="muted small" style="margin:0">{{ comment.body }}</p>
@@ -66,6 +102,20 @@
     <form method="post" class="stack-sm" style="margin-top:.9rem"
           action="/r/{{ restaurant.slug }}/item/{{ item.id }}/comment">
       {% include "partials/csrf.html" %}
+      {#
+        Yulduz tanlagich JS'siz: teskari tartibdagi radio tugmalar. CSS da
+        `~` bilan tanlanganidan keyingilari bo'yaladi, teskari tartib esa
+        ularni ekranda chapdan o'ngga to'g'ri joylashtiradi. Hech biri
+        tanlanmasa forma `rating` ni umuman yubormaydi — baho ixtiyoriy.
+      #}
+      <fieldset class="stars">
+        <legend class="muted small">{{ t('your_rating', lang) }}</legend>
+        {% for n in [5, 4, 3, 2, 1] %}
+          <input type="radio" name="rating" value="{{ n }}"
+                 id="star{{ n }}-{{ item.id }}" aria-label="{{ n }} / 5">
+          <label for="star{{ n }}-{{ item.id }}">★</label>
+        {% endfor %}
+      </fieldset>
       <input name="author_name" maxlength="64" required placeholder="{{ t('your_name', lang) }}">
       <textarea name="body" maxlength="500" required rows="2"
                 placeholder="{{ t('your_comment', lang) }}"></textarea>

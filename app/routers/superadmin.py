@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import (
     Category,
+    ItemComment,
     MenuItem,
     Plan,
     Restaurant,
@@ -16,8 +17,10 @@ from app.models import (
     User,
     utcnow_naive,
 )
-from app.plans import LIMITS, refresh_status, trial_days_left
+from app.plans import LIMITS, limits_for, menu_is_live, refresh_status, trial_days_left
 from app.security import hash_password, require_superadmin, verify_csrf
+from app.services import comments as comment_service
+from app.services import stats
 from app.services.onboarding import clean_slug, create_restaurant_with_admin
 from app.templating import templates
 
@@ -36,9 +39,37 @@ def get_restaurant_or_404(db: Session, restaurant_id: int) -> Restaurant:
     return restaurant
 
 
+# Ro'yxatni saralash. Kalit manzilga tushadi, shuning uchun qisqa.
+SORTS = {
+    "yangi": "Yangi qo'shilgan",
+    "ochilish": "Ko'p ochilgan",
+    "nom": "Nomi bo'yicha",
+    "tugaydi": "Muddati yaqin",
+}
+STATUS_FILTERS = {
+    "hammasi": "Hammasi",
+    "sinov": "Sinovda",
+    "faol": "To'lagan",
+    "tugagan": "Muddati tugagan",
+    "bloklangan": "Bloklangan",
+}
+
+
 @router.get("")
-def dashboard(request: Request, db: DbSession):
-    restaurants = db.scalars(select(Restaurant).order_by(Restaurant.created_at.desc())).all()
+def dashboard(
+    request: Request,
+    db: DbSession,
+    q: str = "",
+    status_filter: str = "hammasi",
+    sort: str = "yangi",
+):
+    restaurants = db.scalars(select(Restaurant)).all()
+    # Holatni ro'yxat chizilishidan OLDIN yangilaymiz, aks holda muddati
+    # tugagan restoran "sinovda" bo'lib ko'rinib, filtr ham yanglishardi
+    for restaurant in restaurants:
+        refresh_status(restaurant)
+    db.commit()
+
     item_counts = dict(
         db.execute(
             select(MenuItem.restaurant_id, func.count(MenuItem.id)).group_by(MenuItem.restaurant_id)
@@ -49,9 +80,33 @@ def dashboard(request: Request, db: DbSession):
             select(Category.restaurant_id, func.count(Category.id)).group_by(Category.restaurant_id)
         ).all()
     )
-    for restaurant in restaurants:
-        refresh_status(restaurant)
-    db.commit()
+
+    end = stats.today()
+    month_start = end - timedelta(days=29)
+    views = stats.views_by_restaurant(db, month_start, end)
+
+    needle = q.strip().lower()
+    if needle:
+        restaurants = [
+            r for r in restaurants
+            if needle in r.name.lower() or needle in r.slug.lower()
+        ]
+    if status_filter in STATUS_FILTERS and status_filter != "hammasi":
+        restaurants = [r for r in restaurants if _status_key(r) == status_filter]
+
+    sort = sort if sort in SORTS else "yangi"
+    orderings = {
+        "yangi": lambda r: (r.created_at is None, r.created_at),
+        "ochilish": lambda r: views.get(r.id, 0),
+        "nom": lambda r: r.name.lower(),
+        "tugaydi": lambda r: (_ends_at(r) is None, _ends_at(r)),
+    }
+    restaurants = sorted(restaurants, key=orderings[sort], reverse=sort in ("yangi", "ochilish"))
+
+    pending_comments = db.scalar(
+        select(func.count(ItemComment.id)).where(ItemComment.is_approved.is_(False))
+    )
+    menu_opens, item_opens = stats.platform_totals(db, month_start, end)
 
     return templates.TemplateResponse(
         request,
@@ -60,11 +115,46 @@ def dashboard(request: Request, db: DbSession):
             "restaurants": restaurants,
             "item_counts": item_counts,
             "category_counts": category_counts,
+            "views": views,
             "plans": list(Plan),
             "limits": LIMITS,
             "trial_days_left": trial_days_left,
+            "status_key": _status_key,
+            "ends_at": _ends_at,
+            # filtr holati
+            "q": q,
+            "status_filter": status_filter if status_filter in STATUS_FILTERS else "hammasi",
+            "sort": sort,
+            "sorts": SORTS,
+            "status_filters": STATUS_FILTERS,
+            # platforma ko'rsatkichlari
+            "totals": {
+                "restaurants": len(db.scalars(select(Restaurant.id)).all()),
+                "live": sum(1 for r in db.scalars(select(Restaurant)).all() if menu_is_live(r)),
+                "menu_opens": menu_opens,
+                "item_opens": item_opens,
+                "pending_comments": int(pending_comments or 0),
+            },
         },
     )
+
+
+def _status_key(restaurant: Restaurant) -> str:
+    """Ro'yxatdagi holat yorlig'i — filtr ham shu kalitlar bilan ishlaydi."""
+    if not restaurant.is_active:
+        return "bloklangan"
+    if restaurant.subscription_status is SubscriptionStatus.expired:
+        return "tugagan"
+    if restaurant.subscription_status is SubscriptionStatus.trial:
+        return "sinov"
+    return "faol"
+
+
+def _ends_at(restaurant: Restaurant):
+    """Obuna qachon tugaydi — sinovda trial, to'laganda paid_until."""
+    if restaurant.subscription_status is SubscriptionStatus.trial:
+        return restaurant.trial_ends_at
+    return restaurant.paid_until
 
 
 @router.post("/restaurants/{restaurant_id}/plan", dependencies=[Depends(verify_csrf)])
@@ -126,6 +216,72 @@ def create_restaurant(
         phone=phone,
     )
     return RedirectResponse("/superadmin", status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/restaurants/{restaurant_id}")
+def restaurant_detail(
+    request: Request,
+    db: DbSession,
+    restaurant_id: int,
+    period: str = "oy",
+    start: str | None = None,
+    end: str | None = None,
+):
+    """Bitta restoranning to'liq ko'rinishi: statistika, obuna, xodimlar.
+
+    Superadmin uchun tarif cheklovi qo'llanmaydi — bepul tarifdagi restoran
+    ham to'liq tarixi bilan ko'rinadi, aks holda "nega bu mijoz ketdi" degan
+    savolga javob topib bo'lmasdi.
+    """
+    restaurant = get_restaurant_or_404(db, restaurant_id)
+    refresh_status(restaurant)
+    db.commit()
+
+    first, last, preset = stats.resolve_range(period, start, end, max_days=365 * 3)
+    daily = stats.daily_series(db, restaurant.id, first, last)
+    ranked = stats.top_items(db, restaurant.id, first, last, limit=15)
+
+    users = db.scalars(
+        select(User).where(User.restaurant_id == restaurant.id).order_by(User.id)
+    ).all()
+    pending = db.scalar(
+        select(func.count(ItemComment.id)).where(
+            ItemComment.restaurant_id == restaurant.id, ItemComment.is_approved.is_(False)
+        )
+    )
+
+    return templates.TemplateResponse(
+        request,
+        "superadmin/restaurant_detail.html",
+        {
+            "restaurant": restaurant,
+            "limits": limits_for(restaurant),
+            "is_live": menu_is_live(restaurant),
+            "status_key": _status_key(restaurant),
+            "ends_at": _ends_at(restaurant),
+            "trial_left": trial_days_left(restaurant),
+            "users": users,
+            "pending_comments": int(pending or 0),
+            "presets": stats.PRESETS,
+            "preset": preset,
+            "start": first,
+            "end": last,
+            "daily_views": daily,
+            "views_peak": max((count for _, count in daily), default=0),
+            "views_total": stats.total_views(db, restaurant.id, first, last),
+            "top_items": ranked,
+            "ratings": comment_service.rating_summary(db, [i.id for i, _ in ranked]),
+            "best_rated": comment_service.best_rated(db, restaurant.id, limit=10),
+            "item_count": db.scalar(
+                select(func.count(MenuItem.id)).where(MenuItem.restaurant_id == restaurant.id)
+            ),
+            "category_count": db.scalar(
+                select(func.count(Category.id)).where(Category.restaurant_id == restaurant.id)
+            ),
+            "plans": list(Plan),
+            "limits_by_plan": LIMITS,
+        },
+    )
 
 
 @router.get("/restaurants/{restaurant_id}/edit")

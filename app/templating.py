@@ -40,7 +40,13 @@ templates.env.globals.update(
     LANGUAGES=LANGUAGES,
     asset_v=_asset_version(),
     theme_css=theme_css,
+    # Bosh sahifadagi ko'rgazma uslublarni restoransiz chizadi: har bir
+    # namuna karta o'z palitrasini shu yerdan oladi
+    css_variables=themes.css_variables,
     THEMES=themes.THEMES,
+    # Havola kartochkasidagi manzillar MUTLAQ bo'lishi shart — Telegram va
+    # Facebook nisbiy yo'lni tanimaydi
+    BASE_URL=settings.base_url.rstrip("/"),
     CONTACT={
         "phone": settings.contact_phone,
         "phone_href": settings.contact_phone_href,

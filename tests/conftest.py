@@ -21,6 +21,7 @@ from app.config import BASE_DIR  # noqa: E402
 from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import LoginAttempt, Restaurant, Role, User  # noqa: E402
+from app.plans import start_trial  # noqa: E402
 from app.security import hash_password  # noqa: E402
 
 
@@ -78,6 +79,10 @@ def superadmin(db):
 
 def make_restaurant(db, *, slug: str, username: str) -> tuple[Restaurant, User]:
     restaurant = Restaurant(name=slug.title(), slug=slug)
+    # Haqiqiy ro'yxatdan o'tish doim start_trial() ni chaqiradi. Busiz
+    # trial_ends_at bo'sh qolardi va menyu "muddati tugagan" deb yopilardi —
+    # ya'ni testlar hech qachon uchramaydigan holatni tekshirardi.
+    start_trial(restaurant)
     db.add(restaurant)
     db.flush()
     user = User(

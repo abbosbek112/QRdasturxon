@@ -68,7 +68,10 @@ def test_dietary_marks_show_on_card_and_detail(client, db, cafe):
     assert "Vegetarian" in menu
 
     detail = html.unescape(client.get(f"/r/{restaurant.slug}/item/{item.id}").text)
-    assert "sut, yong'oq" in detail
+    # Allergen ham chiplarga bo'linadi, faqat ogohlantirish rangida
+    assert "tags-warn" in detail
+    assert "<li>Sut</li>" in detail
+    assert "<li>Yong'oq</li>" in detail
     assert "Allergenlar" in detail
 
 
@@ -95,17 +98,18 @@ def test_free_plan_hides_the_specials_section(client, db, free_cafe):
 
 # --- izohlar ---
 
-def post_comment(client, restaurant, item, name="Aziz", body="Juda mazali edi"):
+def post_comment(client, restaurant, item, name="Aziz", body="Juda mazali edi", rating=None):
     # Token sessiyaga bog'langan — bepul tarifda izoh formasi chiqmagani uchun
     # uni har doim mavjud bo'lgan ochiq sahifadan olamiz
-    return client.post(
-        f"/r/{restaurant.slug}/item/{item.id}/comment",
-        data={
-            "csrf_token": csrf(client, "/signup"),
-            "author_name": name,
-            "body": body,
-        },
-    )
+    data = {
+        "csrf_token": csrf(client, "/signup"),
+        "author_name": name,
+        "body": body,
+    }
+    # Yulduz tanlanmasa brauzer bu maydonni umuman yubormaydi
+    if rating is not None:
+        data["rating"] = rating
+    return client.post(f"/r/{restaurant.slug}/item/{item.id}/comment", data=data)
 
 
 def test_comment_waits_for_approval_before_showing(client, db, cafe):
@@ -218,3 +222,68 @@ def test_print_page_lists_dishes_with_prices(client, db, cafe):
 def test_free_plan_cannot_print(client, db, free_cafe):
     login(client, "osh", "adminpass123")
     assert client.get("/admin/menu/print").status_code == 403
+
+
+# --- yulduzli baho ---
+
+def test_a_rating_is_saved_with_the_comment(client, db, cafe):
+    restaurant, item = cafe
+    post_comment(client, restaurant, item, rating=4)
+
+    assert db.query(ItemComment).one().rating == 4
+
+
+def test_the_rating_is_optional(client, db, cafe):
+    """Yulduz tanlanmasa forma bu maydonni umuman yubormaydi."""
+    restaurant, item = cafe
+    post_comment(client, restaurant, item)
+
+    assert db.query(ItemComment).one().rating == 0
+
+
+@pytest.mark.parametrize("bad", [0, 6, 99, -3])
+def test_a_rating_outside_one_to_five_becomes_no_rating(client, db, cafe, bad):
+    """Formani qo'lda yuborish mumkin — oraliqdan chiqqani bahosiz bo'lib qoladi."""
+    restaurant, item = cafe
+    post_comment(client, restaurant, item, rating=bad)
+
+    assert db.query(ItemComment).one().rating == 0
+
+
+def _rated(db, restaurant, item, stars, ip, approved=True):
+    db.add(ItemComment(
+        restaurant_id=restaurant.id, item_id=item.id,
+        author_name="Mijoz", body="izoh", ip=ip,
+        rating=stars, is_approved=approved,
+    ))
+
+
+def test_the_average_ignores_comments_without_a_rating(db, cafe):
+    """Bahosiz izoh o'rtachani nolga tortib tushirmasligi kerak."""
+    restaurant, item = cafe
+    _rated(db, restaurant, item, 5, "1.1.1.1")
+    _rated(db, restaurant, item, 4, "2.2.2.2")
+    _rated(db, restaurant, item, 0, "3.3.3.3")
+    db.commit()
+
+    assert comments.rating_summary(db, [item.id])[item.id] == (4.5, 2)
+
+
+def test_an_unapproved_rating_stays_out_of_the_average(db, cafe):
+    restaurant, item = cafe
+    _rated(db, restaurant, item, 5, "1.1.1.1")
+    _rated(db, restaurant, item, 1, "2.2.2.2", approved=False)
+    db.commit()
+
+    assert comments.rating_summary(db, [item.id])[item.id] == (5.0, 1)
+
+
+def test_the_dish_page_shows_the_average(client, db, cafe):
+    restaurant, item = cafe
+    _rated(db, restaurant, item, 5, "1.1.1.1")
+    _rated(db, restaurant, item, 4, "2.2.2.2")
+    db.commit()
+
+    body = html.unescape(client.get(f"/r/{restaurant.slug}/item/{item.id}").text)
+    assert "4.5" in body
+    assert "2 ta baho" in body

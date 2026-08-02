@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
@@ -10,7 +11,7 @@ from app.models import Category, ItemComment, MenuItem, Restaurant, User
 from app.plans import limits_for, refresh_status, trial_days_left
 from app.security import require_restaurant_admin, verify_csrf
 from app import themes
-from app.services import onboarding, qr, stats
+from app.services import comments, onboarding, qr, stats
 from app.services.images import delete_image, save_image
 from app.templating import templates
 
@@ -106,10 +107,13 @@ def dashboard(request: Request, db: DbSession, user: AdminUser):
         )
     )
     limits = limits_for(restaurant)
-    # Kunlik ustunlar 30 tadan oshsa ingichkalashib ko'rinmay qoladi — grafikni
-    # shu bilan cheklaymiz; umumiy son esa tarif oynasi bo'yicha hisoblanadi
+    # Kunlik ustunlar 30 tadan oshsa ingichkalashib ko'rinmay qoladi — bosh
+    # sahifadagi grafikni shu bilan cheklaymiz. To'liq tahlil /admin/stats da.
     chart_days = min(limits.stats_days, 30)
-    daily = stats.daily_menu_views(db, restaurant.id, days=chart_days)
+    chart_end = stats.today()
+    chart_start = chart_end - timedelta(days=chart_days - 1)
+    window_start = chart_end - timedelta(days=limits.stats_days - 1)
+    daily = stats.daily_series(db, restaurant.id, chart_start, chart_end)
     return templates.TemplateResponse(
         request,
         "admin/dashboard.html",
@@ -121,14 +125,55 @@ def dashboard(request: Request, db: DbSession, user: AdminUser):
             "hidden_count": hidden_count,
             "menu_url": qr.menu_url(restaurant.slug),
             "daily_views": daily,
-            "views_total": stats.total_views(db, restaurant.id, days=limits.stats_days),
+            "views_total": stats.total_views(db, restaurant.id, window_start, chart_end),
             "views_peak": max((count for _, count in daily), default=0),
-            "top_items": stats.top_items(db, restaurant.id, days=limits.stats_days),
+            "top_items": stats.top_items(db, restaurant.id, window_start, chart_end),
             "limits": limits,
             "chart_days": chart_days,
             "trial_days": trial_days_left(restaurant),
             # Barcha qadam bajarilgach ro'yxat o'zi yo'qoladi
             "steps": [s for s in onboarding.setup_steps(db, restaurant)],
+        },
+    )
+
+
+@router.get("/stats")
+def statistics(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    period: str = "oy",
+    start: str | None = None,
+    end: str | None = None,
+):
+    """Analitika: ixtiyoriy muddat ichida nima necha marta ochilgan."""
+    restaurant = get_restaurant(db, user)
+    limits = limits_for(restaurant)
+    first, last, preset = stats.resolve_range(period, start, end, limits.stats_days)
+
+    daily = stats.daily_series(db, restaurant.id, first, last)
+    ranked = stats.top_items(db, restaurant.id, first, last, limit=25)
+    # Baho izohlar bilan keladi, ochilish esa MenyuView bilan — ikkalasini
+    # taom bo'yicha birlashtiramiz, shunda bitta jadvalda ko'rinadi
+    ratings = comments.rating_summary(db, [item.id for item, _ in ranked])
+
+    return templates.TemplateResponse(
+        request,
+        "admin/stats.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "limits": limits,
+            "presets": stats.PRESETS,
+            "preset": preset,
+            "start": first,
+            "end": last,
+            "daily_views": daily,
+            "views_peak": max((count for _, count in daily), default=0),
+            "views_total": stats.total_views(db, restaurant.id, first, last),
+            "top_items": ranked,
+            "ratings": ratings,
+            "best_rated": comments.best_rated(db, restaurant.id, limit=10),
         },
     )
 

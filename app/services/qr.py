@@ -1,3 +1,5 @@
+import re
+from functools import lru_cache
 from io import BytesIO
 
 import qrcode
@@ -35,3 +37,25 @@ def svg_bytes(slug: str, box_size: int = 12) -> bytes:
     buffer = BytesIO()
     image.save(buffer)
     return buffer.getvalue()
+
+
+_XML_PROLOG = re.compile(r"^\s*<\?xml[^>]*\?>\s*")
+_FIXED_SIZE = re.compile(r'\s(?:width|height)="[\d.]+mm"')
+
+
+@lru_cache(maxsize=8)
+def svg_markup(slug: str, box_size: int = 6) -> str:
+    """Sahifa ichiga to'g'ridan-to'g'ri qo'yiladigan SVG.
+
+    Kutubxona to'liq fayl yasaydi: boshida XML e'loni, ildizida esa qat'iy
+    `mm` o'lchami. HTML ichida XML e'loni matn bo'lib qoladi, `mm` esa
+    rasmni CSS bilan boshqarib bo'lmaydigan qilib qotiradi — shuning uchun
+    ikkalasi ham olib tashlanadi. `viewBox` joyida qoladi, ya'ni o'lcham
+    endi butunlay CSS ixtiyorida.
+
+    Natija keshlanadi: manzil `BASE_URL` va slug'dan yig'iladi, ikkalasi
+    ham ishlash paytida o'zgarmaydi.
+    """
+    markup = svg_bytes(slug, box_size).decode("utf-8")
+    markup = _XML_PROLOG.sub("", markup)
+    return _FIXED_SIZE.sub("", markup, count=2)

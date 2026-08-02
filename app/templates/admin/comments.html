@@ -33,6 +33,11 @@
         <div class="grow">
           <div class="row" style="gap:.5rem">
             <strong>{{ comment.author_name }}</strong>
+            {% if comment.rating %}
+              <span class="stars-show small" aria-label="{{ comment.rating }} / 5">
+                {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= comment.rating }}">★</span>{% endfor -%}
+              </span>
+            {% endif %}
             <span class="muted small">{{ tr(comment.item.name, 'uz') }}</span>
             <span class="muted small">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
             {% if comment.is_approved %}

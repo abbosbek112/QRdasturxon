@@ -184,6 +184,9 @@ class ItemComment(Base):
     body: Mapped[str] = mapped_column(String(500))
     ip: Mapped[str] = mapped_column(String(64), index=True)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 1-5 yulduz. 0 = baho qo'yilmagan (eski izohlar shunday qoladi) va
+    # o'rtachani hisoblashda bunday izohlar umuman qatnashmaydi.
+    rating: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow_naive)
 
     item: Mapped[MenuItem] = relationship()

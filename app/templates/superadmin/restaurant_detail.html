@@ -1,0 +1,211 @@
+{% extends "superadmin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="page-head spread">
+  <div>
+    <p class="muted small"><a href="/superadmin">← Restoranlar</a></p>
+    <h1>{{ restaurant.name }}</h1>
+    <p class="muted small">
+      <a href="/r/{{ restaurant.slug }}" target="_blank" rel="noopener">/r/{{ restaurant.slug }}</a>
+      {% if restaurant.phone %} · {{ restaurant.phone }}{% endif %}
+    </p>
+  </div>
+  <a class="btn" href="/superadmin/restaurants/{{ restaurant.id }}/edit">Tahrirlash</a>
+</div>
+
+{% if not is_live %}
+  <div class="notice notice-warn">
+    <strong>Menyu hozir yopiq.</strong>
+    QR kodni skanerlagan mijoz menyuni ko'rmayapti.
+    {% if not restaurant.is_active %}
+      Sabab: restoran bloklangan.
+    {% else %}
+      Sabab: obuna muddati tugagan. Quyidan tarif bering — menyu o'sha zahoti ochiladi.
+    {% endif %}
+  </div>
+{% endif %}
+
+<div class="grid-2">
+  {# --- obuna --- #}
+  <div class="card">
+    <h2>Obuna</h2>
+    <p class="muted small">
+      Hozir: <strong>{{ limits.name }}</strong>
+      {% if status_key == 'sinov' %}
+        · sinovda, {{ trial_left }} kun qoldi
+      {% elif ends_at %}
+        · {{ ends_at.strftime('%d.%m.%Y') }} gacha
+      {% endif %}
+    </p>
+
+    <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/plan" class="stack-sm">
+      {% include "partials/csrf.html" %}
+      <div class="grid-2">
+        <div class="field">
+          <label for="plan">Tarif</label>
+          <select id="plan" name="plan">
+            {% for option in plans %}
+              <option value="{{ option.value }}" {{ 'selected' if restaurant.plan == option }}>
+                {{ limits_by_plan[option].name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="years">Necha yil</label>
+          <input id="years" name="years" type="number" value="1" min="1" max="5">
+        </div>
+      </div>
+      <p class="hint">
+        Muddat mavjud sanaga qo'shiladi — erta to'lagan restoran kunini yo'qotmaydi.
+      </p>
+      <button class="btn btn-primary" type="submit">Tarifni berish</button>
+    </form>
+  </div>
+
+  {# --- xodimlar va tez amallar --- #}
+  <div class="card">
+    <h2>Hisoblar</h2>
+    {% if users %}
+      <div class="stack-sm">
+        {% for account in users %}
+          <div class="spread">
+            <div>
+              <strong>{{ account.username }}</strong>
+              {% if not account.is_active %}<span class="badge badge-off">Bloklangan</span>{% endif %}
+              {% if account.email %}<div class="muted small">{{ account.email }}</div>{% endif %}
+            </div>
+            <a class="btn btn-sm" href="/superadmin/users">Parolni tiklash</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted small">Bu restoranga bog'langan hisob yo'q.</p>
+    {% endif %}
+
+    <p class="section-label">Tez amallar</p>
+    <div class="row">
+      <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/toggle">
+        {% include "partials/csrf.html" %}
+        <button class="btn btn-sm" type="submit">
+          {{ 'Bloklash' if restaurant.is_active else 'Blokdan chiqarish' }}
+        </button>
+      </form>
+      <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/delete"
+            onsubmit="return confirm('{{ restaurant.name }} va uning butun menyusi butunlay o\'chiriladi. Davom etasizmi?')">
+        {% include "partials/csrf.html" %}
+        <button class="btn btn-danger btn-sm" type="submit">Butunlay o'chirish</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# --- statistika --- #}
+<p class="section-label">Statistika</p>
+<div class="card range-bar">
+  <div class="chips-row">
+    {% for key, (label, _) in presets.items() %}
+      <a class="chip {{ 'active' if preset == key }}"
+         href="/superadmin/restaurants/{{ restaurant.id }}?period={{ key }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <form method="get" action="/superadmin/restaurants/{{ restaurant.id }}" class="range-form">
+    <input type="hidden" name="period" value="custom">
+    <input type="date" name="start" value="{{ start.isoformat() }}" max="{{ end.isoformat() }}"
+           aria-label="Boshlanishi">
+    <span class="muted small">—</span>
+    <input type="date" name="end" value="{{ end.isoformat() }}" aria-label="Tugashi">
+    <button class="btn btn-sm {{ 'btn-primary' if preset == 'custom' }}" type="submit">Ko'rsatish</button>
+  </form>
+</div>
+
+<div class="stat-grid" style="margin-top:1rem">
+  <div class="stat"><b>{{ views_total }}</b><span>Menyu ochilgan</span></div>
+  <div class="stat"><b>{{ views_peak }}</b><span>Eng yuqori kun</span></div>
+  <div class="stat"><b>{{ item_count }}</b><span>Taom</span></div>
+  <div class="stat"><b>{{ category_count }}</b><span>Bo'lim</span></div>
+  <div class="stat"><b>{{ pending_comments }}</b><span>Izoh kutmoqda</span></div>
+</div>
+
+<div class="card" style="margin-top:1rem">
+  {% if views_total %}
+    <div class="chart" role="img" aria-label="Kunlik ochilishlar">
+      {% for day, count in daily_views %}
+        <div class="chart-col" title="{{ day.strftime('%d.%m.%Y') }} — {{ count }} marta">
+          <div class="chart-bar" style="height:{{ (count / views_peak * 100) | round(1) }}%"></div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="spread small muted" style="margin-top:.5rem">
+      <span>{{ daily_views[0][0].strftime('%d.%m') }}</span>
+      <span>Jami {{ views_total }} marta</span>
+      <span>{{ daily_views[-1][0].strftime('%d.%m') }}</span>
+    </div>
+  {% else %}
+    <p class="muted small" style="margin:0">Bu oraliqda ochilish yo'q.</p>
+  {% endif %}
+</div>
+
+<div class="grid-2" style="margin-top:1rem">
+  <div>
+    <p class="section-label">Eng ko'p ochilgan taomlar</p>
+    {% if top_items %}
+      <div class="table-card table-scroll table-compact">
+        <table>
+          <thead><tr><th>#</th><th>Taom</th><th>Ochilgan</th><th>Baho</th></tr></thead>
+          <tbody>
+            {% for item, count in top_items %}
+              <tr>
+                <td class="muted">{{ loop.index }}</td>
+                <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
+                <td><strong>{{ count }}</strong></td>
+                <td>
+                  {% set rated = ratings.get(item.id) %}
+                  {% if rated %}
+                    <span class="stars-show small">
+                      {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= rated[0] | round(0, 'common') | int }}">★</span>{% endfor -%}
+                    </span>
+                    <span class="muted small">{{ rated[0] }}</span>
+                  {% else %}<span class="muted small">—</span>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Taom ochilmagan</strong>Bu oraliqda hech kim taom kartasini bosmagan.</div>
+    {% endif %}
+  </div>
+
+  <div>
+    <p class="section-label">Eng yuqori baholi taomlar</p>
+    {% if best_rated %}
+      <div class="table-card table-scroll table-compact">
+        <table>
+          <thead><tr><th>#</th><th>Taom</th><th>O'rtacha</th><th>Soni</th></tr></thead>
+          <tbody>
+            {% for item, average, votes in best_rated %}
+              <tr>
+                <td class="muted">{{ loop.index }}</td>
+                <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
+                <td>
+                  <span class="stars-show small">
+                    {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= average | round(0, 'common') | int }}">★</span>{% endfor -%}
+                  </span>
+                  <strong>{{ average }}</strong>
+                </td>
+                <td class="muted">{{ votes }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Hali baho yo'q</strong>Mijozlar izoh bilan birga yulduz qo'yishi mumkin.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

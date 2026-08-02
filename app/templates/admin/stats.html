@@ -1,0 +1,156 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}Statistika{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Statistika</h1>
+  <p class="muted small">
+    Qaysi taom necha marta ochilgani va mijozlar bahosi.
+    {% if limits.stats_days < 365 %}
+      Tarifingizda {{ limits.stats_days }} kunlik tarix saqlanadi.
+    {% endif %}
+  </p>
+</div>
+
+{#
+  Muddat tanlash. Tayyor tugmalar oddiy havola — JS ham, forma ham kerak
+  emas, ya'ni tanlangan oraliq manzilda qoladi va uni ulashsa ham bo'ladi.
+#}
+<div class="card range-bar">
+  <div class="chips-row">
+    {% for key, (label, _) in presets.items() %}
+      <a class="chip {{ 'active' if preset == key }}" href="/admin/stats?period={{ key }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <form method="get" action="/admin/stats" class="range-form">
+    <input type="hidden" name="period" value="custom">
+    <label class="sr-only" for="from">Boshlanishi</label>
+    <input id="from" type="date" name="start" value="{{ start.isoformat() }}" max="{{ end.isoformat() }}">
+    <span class="muted small">—</span>
+    <label class="sr-only" for="to">Tugashi</label>
+    <input id="to" type="date" name="end" value="{{ end.isoformat() }}">
+    <button class="btn btn-sm {{ 'btn-primary' if preset == 'custom' }}" type="submit">Ko'rsatish</button>
+  </form>
+</div>
+
+<div class="stat-grid" style="margin-top:1rem">
+  <div class="stat">
+    <b>{{ views_total }}</b>
+    <span>Menyu ochilgan</span>
+  </div>
+  <div class="stat">
+    <b>{{ views_peak }}</b>
+    <span>Eng yuqori kun</span>
+  </div>
+  <div class="stat">
+    <b>{{ (end - start).days + 1 }}</b>
+    <span>Kun tanlangan</span>
+  </div>
+  <div class="stat">
+    <b>{{ top_items | length }}</b>
+    <span>Ochilgan taom</span>
+  </div>
+</div>
+
+<p class="section-label">Kunlik ochilish — {{ start.strftime('%d.%m.%Y') }} … {{ end.strftime('%d.%m.%Y') }}</p>
+<div class="card">
+  {% if views_total %}
+    <div class="chart" role="img" aria-label="Tanlangan oraliqdagi kunlik ochilishlar">
+      {% for day, count in daily_views %}
+        <div class="chart-col" title="{{ day.strftime('%d.%m.%Y') }} — {{ count }} marta">
+          <div class="chart-bar" style="height:{{ (count / views_peak * 100) | round(1) }}%"></div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="spread small muted" style="margin-top:.5rem">
+      <span>{{ daily_views[0][0].strftime('%d.%m') }}</span>
+      <span>Jami {{ views_total }} marta</span>
+      <span>{{ daily_views[-1][0].strftime('%d.%m') }}</span>
+    </div>
+  {% else %}
+    <p class="muted small" style="margin:0">
+      Bu oraliqda ochilish yo'q. Boshqa muddatni tanlab ko'ring.
+    </p>
+  {% endif %}
+</div>
+
+<p class="section-label">Eng ko'p ochilgan taomlar</p>
+{% if top_items %}
+  <div class="table-card table-scroll table-compact">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Taom</th><th>Ochilgan</th><th>Ulush</th><th>Baho</th></tr>
+      </thead>
+      <tbody>
+        {% set most = top_items[0][1] %}
+        {% for item, count in top_items %}
+          <tr>
+            <td class="muted">{{ loop.index }}</td>
+            <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
+            <td><strong>{{ count }}</strong></td>
+            <td style="min-width:120px">
+              {# Ulush eng ko'p ochilganga nisbatan — ko'z bir qarashda farqni ko'radi #}
+              <span class="meter" title="Eng ko'p ochilganning {{ (count / most * 100) | round }}%">
+                <span style="width:{{ (count / most * 100) | round(1) }}%"></span>
+              </span>
+            </td>
+            <td>
+              {% set rated = ratings.get(item.id) %}
+              {% if rated %}
+                <span class="stars-show small">
+                  {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= rated[0] | round(0, 'common') | int }}">★</span>{% endfor -%}
+                </span>
+                <span class="muted small">{{ rated[0] }}</span>
+              {% else %}
+                <span class="muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty">
+    <strong>Bu oraliqda taom ochilmagan</strong>
+    Mijoz taom kartasini bosganda shu yerda ro'yxat paydo bo'ladi.
+  </div>
+{% endif %}
+
+<p class="section-label">Eng yuqori baholi taomlar</p>
+{% if best_rated %}
+  <div class="table-card table-scroll table-compact">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Taom</th><th>O'rtacha</th><th>Baho soni</th></tr>
+      </thead>
+      <tbody>
+        {% for item, average, votes in best_rated %}
+          <tr>
+            <td class="muted">{{ loop.index }}</td>
+            <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
+            <td>
+              <span class="stars-show small">
+                {%- for n in range(1, 6) %}<span class="{{ 'on' if n <= average | round(0, 'common') | int }}">★</span>{% endfor -%}
+              </span>
+              <strong>{{ average }}</strong>
+            </td>
+            <td class="muted">{{ votes }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">
+    Baho izohlar bilan birga keladi va faqat siz tasdiqlaganlari hisobga olinadi.
+    Bu ro'yxat tanlangan muddatga bog'liq emas — barcha vaqt bo'yicha.
+  </p>
+{% else %}
+  <div class="empty">
+    <strong>Hali baho yo'q</strong>
+    Mijoz taomga izoh qoldirganda yulduz ham qo'yishi mumkin. Izohni tasdiqlaganingizdan keyin
+    baho shu yerda hisobga olinadi.
+  </div>
+{% endif %}
+{% endblock %}

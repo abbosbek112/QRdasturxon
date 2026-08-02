@@ -1,0 +1,27 @@
+{% extends "public/base.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ restaurant.name }}{% endblock %}
+
+{#
+  Muddat tugagan menyu. Buni stoldagi QR kodni skanerlagan mijoz ko'radi — u
+  hech narsaga aybdor emas va tarif nima ekanini bilishi ham shart emas.
+  Shuning uchun bu yerda "to'lanmagan", "muddat tugagan" degan so'zlar yo'q:
+  faqat menyu vaqtincha yopiqligi va xodimdan so'rash mumkinligi aytiladi.
+#}
+{% block body %}
+<div class="closed-shell">
+  <div class="lp-panel closed-card">
+    <span class="closed-mark">{{ ui.icon('plate') }}</span>
+    <h1>{{ restaurant.name }}</h1>
+    <p class="muted">
+      Menyu vaqtincha yopiq. Uzr so'raymiz — buyurtmani xodimdan so'rasangiz
+      bo'ladi.
+    </p>
+    {% if restaurant.phone %}
+      <a class="btn btn-xl" href="tel:{{ restaurant.phone }}">
+        {{ ui.icon('phone') }} {{ restaurant.phone }}
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

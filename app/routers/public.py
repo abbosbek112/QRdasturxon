@@ -5,12 +5,13 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.config import settings
 from app.database import get_db
 from app.i18n import LANGUAGES, LANG_COOKIE, resolve_lang, tr
 from app.models import Category, MenuItem, Plan, Restaurant
-from app.plans import LIMITS, TRIAL_DAYS, limits_for, visible_languages
+from app.plans import LIMITS, TRIAL_DAYS, is_expired, limits_for, visible_languages
 from app.security import verify_csrf
-from app.services import comments
+from app.services import comments, qr
 from app.services.stats import record_view
 from app.templating import templates
 
@@ -24,6 +25,37 @@ def _get_restaurant(db: Session, slug: str) -> Restaurant:
     if restaurant is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Restoran topilmadi")
     return restaurant
+
+
+def _share_card(restaurant: Restaurant, lang: str, image: str | None = None) -> dict:
+    """Havola ulashilganda chiqadigan kartochka.
+
+    Restoran o'z menyusini mijozlariga aynan havola bilan tarqatadi —
+    shuning uchun u yerda QRdasturxon emas, restoranning o'z nomi va
+    muqovasi ko'rinishi kerak.
+    """
+    picture = image or restaurant.cover_image
+    return {
+        "og_title": restaurant.name,
+        "og_desc": tr(restaurant.description, lang)
+        or f"{restaurant.name} menyusi. Taomlar, narxlar va tarkibi.",
+        "og_image": f"/media/{picture}" if picture else None,
+    }
+
+
+def _closed_response(request: Request, restaurant: Restaurant):
+    """Muddati tugagan menyu o'rniga chiqadigan sahifa.
+
+    404 emas: manzil to'g'ri va restoran o'z joyida — menyu shunchaki hozir
+    yopiq. 503 esa "vaqtincha" degani, shuning uchun qidiruv tizimi sahifani
+    o'chirib tashlamaydi va to'lovdan keyin hammasi joyiga qaytadi.
+    """
+    return templates.TemplateResponse(
+        request,
+        "public/closed.html",
+        {"lang": resolve_lang(request), "restaurant": restaurant},
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
 
 
 def _menu_languages(restaurant: Restaurant) -> tuple[dict[str, str], str]:
@@ -40,11 +72,12 @@ def _menu_languages(restaurant: Restaurant) -> tuple[dict[str, str], str]:
 def index(request: Request, db: DbSession):
     """Reklama sahifasi — platformaga kelgan restoran egasi shu yerni ko'radi."""
     lang = resolve_lang(request)
+    # Namuna ataylab sozlamadan olinadi. Avval eng eski restoran ko'rsatilardi,
+    # ya'ni saytga kelgan odam haqiqiy mijozning menyusini "namuna" deb ko'rardi.
     demo = db.scalar(
-        select(Restaurant)
-        .where(Restaurant.is_active.is_(True))
-        .order_by(Restaurant.created_at)
-        .limit(1)
+        select(Restaurant).where(
+            Restaurant.slug == settings.demo_slug, Restaurant.is_active.is_(True)
+        )
     )
     return templates.TemplateResponse(
         request,
@@ -53,6 +86,8 @@ def index(request: Request, db: DbSession):
             "lang": lang,
             "restaurant": None,
             "demo_slug": demo.slug if demo else None,
+            # Ko'rgazmadagi QR bezak emas — skanerlansa namuna menyusi ochiladi
+            "demo_qr": qr.svg_markup(demo.slug) if demo else None,
             "plans": [(plan, LIMITS[plan]) for plan in Plan],
             "trial_days": TRIAL_DAYS,
         },
@@ -65,6 +100,8 @@ def menu(request: Request, db: DbSession, slug: str, q: str = ""):
     restaurant = _get_restaurant(db, slug)
     if not restaurant.is_active:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Restoran topilmadi")
+    if is_expired(restaurant):
+        return _closed_response(request, restaurant)
 
     languages, fallback = _menu_languages(restaurant)
     if lang not in languages:
@@ -116,6 +153,7 @@ def menu(request: Request, db: DbSession, slug: str, q: str = ""):
             "specials": specials,
             "q": q,
             "languages": languages,
+            **_share_card(restaurant, lang),
         },
     )
     _remember_language(request, response, lang)
@@ -146,6 +184,10 @@ def item_detail(
 ):
     lang = resolve_lang(request)
     restaurant = _get_restaurant(db, slug)
+    if not restaurant.is_active:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Restoran topilmadi")
+    if is_expired(restaurant):
+        return _closed_response(request, restaurant)
     item = _get_item(db, restaurant, item_id)
 
     languages, fallback = _menu_languages(restaurant)
@@ -155,6 +197,7 @@ def item_detail(
     record_view(db, restaurant.id, item.id)
 
     allow_comments = limits_for(restaurant).comments
+    average, votes = comments.rating_summary(db, [item.id]).get(item.id, (0, 0)) if allow_comments else (0, 0)
     # ?partial=1 — bottom sheet ichiga joylash uchun faqat mazmun bo'lagi
     template = "public/_item_body.html" if partial else "public/item.html"
     response = templates.TemplateResponse(
@@ -168,6 +211,11 @@ def item_detail(
             "allow_comments": allow_comments,
             "comments": comments.visible_for(db, item.id) if allow_comments else [],
             "comment_sent": sent,
+            "rating_avg": average,
+            "rating_count": votes,
+            # Bitta taom havolasi ulashilsa — o'sha taomning nomi va rasmi
+            **_share_card(restaurant, lang, image=item.image),
+            "og_title": f"{tr(item.name, lang)} — {restaurant.name}",
         },
     )
     _remember_language(request, response, lang)
@@ -182,6 +230,9 @@ def add_comment(
     item_id: int,
     author_name: Annotated[str, Form()],
     body: Annotated[str, Form()],
+    # Yulduz majburiy emas: hech biri tanlanmasa forma bu maydonni umuman
+    # yubormaydi va izoh bahosiz saqlanadi
+    rating: Annotated[int, Form()] = 0,
 ):
     lang = resolve_lang(request)
     restaurant = _get_restaurant(db, slug)
@@ -194,6 +245,7 @@ def add_comment(
         item=item,
         author_name=author_name,
         body=body,
+        rating=rating,
         ip=request.client.host if request.client else "unknown",
     )
     # ?sent=1 — "tasdiqlanishi kutilmoqda" xabari uchun

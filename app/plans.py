@@ -1,8 +1,15 @@
 """Tariflar, sinov muddati va cheklovlar.
 
-Muhim qoida: **obuna tugasa ham mijoz menyusi ochiq qoladi**. Faqat admin
-panelidagi imkoniyatlar toraydi. Restoranning stolidagi QR kodni ishlamay
-qo'yish — restoranga ham, uning mijoziga ham zarar, to'lovni esa tezlashtirmaydi.
+Muhim qoida: **muddat tugasa mijoz menyusi o'chadi**. Ya'ni bepul rejim —
+{TRIAL_DAYS} kunlik sinov, undan nariga cho'zilmaydi. Muddat tugagach:
+
+* stoldagi QR kod ishlamaydi, mijoz "menyu vaqtincha yopiq" sahifasini ko'radi;
+* restoran egasi hisobiga bemalol kiradi, menyusi va rasmlari joyida turadi;
+* to'lov tasdiqlangach menyu o'sha zahoti qayta ochiladi.
+
+Buning narxi bor va uni bilib turaylik: xato sahifasini restoranning aybsiz
+mijozi ko'radi. Shuning uchun o'sha sahifa kafeni ayblamaydi va menyu
+yo'qolmaganini aytib turadi.
 """
 
 from dataclasses import dataclass
@@ -45,8 +52,8 @@ LIMITS: dict[Plan, Limits] = {
         printable=False,
     ),
     Plan.full: Limits(
-        name="To'liq",
-        price_yearly=600_000,
+        name="To'liq 1 yillik",
+        price_yearly=500_000,
         max_items=None,
         max_categories=None,
         languages=("uz", "ru", "en"),
@@ -80,11 +87,42 @@ def refresh_status(restaurant: Restaurant) -> bool:
     return False
 
 
+def is_expired(restaurant: Restaurant) -> bool:
+    """Muddat tugaganmi — saqlangan holatga emas, SANAGA qarab.
+
+    `refresh_status()` faqat egasi panelga kirganda ishlaydi. Agar u bir oy
+    kirmasa, bazadagi holat hamon `trial` bo'lib turaveradi. Ommaviy menyu
+    shuning uchun holatga emas, muddatning o'ziga qaraydi — aks holda panelga
+    kirmaslik cheksiz bepul ishlatish yo'liga aylanardi.
+    """
+    now = utcnow_naive()
+    status = restaurant.subscription_status
+
+    if status is SubscriptionStatus.expired:
+        return True
+    if status is SubscriptionStatus.trial:
+        # Sinov sanasi umuman yo'q bo'lsa ham tugagan deb hisoblaymiz
+        return restaurant.trial_ends_at is None or restaurant.trial_ends_at < now
+    if status is SubscriptionStatus.active:
+        # paid_until bo'sh bo'lsa — superadmin qo'lda ochgan, muddatsiz
+        return restaurant.paid_until is not None and restaurant.paid_until < now
+    return False
+
+
+def menu_is_live(restaurant: Restaurant) -> bool:
+    """Mijoz QR kodni skanerlaganda menyu ochiladimi."""
+    return restaurant.is_active and not is_expired(restaurant)
+
+
 def effective_plan(restaurant: Restaurant) -> Plan:
-    """Hozir amalda qaysi tarif imkoniyatlari ishlayapti.
+    """Admin panelda hozir qaysi tarif imkoniyatlari ochiq.
 
     Sinov muddatida restoran To'liq imkoniyatlarni ko'radi — shunda u nima
-    sotib olayotganini bilib turadi. Muddat tugasa Bepul darajaga tushadi.
+    sotib olayotganini bilib turadi.
+
+    Muddat tugagach Bepul cheklovlariga tushadi: menyusi mijozga ko'rinmasa
+    ham egasi uni tahrirlashda davom eta oladi. Menyu ochiq-yopiqligini bu
+    emas, `menu_is_live()` hal qiladi.
     """
     if restaurant.subscription_status is SubscriptionStatus.trial:
         return Plan.full
