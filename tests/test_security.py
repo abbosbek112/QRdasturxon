@@ -7,10 +7,10 @@ from pydantic import ValidationError
 
 from app.config import INSECURE_SECRET, Settings
 from app.database import Base, SessionLocal, engine
-from app.models import LoginAttempt
+from app.models import LoginAttempt, Restaurant
 from app.security import MAX_ATTEMPTS
 
-from tests.conftest import csrf
+from tests.conftest import csrf, login
 
 
 def test_models_and_migrations_stay_in_sync():
@@ -94,3 +94,82 @@ def test_successful_login_clears_the_counter(client, tenant_a):
     )
     with SessionLocal() as session:
         assert session.query(LoginAttempt).count() == 0
+
+
+# --- ro'yxatdan o'tish cheklovi ---
+
+def _signup(client, n: int):
+    return client.post(
+        "/signup",
+        data={
+            "csrf_token": csrf(client, "/signup"),
+            "name": f"Kafe {n}",
+            "slug": f"kafe-{n}",
+            "username": f"kafe{n}",
+            "password": "parol12345",
+            "phone": "",
+            "email": "",
+        },
+    )
+
+
+def test_signup_stops_after_the_limit(client, db):
+    """Bitta IP cheksiz restoran ocholmasin — yaxshi slug'lar band bo'lib ketmasin."""
+    from app.security import MAX_SIGNUPS
+
+    for n in range(MAX_SIGNUPS):
+        assert _signup(client, n).status_code == 200
+
+    blocked = _signup(client, 99)
+    assert blocked.status_code == 429
+    assert db.query(Restaurant).filter_by(slug="kafe-99").first() is None
+
+
+def test_a_failed_signup_still_counts(client, db):
+    """Aks holda ataylab xato yuborib hisoblagichni chetlab o'tish mumkin edi."""
+    from app.security import MAX_SIGNUPS
+
+    for _ in range(MAX_SIGNUPS):
+        # slug band — signup yiqiladi, lekin urinish baribir sanaladi
+        client.post(
+            "/signup",
+            data={
+                "csrf_token": csrf(client, "/signup"),
+                "name": "X", "slug": "admin", "username": "x",
+                "password": "parol12345", "phone": "", "email": "",
+            },
+        )
+
+    assert _signup(client, 1).status_code == 429
+
+
+def test_logging_in_does_not_reset_the_signup_limit(client, db, tenant_a):
+    """Eng muhim tarmoq: ikki hisoblagich ALOHIDA bo'lishi kerak.
+
+    Urinishlar bitta jadvalda yotadi va muvaffaqiyatli login o'z IP'sining
+    yozuvlarini tozalaydi. Agar signup ham o'sha hisobga qo'shilsa, chegaraga
+    yetgan odam bitta login qilib hisoblagichni nolga tushirib olardi —
+    ya'ni cheklovni cheksiz aylanib o'tish mumkin bo'lardi.
+    """
+    from app.security import MAX_SIGNUPS
+
+    for n in range(MAX_SIGNUPS):
+        _signup(client, n)
+    assert _signup(client, 50).status_code == 429
+
+    # Haqiqiy hisob bilan muvaffaqiyatli kirish (yordamchi o'zi tekshiradi)
+    login(client, "osh", "adminpass123")
+
+    # Signup hamon yopiq bo'lishi kerak
+    assert _signup(client, 51).status_code == 429
+
+
+def test_signup_attempts_do_not_lock_out_login(client, db, tenant_a):
+    """Teskari tomoni ham: signup urinishlari login'ni bloklab qo'ymasin."""
+    from app.security import MAX_SIGNUPS
+
+    for n in range(MAX_SIGNUPS):
+        _signup(client, n)
+
+    login(client, "osh", "adminpass123")
+    assert client.get("/admin").status_code == 200

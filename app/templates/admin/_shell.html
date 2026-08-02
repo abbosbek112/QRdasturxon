@@ -1,5 +1,37 @@
 {% extends "base.html" %}
 {% block brand_href %}/admin{% endblock %}
+
+{#
+  Muddat ogohlantirishi. Ilgari u faqat bosh sahifada edi — taomlarni
+  tahrirlab yurgan odam menyusi o'chishidan bexabar qolardi. Endi qobiqda,
+  ya'ni HAR BIR admin sahifasida ko'rinadi.
+
+  Restoran `user` orqali olinadi, shuning uchun marshrutlarga tegilmagan.
+  Xotirjam holatda (muddat ko'p) tasma umuman chizilmaydi — har kuni
+  ko'rinadigan ogohlantirish tez ko'zga ko'rinmas bo'lib qoladi.
+#}
+{% block banner %}
+  {% set place = user.restaurant if user else None %}
+  {% if place %}
+    {% set status = place.subscription_status.value %}
+    {% set left = trial_days_left(place) %}
+    {% if status == 'expired' %}
+      <div class="notice notice-warn banner-fixed">
+        <strong>Menyungiz yopiq.</strong>
+        QR kodni skanerlagan mijoz uni ko'rmayapti. Ma'lumotlaringiz joyida —
+        to'lov tasdiqlangach o'sha zahoti ochiladi.
+        <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
+      </div>
+    {% elif status == 'trial' and left <= 3 %}
+      <div class="notice banner-fixed">
+        <strong>{{ left }} kun qoldi.</strong>
+        Muddat tugagach menyu yopiladi — QR kodni skanerlagan mijoz uni ko'rmaydi.
+        Davom ettirish uchun
+        <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
+      </div>
+    {% endif %}
+  {% endif %}
+{% endblock %}
 {% block nav %}
   {% import "partials/icons.html" as ui %}
   {% set path = request.url.path %}

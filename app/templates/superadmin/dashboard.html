@@ -28,6 +28,12 @@
     <b>{{ totals.live }}</b>
     <span>Menyusi ochiq</span>
   </div>
+  {# Bugun kimga yozish kerakligi — Telegram bot yo'q, o'zingiz bog'lanasiz #}
+  <a class="stat {{ 'stat-alert' if totals.expiring }}"
+     href="/superadmin?status_filter=tugayapti">
+    <b>{{ totals.expiring }}</b>
+    <span>{{ expiring_days }} kunda tugaydi</span>
+  </a>
   <div class="stat">
     <b>{{ totals.menu_opens }}</b>
     <span>30 kunda ochilgan</span>

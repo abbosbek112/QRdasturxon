@@ -16,6 +16,8 @@ from app.security import (
     login_user,
     logout_user,
     record_login_failure,
+    record_signup,
+    signup_allowed,
     verify_csrf,
     verify_password,
 )
@@ -97,6 +99,24 @@ def signup(
         "phone": phone,
         "email": email,
     }
+
+    client_ip = request.client.host if request.client else "unknown"
+    if not signup_allowed(db, client_ip):
+        return templates.TemplateResponse(
+            request,
+            "signup.html",
+            {
+                "error": "Juda ko'p urinish bo'ldi. Bir soatdan keyin qayta urinib ko'ring "
+                         "yoki biz bilan bog'laning.",
+                "trial_days": TRIAL_DAYS,
+                "form": submitted,
+            },
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+    # Urinish natijasidan qat'i nazar sanaladi: maqsad xatoni ushlash emas,
+    # bitta manbadan kelayotgan restoran oqimini cheklash
+    record_signup(db, client_ip)
+
     try:
         restaurant = create_restaurant_with_admin(
             db,

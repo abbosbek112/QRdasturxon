@@ -247,6 +247,9 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--accent);
   font-size: var(--text-sm);
 }
 .notice strong { color: var(--ink); }
+/* Qobiqdagi ogohlantirish — mazmundan oldin turadi, sahifaning o'z
+   sarlavhasiga yopishib qolmasin */
+.banner-fixed { margin-bottom: 1.35rem; }
 .notice-warn { background: var(--danger-wash); border-color: var(--danger-edge); }
 .notice-warn strong { color: var(--danger); }
 
@@ -353,6 +356,12 @@ tbody tr:hover { background: var(--page); }
 }
 .stat b { display: block; font-size: var(--text-3xl); font-weight: 700; line-height: 1.1; letter-spacing: -.03em; }
 .stat span { color: var(--ink-2); font-size: var(--text-sm); }
+/* Bosiladigan quti — filtrlangan ro'yxatga olib boradi */
+a.stat { display: block; color: inherit; }
+a.stat:hover { text-decoration: none; border-color: var(--line-2); }
+/* Diqqat talab qiladigan son: nolda oddiy, noldan yuqorida ko'zga tashlanadi */
+.stat-alert { border-color: var(--accent-edge); background: var(--accent-wash); }
+.stat-alert b { color: var(--accent); }
 
 .section-label {
   font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .06em;

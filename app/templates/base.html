@@ -22,6 +22,8 @@
 </aside>
 <main class="app-main">
   <div class="app-inner">
+    {# Har bir sahifada turadigan ogohlantirish — bosh sahifadagina emas #}
+    {% block banner %}{% endblock %}
     {% block content %}{% endblock %}
   </div>
 </main>

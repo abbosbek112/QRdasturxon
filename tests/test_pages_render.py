@@ -1,3 +1,5 @@
+import html
+
 import pytest
 
 from app.models import Category, MenuItem
@@ -207,3 +209,40 @@ def test_share_urls_are_absolute(client):
     """Nisbiy yo'lni Telegram ham, Facebook ham tanimaydi."""
     body = client.get("/").text
     assert '<meta property="og:url" content="http://testserver/">' in body
+
+
+# --- robots.txt va sitemap.xml ---
+
+def test_robots_closes_the_panel_and_points_to_the_sitemap(client):
+    body = client.get("/robots.txt").text
+    for closed in ("/admin", "/superadmin", "/login", "/signup"):
+        assert f"Disallow: {closed}" in body
+    assert "Sitemap: http://testserver/sitemap.xml" in body
+
+
+def test_sitemap_lists_working_menus(client, tenant_a):
+    restaurant, _ = tenant_a
+    body = client.get("/sitemap.xml").text
+    assert "http://testserver/" in body
+    assert f"http://testserver/r/{restaurant.slug}" in body
+
+
+def test_sitemap_leaves_out_a_closed_menu(client, db, tenant_a):
+    """Muddati tugagan menyu 503 qaytaradi — Google'ni buzuq manzilga
+    yuborishning ma'nosi yo'q."""
+    from datetime import timedelta
+
+    from app.models import utcnow_naive
+
+    restaurant, _ = tenant_a
+    restaurant.trial_ends_at = utcnow_naive() - timedelta(days=1)
+    db.commit()
+
+    assert f"/r/{restaurant.slug}" not in client.get("/sitemap.xml").text
+
+
+def test_login_tells_you_what_to_do_about_a_lost_password(client):
+    """Parolni faqat tizim admini tiklaydi — odam nima qilishni bilsin."""
+    body = html.unescape(client.get("/login").text)
+    assert "Parolni unutdingizmi" in body
+    assert "t.me/" in body

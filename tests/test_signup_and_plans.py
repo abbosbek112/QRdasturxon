@@ -233,7 +233,10 @@ def test_the_owner_still_reaches_the_panel_after_expiry(client, db, tenant_a):
     login(client, "osh", "adminpass123")
     panel = client.get("/admin")
     assert panel.status_code == 200
-    assert "Menyungiz hozir yopiq" in html.unescape(panel.text)
+    assert "Menyungiz yopiq" in html.unescape(panel.text)
+
+    # Ogohlantirish qobiqda — ya'ni bosh sahifadagina emas, hamma yerda
+    assert "Menyungiz yopiq" in html.unescape(client.get("/admin/items").text)
 
     db.refresh(restaurant)
     assert restaurant.subscription_status is SubscriptionStatus.expired
@@ -366,3 +369,39 @@ def test_the_checklist_comes_back_if_the_menu_is_emptied(client, db, tenant_a):
     login(client, "osh", "adminpass123")
     body = html.unescape(client.get("/admin").text)
     assert "1 / 3 bajarildi" in body
+
+
+def test_the_warning_banner_follows_you_across_the_panel(client, db, tenant_a):
+    """Ogohlantirish bosh sahifadagina bo'lsa, taom tahrirlab yurgan odam
+    menyusi o'chishidan bexabar qolardi."""
+    restaurant, _ = tenant_a
+    restaurant.trial_ends_at = utcnow_naive() + timedelta(days=2)
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    for path in ("/admin", "/admin/items", "/admin/qr", "/admin/settings"):
+        assert "2 kun qoldi" in html.unescape(client.get(path).text), path
+
+
+def test_no_banner_while_there_is_still_time(client, db, tenant_a):
+    """Har kuni ko'rinadigan ogohlantirish tez ko'zga ko'rinmas bo'lib qoladi."""
+    restaurant, _ = tenant_a
+    restaurant.trial_ends_at = utcnow_naive() + timedelta(days=6)
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    assert "banner-fixed" not in client.get("/admin/items").text
+
+
+def test_superadmin_sees_who_expires_this_week(client, db, superadmin, tenant_a, tenant_b):
+    """Telegram bot yo'q — bog'lanishni o'zingiz qilasiz, ro'yxat kimligini aytadi."""
+    soon, _ = tenant_a
+    soon.trial_ends_at = utcnow_naive() + timedelta(days=2)
+    later, _ = tenant_b
+    later.trial_ends_at = utcnow_naive() + timedelta(days=40)
+    db.commit()
+
+    login(client, "root", "rootpass123")
+    body = client.get("/superadmin?status_filter=tugayapti").text
+    assert soon.name in body
+    assert later.name not in body

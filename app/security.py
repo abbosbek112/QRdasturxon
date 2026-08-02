@@ -95,30 +95,85 @@ def require_restaurant_admin(user: CurrentUser) -> User:
     return user
 
 
+# --- IP bo'yicha cheklov ----------------------------------------------------
+#
+# Ikki xil urinish bir jadvalda yotadi, lekin ALOHIDA sanaladi. Sabab
+# quyidagi: muvaffaqiyatli login o'z IP'sining yozuvlarini tozalaydi. Agar
+# signup ham shu hisobga qo'shilsa, chegaraga yetgan odam bitta login qilib
+# hisoblagichni nolga tushirib olardi — cheklov umuman ishlamas edi.
+
+LOGIN = "login"
+SIGNUP = "signup"
+
+# Login: parol terishda adashish normal, shuning uchun oyna qisqa va keng
 MAX_ATTEMPTS = 8
 WINDOW_SECONDS = 300
 
+# Signup: maqsad boshqa — bitta IP nechta restoran ocha olishini cheklash.
+# Bitta kafe wi-fi ortidan bir necha odam ro'yxatdan o'tsa ham yetadi,
+# skript bilan yaxshi slug'larni band qilishga esa yetmaydi.
+MAX_SIGNUPS = 5
+SIGNUP_WINDOW_SECONDS = 3600
 
-def _window_start() -> datetime:
-    return utcnow_naive() - timedelta(seconds=WINDOW_SECONDS)
+
+def _window_start(seconds: int = WINDOW_SECONDS) -> datetime:
+    return utcnow_naive() - timedelta(seconds=seconds)
 
 
-def login_attempt_allowed(db: Session, client_ip: str) -> bool:
+def attempt_allowed(db: Session, client_ip: str, kind: str, limit: int, window: int) -> bool:
     recent = db.scalar(
         select(func.count())
         .select_from(LoginAttempt)
-        .where(LoginAttempt.ip == client_ip, LoginAttempt.created_at >= _window_start())
+        .where(
+            LoginAttempt.ip == client_ip,
+            LoginAttempt.kind == kind,
+            LoginAttempt.created_at >= _window_start(window),
+        )
     )
-    return (recent or 0) < MAX_ATTEMPTS
+    return (recent or 0) < limit
+
+
+def record_attempt(db: Session, client_ip: str, kind: str, window: int) -> None:
+    db.add(LoginAttempt(ip=client_ip, kind=kind))
+    # Eskirgan yozuvlarni shu yerda tozalaymiz — alohida vazifa kerak bo'lmaydi
+    db.execute(
+        delete(LoginAttempt).where(
+            LoginAttempt.kind == kind, LoginAttempt.created_at < _window_start(window)
+        )
+    )
+    db.commit()
+
+
+# --- login (yupqa qobiq) ---
+
+def login_attempt_allowed(db: Session, client_ip: str) -> bool:
+    return attempt_allowed(db, client_ip, LOGIN, MAX_ATTEMPTS, WINDOW_SECONDS)
 
 
 def record_login_failure(db: Session, client_ip: str) -> None:
-    db.add(LoginAttempt(ip=client_ip))
-    # Eskirgan yozuvlarni shu yerda tozalaymiz — alohida vazifa kerak bo'lmaydi
-    db.execute(delete(LoginAttempt).where(LoginAttempt.created_at < _window_start()))
-    db.commit()
+    record_attempt(db, client_ip, LOGIN, WINDOW_SECONDS)
 
 
 def clear_login_failures(db: Session, client_ip: str) -> None:
-    db.execute(delete(LoginAttempt).where(LoginAttempt.ip == client_ip))
+    """Muvaffaqiyatli login'dan keyin — faqat LOGIN yozuvlari o'chadi."""
+    db.execute(
+        delete(LoginAttempt).where(
+            LoginAttempt.ip == client_ip, LoginAttempt.kind == LOGIN
+        )
+    )
     db.commit()
+
+
+# --- ro'yxatdan o'tish ---
+
+def signup_allowed(db: Session, client_ip: str) -> bool:
+    return attempt_allowed(db, client_ip, SIGNUP, MAX_SIGNUPS, SIGNUP_WINDOW_SECONDS)
+
+
+def record_signup(db: Session, client_ip: str) -> None:
+    """Login'dan farqi: HAR BIR urinish sanaladi, muvaffaqiyatlisi ham.
+
+    Maqsad xatoni ushlash emas, bitta manbadan kelayotgan restoran oqimini
+    cheklash — shuning uchun muvaffaqiyatli ro'yxat ham hisobga kiradi.
+    """
+    record_attempt(db, client_ip, SIGNUP, SIGNUP_WINDOW_SECONDS)

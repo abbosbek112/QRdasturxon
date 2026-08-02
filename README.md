@@ -53,6 +53,13 @@ bog'lanadi, pul qo'lda qabul qilinadi, superadmin panelidan obuna uzaytiriladi.
 | Wi-Fi, taom belgilari | bor | bor |
 | Bugungi taklif, izohlar, chop etish | yo'q | bor |
 
+### Qidiruv tizimlari
+
+`robots.txt` panel va formalarni yopadi, menyularni ochiq qoldiradi.
+`sitemap.xml` da bosh sahifa va **faqat ishlayotgan** menyular bo'ladi —
+muddati tugagani 503 qaytaradi, uni ro'yxatga qo'yish Google'ni ataylab
+buzuq manzilga yuborish bo'lardi.
+
 ### Muddat tugagach nima bo'ladi
 
 Bepul rejim — **7 kunlik sinov**, undan nariga cho'zilmaydi. Muddat tugasa:
@@ -70,6 +77,17 @@ yo'liga aylanardi.
 > Buning narxi bor: xato sahifasini restoranning aybsiz mijozi ko'radi. Shu
 > sababli o'sha sahifada tarif ham, qarz ham tilga olinmaydi — faqat menyu
 > vaqtincha yopiqligi aytiladi.
+
+**Ogohlantirish.** Muddat tugashiga 3 kun qolganda panel qobig'ida
+(`admin/_shell.html`) tasma paydo bo'ladi va **har bir admin sahifasida**
+turadi — ilgari u faqat bosh sahifada edi, ya'ni taomlarni tahrirlab yurgan
+odam menyusi o'chishidan bexabar qolardi. Vaqt ko'p bo'lsa tasma umuman
+chizilmaydi: har kuni ko'rinadigan ogohlantirish tez ko'zga ko'rinmas
+bo'lib qoladi.
+
+Sizning tomoningizda superadmin dashboardida *"7 kunda tugaydi"* qutisi bor —
+bosilsa o'sha ro'yxatni ochadi. Xabar yuborish avtomatlashtirilmagan:
+bog'lanishni o'zingiz qilasiz, ro'yxat esa kimligini aytadi.
 
 ## Texnologiyalar
 
@@ -272,6 +290,15 @@ Model o'zgartirilgandan keyin migratsiya yarating:
 - Parollar argon2 bilan hashlanadi. Login urinishlari IP bo'yicha **bazada**
   hisoblanadi — server qayta ishga tushsa ham cheklov kuchida qoladi va bir nechta
   ishchi jarayon bitta hisobni ko'radi
+- **Ro'yxatdan o'tish ham cheklangan**: soatiga 5 ta, aks holda bitta skript
+  yaxshi slug'larni band qilib tashlashi mumkin edi. Login'dan farqi — har bir
+  urinish sanaladi, muvaffaqiyatlisi ham, chunki maqsad xatoni ushlash emas,
+  bitta manbadan kelayotgan restoran oqimini cheklash.
+
+  > Ikkovi `login_attempts` jadvalida `kind` ustuni bilan **ajratilgan**.
+  > Ajratilmasa: muvaffaqiyatli login o'z IP'sining yozuvlarini tozalaydi,
+  > ya'ni chegaraga yetgan odam bitta login qilib hisoblagichni nolga tushirib
+  > olardi. `tests/test_security.py` shu yo'lni alohida tekshiradi.
 - Javob sarlavhalarida CSP (`script-src 'self'` — inline JS umuman yo'q),
   `X-Frame-Options`, `nosniff`, `Referrer-Policy`
 - `DEBUG=false` bo'lganda zaif yoki standart `SECRET_KEY` bilan **server

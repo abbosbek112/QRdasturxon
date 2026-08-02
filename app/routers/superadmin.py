@@ -48,11 +48,27 @@ SORTS = {
 }
 STATUS_FILTERS = {
     "hammasi": "Hammasi",
+    "tugayapti": "Shu hafta tugaydi",
     "sinov": "Sinovda",
     "faol": "To'lagan",
     "tugagan": "Muddati tugagan",
     "bloklangan": "Bloklangan",
 }
+
+# Necha kun qolganda "yaqinda tugaydi" deb hisoblaymiz. Telegram bot yo'q,
+# ya'ni restoranga o'zingiz yozasiz — bu ro'yxat bugun kimga yozish
+# kerakligini ko'rsatadi.
+EXPIRING_DAYS = 7
+
+
+def _expiring_soon(restaurant: Restaurant) -> bool:
+    """Muddati shu hafta tugaydigan, hali ochiq restoran."""
+    if not restaurant.is_active or restaurant.subscription_status is SubscriptionStatus.expired:
+        return False
+    ends = _ends_at(restaurant)
+    if ends is None:
+        return False
+    return utcnow_naive() <= ends <= utcnow_naive() + timedelta(days=EXPIRING_DAYS)
 
 
 @router.get("")
@@ -91,7 +107,9 @@ def dashboard(
             r for r in restaurants
             if needle in r.name.lower() or needle in r.slug.lower()
         ]
-    if status_filter in STATUS_FILTERS and status_filter != "hammasi":
+    if status_filter == "tugayapti":
+        restaurants = [r for r in restaurants if _expiring_soon(r)]
+    elif status_filter in STATUS_FILTERS and status_filter != "hammasi":
         restaurants = [r for r in restaurants if _status_key(r) == status_filter]
 
     sort = sort if sort in SORTS else "yangi"
@@ -128,9 +146,13 @@ def dashboard(
             "sorts": SORTS,
             "status_filters": STATUS_FILTERS,
             # platforma ko'rsatkichlari
+            "expiring_days": EXPIRING_DAYS,
             "totals": {
                 "restaurants": len(db.scalars(select(Restaurant.id)).all()),
                 "live": sum(1 for r in db.scalars(select(Restaurant)).all() if menu_is_live(r)),
+                # Filtrlashdan OLDINGI ro'yxatdan sanaladi, aks holda
+                # "tugayapti" filtri yoqilganda son o'zgarib ketardi
+                "expiring": sum(1 for r in db.scalars(select(Restaurant)).all() if _expiring_soon(r)),
                 "menu_opens": menu_opens,
                 "item_opens": item_opens,
                 "pending_comments": int(pending_comments or 0),

@@ -1,7 +1,8 @@
 from typing import Annotated
+from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -9,7 +10,7 @@ from app.config import settings
 from app.database import get_db
 from app.i18n import LANGUAGES, LANG_COOKIE, resolve_lang, tr
 from app.models import Category, MenuItem, Plan, Restaurant
-from app.plans import LIMITS, TRIAL_DAYS, is_expired, limits_for, visible_languages
+from app.plans import LIMITS, TRIAL_DAYS, is_expired, limits_for, menu_is_live, visible_languages
 from app.security import verify_csrf
 from app.services import comments, qr
 from app.services.stats import record_view
@@ -41,6 +42,57 @@ def _share_card(restaurant: Restaurant, lang: str, image: str | None = None) -> 
         or f"{restaurant.name} menyusi. Taomlar, narxlar va tarkibi.",
         "og_image": f"/media/{picture}" if picture else None,
     }
+
+
+@router.get("/robots.txt", include_in_schema=False)
+def robots() -> Response:
+    """Qidiruv tizimlari uchun qoidalar.
+
+    Menyular ochiq — restoranni Google topsin. Panel va formalar yopiq:
+    ular indeksda turishining ma'nosi yo'q.
+    """
+    base = settings.base_url.rstrip("/")
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin",
+        "Disallow: /superadmin",
+        "Disallow: /login",
+        "Disallow: /signup",
+        "Allow: /",
+        "",
+        f"Sitemap: {base}/sitemap.xml",
+        "",
+    ]
+    return Response("\n".join(lines), media_type="text/plain")
+
+
+@router.get("/sitemap.xml", include_in_schema=False)
+def sitemap(db: DbSession) -> Response:
+    """Bosh sahifa va ISHLAYOTGAN menyular.
+
+    Muddati tugagan menyu 503 qaytaradi — uni ro'yxatga qo'yish Google'ni
+    ataylab buzuq manzilga yuborish bo'lardi. Shuning uchun ro'yxat
+    `menu_is_live()` bilan filtrlanadi.
+    """
+    base = settings.base_url.rstrip("/")
+    restaurants = db.scalars(
+        select(Restaurant).where(Restaurant.is_active.is_(True)).order_by(Restaurant.id)
+    ).all()
+
+    urls = [f"  <url><loc>{base}/</loc><priority>1.0</priority></url>"]
+    urls += [
+        f"  <url><loc>{base}/r/{escape(place.slug)}</loc><priority>0.8</priority></url>"
+        for place in restaurants
+        if menu_is_live(place)
+    ]
+
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(urls)
+        + "\n</urlset>\n"
+    )
+    return Response(body, media_type="application/xml")
 
 
 def _closed_response(request: Request, restaurant: Restaurant):

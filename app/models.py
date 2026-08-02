@@ -193,7 +193,7 @@ class ItemComment(Base):
 
 
 class LoginAttempt(Base):
-    """Muvaffaqiyatsiz login urinishlari.
+    """IP bo'yicha cheklanadigan urinishlar: login va ro'yxatdan o'tish.
 
     Xotirada emas, bazada saqlanadi — shunda server qayta ishga tushganda ham
     cheklov kuchida qoladi va bir nechta ishchi jarayon bitta hisobni ko'radi.
@@ -203,6 +203,10 @@ class LoginAttempt(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ip: Mapped[str] = mapped_column(String(64), index=True)
+    # Turini ajratish shart. Muvaffaqiyatli login o'z IP'sining yozuvlarini
+    # tozalaydi — agar signup ham shu yerda aralash yotsa, hujumchi chegaraga
+    # yetgach bitta login qilib hisoblagichni nolga tushirib olardi.
+    kind: Mapped[str] = mapped_column(String(16), default="login", index=True)
     # Mintaqasiz UTC — sabab uchun utcnow_naive() izohiga qarang
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow_naive, index=True

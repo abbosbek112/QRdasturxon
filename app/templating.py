@@ -3,6 +3,7 @@ from fastapi.templating import Jinja2Templates
 from app import themes
 from app.config import BASE_DIR, settings
 from app.i18n import LANGUAGES, t, tr
+from app.plans import trial_days_left
 from app.security import csrf_token
 
 templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
@@ -40,6 +41,9 @@ templates.env.globals.update(
     LANGUAGES=LANGUAGES,
     asset_v=_asset_version(),
     theme_css=theme_css,
+    # Panel qobig'idagi ogohlantirish tasmasi shuni chaqiradi — marshrutlarga
+    # tegmasdan har bir admin sahifasida ishlashi uchun global
+    trial_days_left=trial_days_left,
     # Bosh sahifadagi ko'rgazma uslublarni restoransiz chizadi: har bir
     # namuna karta o'z palitrasini shu yerdan oladi
     css_variables=themes.css_variables,
