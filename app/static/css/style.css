@@ -1445,15 +1445,24 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
   color: #16a34a; font-size: var(--text-xs); font-weight: 700;
 }
 
+.astra .lp-toggle-label { cursor: pointer; user-select: none; }
+
 /* Oylik/Yillik narx ko'rinishi */
 .astra .price-yearly { display: none; }
 .astra .tag-yearly { display: none; }
 
 /* Toggle yillikka o'tganda */
-.astra:has(#billing-toggle[aria-checked="true"]) .price-monthly { display: none; }
-.astra:has(#billing-toggle[aria-checked="true"]) .price-yearly { display: inline; }
-.astra:has(#billing-toggle[aria-checked="true"]) .tag-monthly { display: none; }
-.astra:has(#billing-toggle[aria-checked="true"]) .tag-yearly { display: inline; }
+.astra:has(#billing-toggle[aria-checked="true"]) .price-monthly,
+.astra .lp-plans.is-yearly .price-monthly { display: none !important; }
+
+.astra:has(#billing-toggle[aria-checked="true"]) .price-yearly,
+.astra .lp-plans.is-yearly .price-yearly { display: inline !important; }
+
+.astra:has(#billing-toggle[aria-checked="true"]) .tag-monthly,
+.astra .lp-plans.is-yearly .tag-monthly { display: none !important; }
+
+.astra:has(#billing-toggle[aria-checked="true"]) .tag-yearly,
+.astra .lp-plans.is-yearly .tag-yearly { display: inline !important; }
 
 /* ==========================================================================
    ko'rgazma — imkoniyatlarni aytib emas, ko'rsatib berish

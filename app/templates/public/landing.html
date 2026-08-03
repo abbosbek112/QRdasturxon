@@ -305,8 +305,8 @@
     {# --- oylik / yillik almashtirgich --- #}
     <div class="lp-toggle-wrap" data-reveal>
       <span class="lp-toggle-label" id="lbl-monthly">{{ t('toggle_monthly', lang) }}</span>
-      <button class="lp-toggle" id="billing-toggle" role="switch" aria-checked="false"
-              aria-labelledby="lbl-monthly lbl-yearly" onclick="this.setAttribute('aria-checked', this.getAttribute('aria-checked')==='false')">
+      <button class="lp-toggle" id="billing-toggle" type="button" role="switch" aria-checked="false"
+              aria-labelledby="lbl-monthly lbl-yearly">
         <span class="lp-toggle-thumb"></span>
       </button>
       <span class="lp-toggle-label" id="lbl-yearly">{{ t('toggle_yearly', lang) }}

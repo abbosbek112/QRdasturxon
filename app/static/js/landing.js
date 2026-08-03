@@ -81,4 +81,31 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     requestAnimationFrame(step);
   }
+
+  // --- Narxlar bo'limi: oylik/yillik almashtirgich ---
+  var billingToggle = document.getElementById("billing-toggle");
+  var toggleWrap = document.querySelector(".lp-toggle-wrap");
+  var plansContainer = document.querySelector(".lp-plans");
+  var lblMonthly = document.getElementById("lbl-monthly");
+  var lblYearly = document.getElementById("lbl-yearly");
+
+  if (billingToggle) {
+    function setBilling(isYearly) {
+      billingToggle.setAttribute("aria-checked", isYearly ? "true" : "false");
+      if (plansContainer) plansContainer.classList.toggle("is-yearly", isYearly);
+      if (toggleWrap) toggleWrap.classList.toggle("is-yearly", isYearly);
+    }
+
+    billingToggle.addEventListener("click", function (e) {
+      e.preventDefault();
+      setBilling(billingToggle.getAttribute("aria-checked") !== "true");
+    });
+
+    if (lblMonthly) {
+      lblMonthly.addEventListener("click", function () { setBilling(false); });
+    }
+    if (lblYearly) {
+      lblYearly.addEventListener("click", function () { setBilling(true); });
+    }
+  }
 });
