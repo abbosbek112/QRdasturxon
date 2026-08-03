@@ -292,7 +292,7 @@ def test_landing_page_lists_every_plan(client):
     body = html.unescape(client.get("/").text)
     for limits in LIMITS.values():
         assert limits.name in body
-    assert "500 000" in body  # yillik narx ko'rinishi
+    assert "499 000" in body  # yillik narx ko'rinishi
     assert "/signup" in body
 
 

@@ -205,17 +205,18 @@ UI: dict[str, dict[str, str]] = {
         "en": "Halal, spicy, vegetarian and allergens. Guests stop asking and staff save time.",
     },
     # --- bosh sahifa: narxlar va oxirgi chaqiriq ---
-    "pricing_title": {"uz": "Yiliga bir marta to'laysiz", "ru": "Платите раз в год", "en": "You pay once a year"},
+    "pricing_title": {"uz": "Qulay narxlar", "ru": "Удобные цены", "en": "Affordable pricing"},
     "pricing_sub": {
-        "uz": "{days} kun bepul sinab ko'ring \u2014 karta so'ralmaydi. Muddat tugagach "
-              "menyu yopiladi, ma'lumotlaringiz esa saqlanib qoladi.",
-        "ru": "Попробуйте {days} дней бесплатно \u2014 карта не нужна. По окончании срока "
-              "меню закрывается, а ваши данные остаются на месте.",
-        "en": "Try it free for {days} days \u2014 no card needed. When the period ends the "
-              "menu closes, but your data stays where it is.",
+        "uz": "{days} kun bepul sinab ko'ring — karta so'ralmaydi. Oylik yoki yillik to'lang.",
+        "ru": "Попробуйте {days} дней бесплатно — карта не нужна. Платите помесячно или за год.",
+        "en": "Try it free for {days} days — no card needed. Pay monthly or yearly.",
     },
-    "plan_tag_best": {"uz": "Hammasi ochiq", "ru": "Всё открыто", "en": "Everything included"},
+    "plan_tag_best": {"uz": "Tejamkor", "ru": "Выгодно", "en": "Best value"},
     "per_year": {"uz": "so'm/yil", "ru": "сум/год", "en": "UZS/year"},
+    "per_month": {"uz": "so'm/oy", "ru": "сум/мес", "en": "UZS/mo"},
+    "toggle_monthly": {"uz": "Oylik", "ru": "Помесячно", "en": "Monthly"},
+    "toggle_yearly": {"uz": "Yillik", "ru": "Годовой", "en": "Yearly"},
+    "yearly_savings": {"uz": "Tejaysiz", "ru": "Экономия", "en": "Save"},
     "plan_items": {"uz": "{n} ta taom", "ru": "{n} блюд", "en": "{n} dishes"},
     "plan_items_unlimited": {"uz": "Cheksiz taom", "ru": "Блюда без ограничений", "en": "Unlimited dishes"},
     "plan_categories": {"uz": "{n} ta kategoriya", "ru": "{n} раздела", "en": "{n} categories"},

@@ -302,39 +302,60 @@
       <p class="lp-sub">{{ t('pricing_sub', lang).replace('{days}', trial_days | string) }}</p>
     </header>
 
+    {# --- oylik / yillik almashtirgich --- #}
+    <div class="lp-toggle-wrap" data-reveal>
+      <span class="lp-toggle-label" id="lbl-monthly">{{ t('toggle_monthly', lang) }}</span>
+      <button class="lp-toggle" id="billing-toggle" role="switch" aria-checked="false"
+              aria-labelledby="lbl-monthly lbl-yearly" onclick="this.setAttribute('aria-checked', this.getAttribute('aria-checked')==='false')">
+        <span class="lp-toggle-thumb"></span>
+      </button>
+      <span class="lp-toggle-label" id="lbl-yearly">{{ t('toggle_yearly', lang) }}
+        <span class="lp-save-pill">−17%</span>
+      </span>
+    </div>
+
     <div class="lp-plans lp-plans-two" data-stagger>
-      {% for plan, limit in plans %}
-        <div class="lp-panel lp-plan {{ 'lp-plan-best' if limit.price_yearly }}" data-reveal="scale">
-          {% if limit.price_yearly %}<span class="lp-tag">{{ t('plan_tag_best', lang) }}</span>{% endif %}
-          <h3>{{ limit.name }}</h3>
-          {# Bepul tarifning nomi ham "Bepul" — narx qatorida uni takrorlamaymiz #}
-          <p class="lp-price">
-            {{ limit.price_yearly | price }} <small class="muted">{{ t('per_year', lang) }}</small>
-          </p>
-          <ul class="lp-list">
-            <li>{{ ui.icon('check') }}<span>{{ t('plan_items', lang).replace('{n}', limit.max_items | string) if limit.max_items else t('plan_items_unlimited', lang) }}</span></li>
-            <li>{{ ui.icon('check') }}<span>{{ t('plan_categories', lang).replace('{n}', limit.max_categories | string) if limit.max_categories else t('plan_categories_unlimited', lang) }}</span></li>
-            <li>{{ ui.icon('check') }}<span>
-              {%- if limit.languages | length > 1 %}{{ t('plan_three_languages', lang) }}
-              {%- else %}{{ t('plan_one_language', lang) }}{% endif -%}
-            </span></li>
-            <li>{{ ui.icon('check') }}<span>{{ t('plan_wifi_marks', lang) }}</span></li>
-            <li>{{ ui.icon('check') }}<span>{{ t('plan_stats', lang).replace('{n}', limit.stats_days | string) }}</span></li>
-            {% if limit.specials %}<li>{{ ui.icon('check') }}<span>{{ t('plan_specials', lang) }}</span></li>{% endif %}
-            {% if limit.comments %}<li>{{ ui.icon('check') }}<span>{{ t('plan_comments', lang) }}</span></li>{% endif %}
-            {% if limit.printable %}<li>{{ ui.icon('check') }}<span>{{ t('plan_print', lang) }}</span></li>{% endif %}
-            {% if limit.price_yearly %}<li>{{ ui.icon('check') }}<span>{{ t('plan_payment', lang) }}</span></li>{% endif %}
-          </ul>
-          {# Sotib olish uchun bog'lanish kerak — pullik karta Telegramga
-             olib boradi, bepuli esa ro'yxatdan o'tkazadi #}
-          {% if limit.price_yearly %}
-            <a class="btn btn-primary btn-block" href="https://t.me/{{ CONTACT.telegram }}"
-               target="_blank" rel="noopener">{{ ui.icon('chat') }} {{ t('plan_buy', lang) }}</a>
-          {% else %}
-            <a class="btn btn-block" href="/signup">{{ t('plan_start_free', lang).replace('{days}', trial_days | string) }}</a>
-          {% endif %}
-        </div>
-      {% endfor %}
+      {# --- Bepul tarif --- #}
+      {% set free_limit = plans[0][1] %}
+      <div class="lp-panel lp-plan" data-reveal="scale">
+        <h3>{{ free_limit.name }}</h3>
+        <p class="lp-price">
+          <span class="price-monthly">{{ t('plan_start_free', lang).replace('{days}', trial_days | string) }}</span>
+          <span class="price-yearly">{{ t('plan_start_free', lang).replace('{days}', trial_days | string) }}</span>
+        </p>
+        <ul class="lp-list">
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_items', lang).replace('{n}', free_limit.max_items | string) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_categories', lang).replace('{n}', free_limit.max_categories | string) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_one_language', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_wifi_marks', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_stats', lang).replace('{n}', free_limit.stats_days | string) }}</span></li>
+        </ul>
+        <a class="btn btn-block" href="/signup">{{ t('plan_start_free', lang).replace('{days}', trial_days | string) }}</a>
+      </div>
+
+      {# --- To'liq tarif --- #}
+      {% set full_limit = plans[1][1] %}
+      <div class="lp-panel lp-plan lp-plan-best" data-reveal="scale">
+        <span class="lp-tag"><span class="tag-monthly">{{ t('plan_tag_best', lang) }}</span><span class="tag-yearly">{{ t('yearly_savings', lang) }}</span></span>
+        <h3>{{ full_limit.name }}</h3>
+        <p class="lp-price">
+          <span class="price-monthly">{{ full_limit.price_monthly | price }} <small class="muted">{{ t('per_month', lang) }}</small></span>
+          <span class="price-yearly">{{ full_limit.price_yearly | price }} <small class="muted">{{ t('per_year', lang) }}</small></span>
+        </p>
+        <ul class="lp-list">
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_items_unlimited', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_categories_unlimited', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_three_languages', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_wifi_marks', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_stats', lang).replace('{n}', full_limit.stats_days | string) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_specials', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_comments', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_print', lang) }}</span></li>
+          <li>{{ ui.icon('check') }}<span>{{ t('plan_payment', lang) }}</span></li>
+        </ul>
+        <a class="btn btn-primary btn-block" href="https://t.me/{{ CONTACT.telegram }}"
+           target="_blank" rel="noopener">{{ ui.icon('chat') }} {{ t('plan_buy', lang) }}</a>
+      </div>
     </div>
 
     <div class="lp-panel lp-pay" data-reveal>

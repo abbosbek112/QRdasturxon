@@ -18,13 +18,14 @@ from math import ceil
 
 from app.models import Plan, Restaurant, SubscriptionStatus, utcnow_naive
 
-TRIAL_DAYS = 7
+TRIAL_DAYS = 30
 
 
 @dataclass(frozen=True)
 class Limits:
     name: str
     price_yearly: int  # so'mda, 0 = bepul
+    price_monthly: int  # oylik to'lov
     max_items: int | None  # None = cheksiz
     max_categories: int | None
     languages: tuple[str, ...]
@@ -43,6 +44,7 @@ LIMITS: dict[Plan, Limits] = {
     Plan.free: Limits(
         name="Bepul",
         price_yearly=0,
+        price_monthly=0,
         max_items=20,
         max_categories=3,
         languages=("uz",),
@@ -52,8 +54,9 @@ LIMITS: dict[Plan, Limits] = {
         printable=False,
     ),
     Plan.full: Limits(
-        name="To'liq 1 yillik",
-        price_yearly=500_000,
+        name="To'liq",
+        price_yearly=499_000,
+        price_monthly=60_000,
         max_items=None,
         max_categories=None,
         languages=("uz", "ru", "en"),
