@@ -405,3 +405,23 @@ def test_superadmin_sees_who_expires_this_week(client, db, superadmin, tenant_a,
     body = client.get("/superadmin?status_filter=tugayapti").text
     assert soon.name in body
     assert later.name not in body
+
+
+def test_interface_language_is_separate_from_menu_language(client, db, free_tenant):
+    """Bepul tarif menyu MAZMUNINI cheklaydi, interfeysni emas.
+
+    Ikkisi bir o'zgaruvchida bo'lsa, interfeys tili menyu cheklovini bosib
+    qo'yardi va bepul restoranning menyusi ruscha chiqib ketardi.
+    """
+    category = Category(restaurant_id=free_tenant.id, name={"uz": "Issiq", "ru": "Горячее"})
+    db.add(category)
+    db.flush()
+    db.add(MenuItem(
+        restaurant_id=free_tenant.id, category_id=category.id,
+        name={"uz": "Osh", "ru": "Плов"}, price=38000,
+    ))
+    db.commit()
+
+    body = client.get(f"/r/{free_tenant.slug}?lang=ru").text
+    assert "Плов" not in body   # mazmun cheklangan
+    assert "Osh" in body

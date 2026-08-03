@@ -2,11 +2,31 @@ from fastapi.templating import Jinja2Templates
 
 from app import themes
 from app.config import BASE_DIR, settings
-from app.i18n import LANGUAGES, t, tr
+from app.i18n import LANGUAGES, resolve_lang, t, tr
 from app.plans import trial_days_left
 from app.security import csrf_token
 
-templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
+def _language(request) -> dict:
+    """Interfeys tili — har bir shablonga avtomatik qo'shiladi.
+
+    Ataylab `lang` emas, `ui_lang`. Bular ikki xil narsa:
+
+    * `lang` — menyu MAZMUNI qaysi tilda ko'rsatilishi. Uni marshrut beradi
+      va tarif cheklashi mumkin (bepulda faqat o'zbekcha).
+    * `ui_lang` — INTERFEYS tili: tugmalar, sarlavhalar, panel. Hech qachon
+      cheklanmaydi.
+
+    Nomlari bir xil bo'lsa, protsessor marshrut bergan qiymatni bosib
+    qo'yardi (Starlette protsessorlarni kontekst USTIGA qo'llaydi) va bepul
+    tarifdagi til cheklovi ishlamay qolardi.
+    """
+    return {"ui_lang": resolve_lang(request)}
+
+
+templates = Jinja2Templates(
+    directory=BASE_DIR / "app" / "templates",
+    context_processors=[_language],
+)
 
 
 def _asset_version() -> str:

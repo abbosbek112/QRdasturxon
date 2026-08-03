@@ -79,16 +79,30 @@ def sitemap(db: DbSession) -> Response:
         select(Restaurant).where(Restaurant.is_active.is_(True)).order_by(Restaurant.id)
     ).all()
 
-    urls = [f"  <url><loc>{base}/</loc><priority>1.0</priority></url>"]
+    def entry(path: str, priority: str) -> str:
+        """Bitta manzil va uning til variantlari.
+
+        hreflang bo'lmasa Google uch tilni bir-biriga bog'lay olmaydi va
+        ruscha qidirgan odam o'zbekcha sahifaga tushib qolishi mumkin.
+        """
+        alternates = "".join(
+            f'<xhtml:link rel="alternate" hreflang="{code}" '
+            f'href="{base}{path}?lang={code}"/>'
+            for code in LANGUAGES
+        )
+        return f"  <url><loc>{base}{path}</loc>{alternates}<priority>{priority}</priority></url>"
+
+    urls = [entry("/", "1.0")]
     urls += [
-        f"  <url><loc>{base}/r/{escape(place.slug)}</loc><priority>0.8</priority></url>"
+        entry(f"/r/{escape(place.slug)}", "0.8")
         for place in restaurants
         if menu_is_live(place)
     ]
 
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+        ' xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
         + "\n".join(urls)
         + "\n</urlset>\n"
     )
@@ -131,7 +145,7 @@ def index(request: Request, db: DbSession):
             Restaurant.slug == settings.demo_slug, Restaurant.is_active.is_(True)
         )
     )
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request,
         "public/landing.html",
         {
@@ -144,6 +158,9 @@ def index(request: Request, db: DbSession):
             "trial_days": TRIAL_DAYS,
         },
     )
+    # Til tanlovi /signup va /login ga ham ergashsin
+    _remember_language(request, response, lang)
+    return response
 
 
 @router.get("/r/{slug}")

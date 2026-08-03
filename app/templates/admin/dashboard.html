@@ -7,12 +7,12 @@
   <div>
     <h1>{{ restaurant.name }}</h1>
     <div class="row small" style="gap:.6rem">
-      {% if restaurant.is_active %}<span class="badge badge-ok">Faol</span>
-      {% else %}<span class="badge badge-off">Faol emas</span>{% endif %}
+      {% if restaurant.is_active %}<span class="badge badge-ok">{{ t('state_active', ui_lang) }}</span>
+      {% else %}<span class="badge badge-off">{{ t('state_inactive', ui_lang) }}</span>{% endif %}
       <a href="{{ menu_url }}" target="_blank" rel="noopener">{{ menu_url }} {{ ui.icon('external') }}</a>
     </div>
   </div>
-  <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} Yangi taom</a>
+  <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} {{ t('dash_new_item', ui_lang) }}</a>
 </div>
 
 {% set pending = steps | rejectattr('done') | list %}
@@ -20,10 +20,9 @@
   <div class="setup">
     <div class="setup-head">
       <div>
-        <h2>Menyuni ishga tushiramiz</h2>
+        <h2>{{ t('setup_title', ui_lang) }}</h2>
         <p class="muted small" style="margin:0">
-          {{ steps | selectattr('done') | list | length }} / {{ steps | length }} bajarildi —
-          qolgan qadamlarni ketma-ket bajaring.
+          {{ t('setup_progress', ui_lang).replace('{done}', steps | selectattr('done') | list | length | string).replace('{all}', steps | length | string) }}
         </p>
       </div>
       <div class="setup-progress" aria-hidden="true">
@@ -49,7 +48,7 @@
     </ol>
 
     <p class="hint" style="margin-top:.75rem">
-      Uchalasi bajarilgach bu ro'yxat o'zi yo'qoladi va QR kodni chop etishga o'tasiz.
+      {{ t('setup_hint', ui_lang) }}
     </p>
   </div>
 {% endif %}
@@ -61,21 +60,20 @@
 #}
 {% if restaurant.subscription_status.value == 'trial' and trial_days > 3 %}
   <div class="notice">
-    <strong>Sinov muddati: {{ trial_days }} kun qoldi.</strong>
-    Hozir To'liq tarif imkoniyatlari ochiq. Muddat tugagach menyu yopiladi —
-    QR kodni skanerlagan mijoz uni ko'rmaydi. Davom ettirish uchun
-    <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
+    <strong>{{ t('trial_days_left_title', ui_lang).replace('{n}', trial_days | string) }}</strong>
+    {{ t('trial_days_left_text', ui_lang) }}
+    <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">{{ t('write_telegram', ui_lang) }}</a>.
   </div>
 {% endif %}
 
 <div class="stat-grid">
-  <div class="stat"><b>{{ views_total }}</b><span>{{ limits.stats_days }} kunda ochilgan</span></div>
-  <div class="stat"><b>{{ category_count }}</b><span>Kategoriya</span></div>
-  <div class="stat"><b>{{ item_count }}</b><span>Taom</span></div>
-  <div class="stat"><b>{{ hidden_count }}</b><span>Yashirilgan taom</span></div>
+  <div class="stat"><b>{{ views_total }}</b><span>{{ t('dash_opens_in', ui_lang).replace('{n}', limits.stats_days | string) }}</span></div>
+  <div class="stat"><b>{{ category_count }}</b><span>{{ t('dash_categories', ui_lang) }}</span></div>
+  <div class="stat"><b>{{ item_count }}</b><span>{{ t('dash_items', ui_lang) }}</span></div>
+  <div class="stat"><b>{{ hidden_count }}</b><span>{{ t('dash_hidden', ui_lang) }}</span></div>
 </div>
 
-<p class="section-label">Menyu ochilishi — oxirgi {{ chart_days }} kun</p>
+<p class="section-label">{{ t('dash_opens_chart', ui_lang).replace('{n}', chart_days | string) }}</p>
 <div class="card">
   {% if views_total %}
     <div class="chart" role="img"
@@ -88,21 +86,21 @@
     </div>
     <div class="spread small muted" style="margin-top:.5rem">
       <span>{{ daily_views[0][0].strftime('%d.%m') }}</span>
-      <span>Eng yuqori kun: {{ views_peak }}</span>
+      <span>{{ t('dash_peak_day', ui_lang).replace('{n}', views_peak | string) }}</span>
       <span>{{ daily_views[-1][0].strftime('%d.%m') }}</span>
     </div>
   {% else %}
     <p class="muted small" style="margin:0">
-      Hozircha ochilish yo'q. QR kodni stolga qo'ygandan keyin bu yerda kunlik grafik chiqadi.
+      {{ t('dash_no_opens', ui_lang) }}
     </p>
   {% endif %}
   <p class="hint">
-    Bu — menyu necha marta ochilgani. Bir mijoz bir necha marta ochsa, har biri sanaladi.
+    {{ t('dash_opens_hint', ui_lang) }}
   </p>
 </div>
 
 {% if top_items %}
-<p class="section-label">Eng ko'p ochilgan taomlar</p>
+<p class="section-label">{{ t('dash_top_items', ui_lang) }}</p>
 <div class="table-card">
   <table>
     <tbody>
@@ -111,7 +109,7 @@
         <td style="width:1%; padding-left:1rem; color:var(--ink-3)">{{ loop.index }}</td>
         <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
         <td style="width:1%; padding-right:1rem; text-align:right; white-space:nowrap">
-          {{ count }} marta
+          {{ count }} {{ t('times', ui_lang) }}
         </td>
       </tr>
       {% endfor %}
@@ -120,14 +118,14 @@
 </div>
 {% endif %}
 
-<p class="section-label">Tez havolalar</p>
+<p class="section-label">{{ t('dash_quick', ui_lang) }}</p>
 <div class="row">
-  <a class="btn" href="/admin/categories">{{ ui.icon('grid') }} Kategoriyalar</a>
-  <a class="btn" href="/admin/items">{{ ui.icon('list') }} Taomlar</a>
-  <a class="btn" href="/admin/qr">{{ ui.icon('qr') }} QR kod</a>
+  <a class="btn" href="/admin/categories">{{ ui.icon('grid') }} {{ t('nav_categories', ui_lang) }}</a>
+  <a class="btn" href="/admin/items">{{ ui.icon('list') }} {{ t('nav_items', ui_lang) }}</a>
+  <a class="btn" href="/admin/qr">{{ ui.icon('qr') }} {{ t('nav_qr', ui_lang) }}</a>
   {% if limits.printable %}
-    <a class="btn" href="/admin/menu/print">{{ ui.icon('printer') }} Chop etish uchun menyu</a>
+    <a class="btn" href="/admin/menu/print">{{ ui.icon('printer') }} {{ t('dash_print_menu', ui_lang) }}</a>
   {% endif %}
-  <a class="btn" href="/admin/settings">{{ ui.icon('settings') }} Sozlamalar</a>
+  <a class="btn" href="/admin/settings">{{ ui.icon('settings') }} {{ t('nav_settings', ui_lang) }}</a>
 </div>
 {% endblock %}

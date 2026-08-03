@@ -37,6 +37,21 @@
   <meta property="og:url" content="{{ BASE_URL }}{{ request.url.path }}">
   <meta name="twitter:card" content="summary_large_image">
 
+  {#
+    Ko'p tilli SEO. Har bir til alohida manzilda yashaydi (?lang=), aks holda
+    Google bitta manzilda uch xil mazmun ko'rib chalkashardi.
+
+    hreflang uchtasini bir-biriga bog'laydi: qidiruvchi o'z tilidagisiga
+    yuboriladi. canonical esa "asli shu" deb ko'rsatadi, ya'ni uch nusxa
+    takroriy mazmun deb hisoblanmaydi.
+  #}
+  {% set here = BASE_URL ~ request.url.path %}
+  <link rel="canonical" href="{{ here }}?lang={{ lang }}">
+  {% for code in LANGUAGES %}
+    <link rel="alternate" hreflang="{{ code }}" href="{{ here }}?lang={{ code }}">
+  {% endfor %}
+  <link rel="alternate" hreflang="x-default" href="{{ here }}">
+
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/style.css?v={{ asset_v }}">
   {% if restaurant %}

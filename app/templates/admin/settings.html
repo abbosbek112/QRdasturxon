@@ -3,38 +3,38 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>Restoran sozlamalari</h1>
-  <p class="muted small">Bu ma'lumotlar mijoz ko'radigan menyu sahifasining yuqorisida chiqadi.</p>
+  <h1>{{ t('settings_title', ui_lang) }}</h1>
+  <p class="muted small">{{ t('settings_sub', ui_lang) }}</p>
 </div>
 
 <form method="post" action="/admin/settings" enctype="multipart/form-data" class="stack" style="max-width:780px">
   {% include "partials/csrf.html" %}
 
   <div class="card stack">
-    <h2>Asosiy</h2>
+    <h2>{{ t('settings_main', ui_lang) }}</h2>
     <div class="field">
-      <label for="name">Restoran nomi</label>
+      <label for="name">{{ t('field_restaurant_name', ui_lang) }}</label>
       <input id="name" name="name" value="{{ restaurant.name }}" required>
     </div>
     <div class="grid-3">
-      <div class="field"><label>Tavsif (uz)</label><textarea name="description_uz">{{ restaurant.description.get('uz', '') }}</textarea></div>
-      <div class="field"><label>Tavsif (ru)</label><textarea name="description_ru">{{ restaurant.description.get('ru', '') }}</textarea></div>
-      <div class="field"><label>Tavsif (en)</label><textarea name="description_en">{{ restaurant.description.get('en', '') }}</textarea></div>
+      <div class="field"><label>{{ t('field_description', ui_lang) }} (uz)</label><textarea name="description_uz">{{ restaurant.description.get('uz', '') }}</textarea></div>
+      <div class="field"><label>{{ t('field_description', ui_lang) }} (ru)</label><textarea name="description_ru">{{ restaurant.description.get('ru', '') }}</textarea></div>
+      <div class="field"><label>{{ t('field_description', ui_lang) }} (en)</label><textarea name="description_en">{{ restaurant.description.get('en', '') }}</textarea></div>
     </div>
   </div>
 
   <div class="card stack">
-    <h2>Aloqa</h2>
+    <h2>{{ t('settings_contact', ui_lang) }}</h2>
     <div class="grid-2">
-      <div class="field"><label for="phone">Telefon</label><input id="phone" name="phone" value="{{ restaurant.phone or '' }}"></div>
-      <div class="field"><label for="working_hours">Ish vaqti</label><input id="working_hours" name="working_hours" value="{{ restaurant.working_hours or '' }}" placeholder="09:00 – 23:00"></div>
-      <div class="field"><label for="instagram">Instagram havolasi</label><input id="instagram" name="instagram" value="{{ restaurant.instagram or '' }}"></div>
-      <div class="field"><label for="telegram">Telegram havolasi</label><input id="telegram" name="telegram" value="{{ restaurant.telegram or '' }}"></div>
+      <div class="field"><label for="phone">{{ t('field_phone', ui_lang) }}</label><input id="phone" name="phone" value="{{ restaurant.phone or '' }}"></div>
+      <div class="field"><label for="working_hours">{{ t('field_hours', ui_lang) }}</label><input id="working_hours" name="working_hours" value="{{ restaurant.working_hours or '' }}" placeholder="09:00 – 23:00"></div>
+      <div class="field"><label for="instagram">{{ t('field_instagram', ui_lang) }}</label><input id="instagram" name="instagram" value="{{ restaurant.instagram or '' }}"></div>
+      <div class="field"><label for="telegram">{{ t('field_telegram', ui_lang) }}</label><input id="telegram" name="telegram" value="{{ restaurant.telegram or '' }}"></div>
     </div>
     <div class="grid-3">
-      <div class="field"><label>Manzil (uz)</label><input name="address_uz" value="{{ restaurant.address.get('uz', '') }}"></div>
-      <div class="field"><label>Manzil (ru)</label><input name="address_ru" value="{{ restaurant.address.get('ru', '') }}"></div>
-      <div class="field"><label>Manzil (en)</label><input name="address_en" value="{{ restaurant.address.get('en', '') }}"></div>
+      <div class="field"><label>{{ t('field_address', ui_lang) }} (uz)</label><input name="address_uz" value="{{ restaurant.address.get('uz', '') }}"></div>
+      <div class="field"><label>{{ t('field_address', ui_lang) }} (ru)</label><input name="address_ru" value="{{ restaurant.address.get('ru', '') }}"></div>
+      <div class="field"><label>{{ t('field_address', ui_lang) }} (en)</label><input name="address_en" value="{{ restaurant.address.get('en', '') }}"></div>
     </div>
   </div>
 
@@ -46,18 +46,18 @@
     </p>
     <div class="grid-2">
       <div class="field">
-        <label for="wifi_name">Tarmoq nomi</label>
+        <label for="wifi_name">{{ t('field_wifi_name', ui_lang) }}</label>
         <input id="wifi_name" name="wifi_name" value="{{ restaurant.wifi_name or '' }}" placeholder="Kafe_WiFi">
       </div>
       <div class="field">
-        <label for="wifi_password">Parol</label>
+        <label for="wifi_password">{{ t('field_password', ui_lang) }}</label>
         <input id="wifi_password" name="wifi_password" value="{{ restaurant.wifi_password or '' }}">
       </div>
     </div>
   </div>
 
   <div class="card stack">
-    <h2>Menyu uslubi</h2>
+    <h2>{{ t('settings_style', ui_lang) }}</h2>
     <p class="hint" style="margin-top:-.5rem">
       Uslub shrift, burchak yumaloqligi va sukut bo'yicha rangni birga o'zgartiradi.
       Tanlaganingizdan keyin rangni o'zingizga moslashtirishingiz mumkin.
@@ -79,29 +79,29 @@
 
     <div class="grid-2">
       <div class="field">
-        <label for="theme_color">Asosiy rang</label>
+        <label for="theme_color">{{ t('field_accent', ui_lang) }}</label>
         <input id="theme_color" name="theme_color" type="color" value="{{ restaurant.theme_color }}">
         <p class="hint">Uslub tanlaganingizda avtomatik o'zgaradi, keyin o'zgartirsangiz shu qoladi.</p>
       </div>
       <div class="field">
-        <label for="currency">Valyuta belgisi</label>
+        <label for="currency">{{ t('field_currency', ui_lang) }}</label>
         <input id="currency" name="currency" value="{{ restaurant.currency }}">
       </div>
     </div>
   </div>
 
   <div class="card stack">
-    <h2>Rasmlar</h2>
+    <h2>{{ t('settings_images', ui_lang) }}</h2>
     <div class="grid-2">
       <div class="field">
-        <label for="logo">Logo</label>
+        <label for="logo">{{ t('field_logo', ui_lang) }}</label>
         {% if restaurant.logo %}
           <img src="/media/{{ restaurant.logo }}" alt="" style="width:64px;height:64px;border-radius:var(--r-md);object-fit:cover;margin-bottom:.5rem">
         {% endif %}
         <input id="logo" name="logo" type="file" accept="image/*">
       </div>
       <div class="field">
-        <label for="cover_image">Muqova rasmi</label>
+        <label for="cover_image">{{ t('field_cover', ui_lang) }}</label>
         {% if restaurant.cover_image %}
           <img src="/media/{{ restaurant.cover_image }}" alt="" style="width:100%;max-width:220px;aspect-ratio:16/7;border-radius:var(--r-md);object-fit:cover;margin-bottom:.5rem">
         {% endif %}
@@ -111,6 +111,6 @@
     </div>
   </div>
 
-  <div><button class="btn btn-primary" type="submit">Saqlash</button></div>
+  <div><button class="btn btn-primary" type="submit">{{ t('action_save', ui_lang) }}</button></div>
 </form>
 {% endblock %}

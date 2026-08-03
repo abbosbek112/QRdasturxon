@@ -3,10 +3,9 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>Izohlar</h1>
+  <h1>{{ t('comments_title', ui_lang) }}</h1>
   <p class="muted small">
-    Izoh siz tasdiqlagandan keyingina menyuda ko'rinadi. Tasdiqlamaganingiz
-    mijozga umuman ko'rinmaydi.
+    {{ t('comments_sub', ui_lang) }}
   </p>
 </div>
 
@@ -19,7 +18,7 @@
 
 {% if not comments %}
   <div class="empty">
-    <strong>Hozircha izoh yo'q</strong>
+    <strong>{{ t('comments_empty', ui_lang) }}</strong>
     Mijozlar taom sahifasidan izoh qoldirganda ular shu yerda paydo bo'ladi.
   </div>
 {% else %}
@@ -41,9 +40,9 @@
             <span class="muted small">{{ tr(comment.item.name, 'uz') }}</span>
             <span class="muted small">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
             {% if comment.is_approved %}
-              <span class="badge badge-ok">Menyuda</span>
+              <span class="badge badge-ok">{{ t('state_in_menu', ui_lang) }}</span>
             {% else %}
-              <span class="badge badge-off">Kutmoqda</span>
+              <span class="badge badge-off">{{ t('state_waiting', ui_lang) }}</span>
             {% endif %}
           </div>
           <p class="muted" style="margin:.35rem 0 0">{{ comment.body }}</p>
@@ -52,13 +51,13 @@
           {% if not comment.is_approved %}
             <form method="post" action="/admin/comments/{{ comment.id }}/approve">
               {% include "partials/csrf.html" %}
-              <button class="btn btn-sm btn-primary" type="submit">Tasdiqlash</button>
+              <button class="btn btn-sm btn-primary" type="submit">{{ t('action_approve', ui_lang) }}</button>
             </form>
           {% endif %}
           <form method="post" action="/admin/comments/{{ comment.id }}/delete"
                 onsubmit="return confirm('Izoh o\'chirilsinmi?')">
             {% include "partials/csrf.html" %}
-            <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
+            <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
           </form>
         </div>
       </div>

@@ -21,6 +21,13 @@ def item(db, tenant_a):
     return menu_item
 
 
+
+@pytest.fixture
+def menu_with_items(db, tenant_a, item):
+    restaurant, _ = tenant_a
+    return restaurant
+
+
 @pytest.mark.parametrize(
     "path",
     [
@@ -246,3 +253,51 @@ def test_login_tells_you_what_to_do_about_a_lost_password(client):
     body = html.unescape(client.get("/login").text)
     assert "Parolni unutdingizmi" in body
     assert "t.me/" in body
+
+
+# --- ko'p tilli SEO ---
+
+def test_pages_link_their_language_versions(client):
+    """hreflang bo'lmasa Google uch tilni bir-biriga bog'lay olmaydi."""
+    from app.i18n import LANGUAGES
+
+    body = client.get("/").text
+    for code in LANGUAGES:
+        assert f'hreflang="{code}" href="http://testserver/?lang={code}"' in body
+    assert 'rel="canonical"' in body
+    assert 'hreflang="x-default"' in body
+
+
+def test_the_landing_title_follows_the_language(client):
+    assert "QR-меню для кафе" in client.get("/?lang=ru").text
+    assert "QR menu for cafes" in client.get("/?lang=en").text
+
+
+def test_a_menu_ships_structured_data_for_google(client, db, menu_with_items):
+    """Bu bo'lmasa qidiruvda oddiy havola chiqadi, restoran ma'lumoti emas."""
+    import json
+    import re
+
+    restaurant = menu_with_items
+    body = client.get(f"/r/{restaurant.slug}").text
+    found = re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S)
+    assert found, "JSON-LD topilmadi"
+
+    data = json.loads(found.group(1))       # buzuq JSON bo'lsa shu yerda yiqiladi
+    assert data["@type"] == "Restaurant"
+    assert data["name"] == restaurant.name
+    assert data["hasMenu"]["hasMenuSection"]
+
+
+def test_structured_data_survives_a_quote_in_the_name(client, db, menu_with_items):
+    """Restoran nomida qo'shtirnoq bo'lsa JSON buzilib, Google uni tashlab yuborardi."""
+    import json
+    import re
+
+    restaurant = menu_with_items
+    restaurant.name = 'Kafe "Bahor"'
+    db.commit()
+
+    body = client.get(f"/r/{restaurant.slug}").text
+    found = re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S)
+    assert json.loads(found.group(1))["name"] == 'Kafe "Bahor"'

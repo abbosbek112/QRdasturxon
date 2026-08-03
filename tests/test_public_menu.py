@@ -213,3 +213,26 @@ def test_each_restaurant_gets_its_own_qr():
     from app.services import qr
 
     assert qr.svg_markup("birinchi") != qr.svg_markup("ikkinchi")
+
+
+# --- tarjima katalogi ---
+
+def test_every_ui_string_exists_in_all_three_languages():
+    """Yetishmagan tarjima sahifada o'zbekcha bo'lib chiqadi va sezilmay qoladi.
+
+    Katalog kalit-birinchi tuzilgan (uch tili yonma-yon) aynan shuning uchun —
+    bu test esa unutilganini darrov aytadi.
+    """
+    from app.i18n import LANGUAGES, UI
+
+    gaps = {
+        key: [lang for lang in LANGUAGES if not entry.get(lang)]
+        for key, entry in UI.items()
+    }
+    assert not {k: v for k, v in gaps.items() if v}
+
+
+def test_an_unknown_key_returns_itself_instead_of_breaking():
+    from app.i18n import t
+
+    assert t("bunday_kalit_yoq", "uz") == "bunday_kalit_yoq"

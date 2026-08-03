@@ -23,13 +23,13 @@
       {% include "partials/csrf.html" %}
 
       <div class="field">
-        <label for="name">Restoran nomi</label>
+        <label for="name">{{ t('field_restaurant_name', lang) }}</label>
         <input id="name" name="name" value="{{ form.get('name', '') }}" required autofocus
                placeholder="Osh Markazi">
       </div>
 
       <div class="field">
-        <label for="slug">Menyu manzili</label>
+        <label for="slug">{{ t('field_menu_address', lang) }}</label>
         <input id="slug" name="slug" value="{{ form.get('slug', '') }}" placeholder="osh-markazi">
         <p class="hint">Menyu <code>qrdasturxon.uz/r/&lt;manzil&gt;</code> da ochiladi.
           Bo'sh qoldirsangiz nomdan avtomatik yasaladi.</p>
@@ -37,35 +37,35 @@
 
       <div class="grid-2">
         <div class="field">
-          <label for="username">Login</label>
+          <label for="username">{{ t('field_login', lang) }}</label>
           <input id="username" name="username" value="{{ form.get('username', '') }}"
                  required minlength="3" autocomplete="username">
         </div>
         <div class="field">
-          <label for="password">Parol</label>
+          <label for="password">{{ t('field_password', lang) }}</label>
           <input id="password" name="password" type="password" required minlength="8"
                  autocomplete="new-password">
-          <p class="hint">Kamida 8 belgi</p>
+          <p class="hint">{{ t('password_hint', lang) }}</p>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="field">
-          <label for="phone">Telefon</label>
+          <label for="phone">{{ t('field_phone', lang) }}</label>
           <input id="phone" name="phone" value="{{ form.get('phone', '') }}"
                  placeholder="+998 90 123 45 67">
         </div>
         <div class="field">
-          <label for="email">Email (ixtiyoriy)</label>
+          <label for="email">{{ t('field_email_optional', lang) }}</label>
           <input id="email" name="email" type="email" value="{{ form.get('email', '') }}">
         </div>
       </div>
 
-      <button class="btn btn-primary btn-block" type="submit">Bepul boshlash</button>
+      <button class="btn btn-primary btn-block" type="submit">{{ t('hero_cta', lang) }}</button>
     </form>
 
     <p class="center small muted" style="margin:0">
-      Hisobingiz bormi? <a href="/login">Kiring</a>
+      {{ t('have_account', lang) }} <a href="/login">{{ t('sign_in_link', lang) }}</a>
     </p>
   </div>
 </div>

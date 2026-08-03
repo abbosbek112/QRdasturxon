@@ -14,9 +14,15 @@
   <div class="sidebar-inner">
     <a class="brand" href="{% block brand_href %}/admin{% endblock %}">QR<span>dasturxon</span></a>
     <nav class="nav">{% block nav %}{% endblock %}</nav>
+    {# Interfeys tili — menyu tilidan alohida, tarif cheklamaydi #}
+    <div class="langs langs-solid panel-langs">
+      {% for code, name in LANGUAGES.items() %}
+        <a href="?lang={{ code }}" class="{{ 'active' if ui_lang == code }}" title="{{ name }}">{{ code | upper }}</a>
+      {% endfor %}
+    </div>
     <form method="post" action="/logout">
       {% include "partials/csrf.html" %}
-      <button class="btn btn-sm btn-block" type="submit">{{ ui.icon('logout') }} Chiqish</button>
+      <button class="btn btn-sm btn-block" type="submit">{{ ui.icon('logout') }} {{ t('sign_out', ui_lang) }}</button>
     </form>
   </div>
 </aside>

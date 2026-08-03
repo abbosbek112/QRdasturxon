@@ -13,7 +13,7 @@
   <div class="login-card card stack">
     <div class="center">
       <div class="brand">QR<span>dasturxon</span></div>
-      <p class="muted small" style="margin-top:.15rem">Boshqaruv paneliga kirish</p>
+      <p class="muted small" style="margin-top:.15rem">{{ t('login_sub', lang) }}</p>
     </div>
 
     {% if error %}<div class="alert">{{ error }}</div>{% endif %}
@@ -21,14 +21,14 @@
     <form method="post" action="/login" class="stack">
       {% include "partials/csrf.html" %}
       <div class="field">
-        <label for="username">Login</label>
+        <label for="username">{{ t('field_login', lang) }}</label>
         <input id="username" name="username" autocomplete="username" required autofocus>
       </div>
       <div class="field">
-        <label for="password">Parol</label>
+        <label for="password">{{ t('field_password', lang) }}</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required>
       </div>
-      <button class="btn btn-primary btn-block" type="submit">Kirish</button>
+      <button class="btn btn-primary btn-block" type="submit">{{ t('login_title', lang) }}</button>
     </form>
 
     {#
@@ -37,8 +37,8 @@
       noaniq qo'ng'iroq o'rniga aniq murojaat keladi.
     #}
     <p class="center small muted" style="margin:0">
-      Parolni unutdingizmi?
-      <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>
+      {{ t('forgot_password', lang) }}
+      <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">{{ t('write_telegram', lang) }}</a>
     </p>
   </div>
 </div>

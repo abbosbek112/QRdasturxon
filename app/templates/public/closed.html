@@ -14,8 +14,7 @@
     <span class="closed-mark">{{ ui.icon('plate') }}</span>
     <h1>{{ restaurant.name }}</h1>
     <p class="muted">
-      Menyu vaqtincha yopiq. Uzr so'raymiz — buyurtmani xodimdan so'rasangiz
-      bo'ladi.
+      {{ t('closed_title', lang) }}. {{ t('closed_text', lang) }}
     </p>
     {% if restaurant.phone %}
       <a class="btn btn-xl" href="tel:{{ restaurant.phone }}">

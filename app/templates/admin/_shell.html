@@ -17,17 +17,15 @@
     {% set left = trial_days_left(place) %}
     {% if status == 'expired' %}
       <div class="notice notice-warn banner-fixed">
-        <strong>Menyungiz yopiq.</strong>
-        QR kodni skanerlagan mijoz uni ko'rmayapti. Ma'lumotlaringiz joyida —
-        to'lov tasdiqlangach o'sha zahoti ochiladi.
-        <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
+        <strong>{{ t('banner_closed_title', ui_lang) }}</strong>
+        {{ t('banner_closed_text', ui_lang) }}
+        <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">{{ t('write_telegram', ui_lang) }}</a>.
       </div>
     {% elif status == 'trial' and left <= 3 %}
       <div class="notice banner-fixed">
-        <strong>{{ left }} kun qoldi.</strong>
-        Muddat tugagach menyu yopiladi — QR kodni skanerlagan mijoz uni ko'rmaydi.
-        Davom ettirish uchun
-        <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">Telegramdan yozing</a>.
+        <strong>{{ t('banner_days_left', ui_lang).replace('{n}', left | string) }}</strong>
+        {{ t('banner_days_text', ui_lang) }}
+        <a href="https://t.me/{{ CONTACT.telegram }}" target="_blank" rel="noopener">{{ t('write_telegram', ui_lang) }}</a>.
       </div>
     {% endif %}
   {% endif %}
@@ -35,11 +33,11 @@
 {% block nav %}
   {% import "partials/icons.html" as ui %}
   {% set path = request.url.path %}
-  <a href="/admin" class="{{ 'active' if path == '/admin' }}">{{ ui.icon('home') }} Bosh sahifa</a>
-  <a href="/admin/categories" class="{{ 'active' if path.startswith('/admin/categories') }}">{{ ui.icon('grid') }} Kategoriyalar</a>
-  <a href="/admin/items" class="{{ 'active' if path.startswith('/admin/items') }}">{{ ui.icon('list') }} Taomlar</a>
-  <a href="/admin/stats" class="{{ 'active' if path.startswith('/admin/stats') }}">{{ ui.icon('chart') }} Statistika</a>
-  <a href="/admin/comments" class="{{ 'active' if path.startswith('/admin/comments') }}">{{ ui.icon('chat') }} Izohlar</a>
-  <a href="/admin/qr" class="{{ 'active' if path.startswith('/admin/qr') }}">{{ ui.icon('qr') }} QR kod</a>
-  <a href="/admin/settings" class="{{ 'active' if path.startswith('/admin/settings') }}">{{ ui.icon('settings') }} Sozlamalar</a>
+  <a href="/admin" class="{{ 'active' if path == '/admin' }}">{{ ui.icon('home') }} {{ t('nav_home', ui_lang) }}</a>
+  <a href="/admin/categories" class="{{ 'active' if path.startswith('/admin/categories') }}">{{ ui.icon('grid') }} {{ t('nav_categories', ui_lang) }}</a>
+  <a href="/admin/items" class="{{ 'active' if path.startswith('/admin/items') }}">{{ ui.icon('list') }} {{ t('nav_items', ui_lang) }}</a>
+  <a href="/admin/stats" class="{{ 'active' if path.startswith('/admin/stats') }}">{{ ui.icon('chart') }} {{ t('nav_stats', ui_lang) }}</a>
+  <a href="/admin/comments" class="{{ 'active' if path.startswith('/admin/comments') }}">{{ ui.icon('chat') }} {{ t('nav_comments', ui_lang) }}</a>
+  <a href="/admin/qr" class="{{ 'active' if path.startswith('/admin/qr') }}">{{ ui.icon('qr') }} {{ t('nav_qr', ui_lang) }}</a>
+  <a href="/admin/settings" class="{{ 'active' if path.startswith('/admin/settings') }}">{{ ui.icon('settings') }} {{ t('nav_settings', ui_lang) }}</a>
 {% endblock %}

@@ -2,6 +2,60 @@
 {% import "partials/icons.html" as ui %}
 {% block title %}{{ restaurant.name }} — {{ t('menu', lang) }}{% endblock %}
 
+{% block head %}
+{#
+  Google uchun tuzilgan ma'lumot. Bu bo'lmasa qidiruvda oddiy havola
+  chiqadi; bo'lsa — restoran nomi, manzili va ish vaqti bilan boyroq
+  natija berishi mumkin.
+
+  Qiymatlar `tojson` bilan yoziladi: restoran nomida qo'shtirnoq bo'lsa
+  ham JSON buzilmaydi.
+#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": {{ restaurant.name | tojson }},
+  "url": {{ (BASE_URL ~ '/r/' ~ restaurant.slug) | tojson }}
+  {%- if tr(restaurant.description, lang) %},
+  "description": {{ tr(restaurant.description, lang) | tojson }}
+  {%- endif %}
+  {%- if restaurant.cover_image %},
+  "image": {{ (BASE_URL ~ '/media/' ~ restaurant.cover_image) | tojson }}
+  {%- endif %}
+  {%- if restaurant.phone %},
+  "telephone": {{ restaurant.phone | tojson }}
+  {%- endif %}
+  {%- if tr(restaurant.address, lang) %},
+  "address": {"@type": "PostalAddress", "streetAddress": {{ tr(restaurant.address, lang) | tojson }}}
+  {%- endif %}
+  {%- if restaurant.working_hours %},
+  "openingHours": {{ restaurant.working_hours | tojson }}
+  {%- endif %},
+  "hasMenu": {
+    "@type": "Menu",
+    "hasMenuSection": [
+      {%- for category, items in sections %}
+      {
+        "@type": "MenuSection",
+        "name": {{ tr(category.name, lang) | tojson }},
+        "hasMenuItem": [
+          {%- for item in items %}
+          {
+            "@type": "MenuItem",
+            "name": {{ tr(item.name, lang) | tojson }},
+            "offers": {"@type": "Offer", "price": {{ item.price | int }}, "priceCurrency": "UZS"}
+          }{{ "," if not loop.last }}
+          {%- endfor %}
+        ]
+      }{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+  }
+}
+</script>
+{% endblock %}
+
 {% block body %}
 <header class="hero {{ 'hero-photo' if restaurant.cover_image else 'hero-flat' }}"
         {% if restaurant.cover_image %}style="background-image:url('/media/{{ restaurant.cover_image }}')"{% endif %}>

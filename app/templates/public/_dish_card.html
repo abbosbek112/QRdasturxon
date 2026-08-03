@@ -7,11 +7,18 @@
     {% else %}
       <div class="dish-ph">{{ ui.icon('plate') }}</div>
     {% endif %}
-    <span class="price-pill">{{ item.price | price }} <small>{{ restaurant.currency }}</small></span>
+    {#
+      Narx va vaqt bitta qatorda. Ilgari ikkalasi alohida absolyut joylashgan
+      edi va telefonda tor kartada bir-birining ustiga chiqib ketardi —
+      "100 000 so'm" ustiga "60 min" tushib, narx o'qilmay qolardi.
+    #}
+    <span class="dish-meta">
+      <span class="price-pill">{{ item.price | price }} <small>{{ restaurant.currency }}</small></span>
+      {% if item.prep_minutes %}
+        <span class="time-pill">{{ ui.icon('clock') }}{{ item.prep_minutes }} {{ t('min', lang) }}</span>
+      {% endif %}
+    </span>
     {% if item.is_popular %}<span class="dish-tag">{{ t('popular', lang) }}</span>{% endif %}
-    {% if item.prep_minutes %}
-      <span class="time-pill">{{ ui.icon('clock') }}{{ item.prep_minutes }} {{ t('min', lang) }}</span>
-    {% endif %}
   </div>
   <div class="dish-body">
     <p class="dish-name clamp-2">{{ tr(item.name, lang) }}</p>

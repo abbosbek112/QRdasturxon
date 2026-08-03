@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>QR kod</h1>
-  <p class="muted small">Stolga qo'yish uchun chop eting — mijoz skanerlab menyuni ochadi.</p>
+  <h1>{{ t('qr_title', ui_lang) }}</h1>
+  <p class="muted small">{{ t('qr_sub', ui_lang) }}</p>
 </div>
 
 <div class="card center stack" style="max-width:420px">
@@ -14,7 +14,7 @@
   <div class="row" style="justify-content:center">
     <a class="btn btn-primary" href="/admin/qr.png" download>{{ ui.icon('download') }} PNG</a>
     <a class="btn" href="/admin/qr.svg" download>{{ ui.icon('download') }} SVG</a>
-    <a class="btn" href="{{ menu_url }}" target="_blank" rel="noopener">{{ ui.icon('external') }} Ochish</a>
+    <a class="btn" href="{{ menu_url }}" target="_blank" rel="noopener">{{ ui.icon('external') }} {{ t('qr_open', ui_lang) }}</a>
   </div>
   <p class="hint">Chop etish uchun SVG'ni tanlang — u sifatini yo'qotmasdan istalgan o'lchamga kattalashadi.</p>
 </div>

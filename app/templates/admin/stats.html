@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>Statistika</h1>
+  <h1>{{ t('nav_stats', ui_lang) }}</h1>
   <p class="muted small">
     Qaysi taom necha marta ochilgani va mijozlar bahosi.
     {% if limits.stats_days < 365 %}
@@ -25,31 +25,31 @@
   </div>
   <form method="get" action="/admin/stats" class="range-form">
     <input type="hidden" name="period" value="custom">
-    <label class="sr-only" for="from">Boshlanishi</label>
+    <label class="sr-only" for="from">{{ t('range_from', ui_lang) }}</label>
     <input id="from" type="date" name="start" value="{{ start.isoformat() }}" max="{{ end.isoformat() }}">
     <span class="muted small">—</span>
-    <label class="sr-only" for="to">Tugashi</label>
+    <label class="sr-only" for="to">{{ t('range_to', ui_lang) }}</label>
     <input id="to" type="date" name="end" value="{{ end.isoformat() }}">
-    <button class="btn btn-sm {{ 'btn-primary' if preset == 'custom' }}" type="submit">Ko'rsatish</button>
+    <button class="btn btn-sm {{ 'btn-primary' if preset == 'custom' }}" type="submit">{{ t('action_show', ui_lang) }}</button>
   </form>
 </div>
 
 <div class="stat-grid" style="margin-top:1rem">
   <div class="stat">
     <b>{{ views_total }}</b>
-    <span>Menyu ochilgan</span>
+    <span>{{ t('stat_opens', ui_lang) }}</span>
   </div>
   <div class="stat">
     <b>{{ views_peak }}</b>
-    <span>Eng yuqori kun</span>
+    <span>{{ t('stat_peak', ui_lang) }}</span>
   </div>
   <div class="stat">
     <b>{{ (end - start).days + 1 }}</b>
-    <span>Kun tanlangan</span>
+    <span>{{ t('stat_days_picked', ui_lang) }}</span>
   </div>
   <div class="stat">
     <b>{{ top_items | length }}</b>
-    <span>Ochilgan taom</span>
+    <span>{{ t('stat_items_opened', ui_lang) }}</span>
   </div>
 </div>
 
@@ -75,12 +75,12 @@
   {% endif %}
 </div>
 
-<p class="section-label">Eng ko'p ochilgan taomlar</p>
+<p class="section-label">{{ t('dash_top_items', ui_lang) }}</p>
 {% if top_items %}
   <div class="table-card table-scroll table-compact">
     <table>
       <thead>
-        <tr><th>#</th><th>Taom</th><th>Ochilgan</th><th>Ulush</th><th>Baho</th></tr>
+        <tr><th>#</th><th>{{ t('dash_items', ui_lang) }}</th><th>{{ t('col_opened', ui_lang) }}</th><th>{{ t('col_share', ui_lang) }}</th><th>{{ t('col_rating', ui_lang) }}</th></tr>
       </thead>
       <tbody>
         {% set most = top_items[0][1] %}
@@ -113,17 +113,17 @@
   </div>
 {% else %}
   <div class="empty">
-    <strong>Bu oraliqda taom ochilmagan</strong>
+    <strong>{{ t('stats_none_opened', ui_lang) }}</strong>
     Mijoz taom kartasini bosganda shu yerda ro'yxat paydo bo'ladi.
   </div>
 {% endif %}
 
-<p class="section-label">Eng yuqori baholi taomlar</p>
+<p class="section-label">{{ t('stats_top_rated', ui_lang) }}</p>
 {% if best_rated %}
   <div class="table-card table-scroll table-compact">
     <table>
       <thead>
-        <tr><th>#</th><th>Taom</th><th>O'rtacha</th><th>Baho soni</th></tr>
+        <tr><th>#</th><th>{{ t('dash_items', ui_lang) }}</th><th>{{ t('col_average', ui_lang) }}</th><th>{{ t('col_votes', ui_lang) }}</th></tr>
       </thead>
       <tbody>
         {% for item, average, votes in best_rated %}
@@ -148,7 +148,7 @@
   </p>
 {% else %}
   <div class="empty">
-    <strong>Hali baho yo'q</strong>
+    <strong>{{ t('stats_no_ratings', ui_lang) }}</strong>
     Mijoz taomga izoh qoldirganda yulduz ham qo'yishi mumkin. Izohni tasdiqlaganingizdan keyin
     baho shu yerda hisobga olinadi.
   </div>

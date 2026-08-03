@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.i18n import resolve_lang, t
 from app.models import Role, User
 from app.plans import TRIAL_DAYS
 from app.security import (
@@ -36,7 +37,9 @@ def home_url_for(user: User) -> str:
 def login_form(request: Request, user: CurrentUser):
     if user is not None:
         return RedirectResponse(home_url_for(user), status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse(request, "login.html", {"error": None})
+    return templates.TemplateResponse(
+        request, "login.html", {"error": None, "lang": resolve_lang(request)}
+    )
 
 
 @router.post("/login", dependencies=[Depends(verify_csrf)])
@@ -50,7 +53,10 @@ def login(
 
     def failure(message: str):
         return templates.TemplateResponse(
-            request, "login.html", {"error": message}, status_code=status.HTTP_401_UNAUTHORIZED
+            request,
+            "login.html",
+            {"error": message, "lang": resolve_lang(request)},
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
     if not login_attempt_allowed(db, client_ip):
@@ -77,7 +83,9 @@ def signup_form(request: Request, user: CurrentUser):
     if user is not None:
         return RedirectResponse(home_url_for(user), status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(
-        request, "signup.html", {"error": None, "trial_days": TRIAL_DAYS, "form": {}}
+        request,
+        "signup.html",
+        {"error": None, "trial_days": TRIAL_DAYS, "form": {}, "lang": resolve_lang(request)},
     )
 
 
@@ -106,10 +114,10 @@ def signup(
             request,
             "signup.html",
             {
-                "error": "Juda ko'p urinish bo'ldi. Bir soatdan keyin qayta urinib ko'ring "
-                         "yoki biz bilan bog'laning.",
+                "error": t("signup_throttled", resolve_lang(request)),
                 "trial_days": TRIAL_DAYS,
                 "form": submitted,
+                "lang": resolve_lang(request),
             },
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         )
@@ -133,7 +141,12 @@ def signup(
         return templates.TemplateResponse(
             request,
             "signup.html",
-            {"error": error.detail, "trial_days": TRIAL_DAYS, "form": submitted},
+            {
+                "error": error.detail,
+                "trial_days": TRIAL_DAYS,
+                "form": submitted,
+                "lang": resolve_lang(request),
+            },
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 

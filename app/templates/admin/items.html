@@ -5,15 +5,15 @@
 {% block content %}
 <div class="page-head spread">
   <div>
-    <h1>Taomlar</h1>
-    <p class="muted small">Menyudagi barcha taomlar va ularning holati.</p>
+    <h1>{{ t('items_title', ui_lang) }}</h1>
+    <p class="muted small">{{ t('items_sub', ui_lang) }}</p>
   </div>
-  <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} Yangi taom</a>
+  <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} {{ t('dash_new_item', ui_lang) }}</a>
 </div>
 
 {% if categories %}
 <div class="row" style="margin-bottom:1rem">
-  <a class="btn btn-sm {{ 'btn-primary' if active_category_id is none }}" href="/admin/items">Hammasi</a>
+  <a class="btn btn-sm {{ 'btn-primary' if active_category_id is none }}" href="/admin/items">{{ t('items_all', ui_lang) }}</a>
   {% for category in categories %}
     <a class="btn btn-sm {{ 'btn-primary' if active_category_id == category.id }}"
        href="/admin/items?category_id={{ category.id }}">{{ tr(category.name, 'uz') }}</a>
@@ -24,10 +24,10 @@
 {% if not items %}
   <div class="empty">
     {% if not categories %}
-      <strong>Avval kategoriya kerak</strong>
+      <strong>{{ t('need_category_first', ui_lang) }}</strong>
       Taom qo'shish uchun oldin <a href="/admin/categories">kategoriya</a> yarating.
     {% else %}
-      <strong>Bu yerda hali taom yo'q</strong>
+      <strong>{{ t('items_empty', ui_lang) }}</strong>
       <a href="/admin/items/new">Birinchi taomni qo'shing.</a>
     {% endif %}
   </div>
@@ -36,8 +36,8 @@
   <table>
     <thead>
       <tr>
-        <th class="col-thumb"></th><th>Nomi</th><th>Kategoriya</th>
-        <th>Narx</th><th>Holat</th><th class="col-actions"></th>
+        <th class="col-thumb"></th><th>{{ t('col_name', ui_lang) }}</th><th>{{ t('col_category', ui_lang) }}</th>
+        <th>{{ t('col_price', ui_lang) }}</th><th>{{ t('col_state', ui_lang) }}</th><th class="col-actions"></th>
       </tr>
     </thead>
     <tbody>
@@ -50,7 +50,7 @@
         <td>
           <div class="row" style="gap:.4rem">
             <strong>{{ tr(item.name, 'uz') }}</strong>
-            {% if item.is_popular %}<span class="badge">Ommabop</span>{% endif %}
+            {% if item.is_popular %}<span class="badge">{{ t('mark_popular', ui_lang) }}</span>{% endif %}
           </div>
           {% set note = tr(item.description, 'uz') %}
           {% if note %}<div class="muted small">{{ note | truncate(64) }}</div>{% endif %}
@@ -60,12 +60,12 @@
           {{ item.price | price }} <span class="muted small">{{ restaurant.currency }}</span>
         </td>
         <td>
-          {% if item.is_available %}<span class="badge badge-ok">Menyuda</span>
-          {% else %}<span class="badge badge-off">Yashirilgan</span>{% endif %}
+          {% if item.is_available %}<span class="badge badge-ok">{{ t('state_in_menu', ui_lang) }}</span>
+          {% else %}<span class="badge badge-off">{{ t('state_hidden', ui_lang) }}</span>{% endif %}
         </td>
         <td>
           <div class="row" style="flex-wrap:nowrap; justify-content:flex-end">
-            <a class="btn btn-sm" href="/admin/items/{{ item.id }}/edit">Tahrirlash</a>
+            <a class="btn btn-sm" href="/admin/items/{{ item.id }}/edit">{{ t('action_edit', ui_lang) }}</a>
             <form method="post" action="/admin/items/{{ item.id }}/toggle">
               {% include "partials/csrf.html" %}
               <button class="btn btn-sm" type="submit">{{ 'Yashirish' if item.is_available else "Ko'rsatish" }}</button>
@@ -73,7 +73,7 @@
             <form method="post" action="/admin/items/{{ item.id }}/delete"
                   onsubmit="return confirm('Taom o\'chirilsinmi?')">
               {% include "partials/csrf.html" %}
-              <button class="btn btn-danger btn-sm" type="submit">O'chirish</button>
+              <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
             </form>
           </div>
         </td>
