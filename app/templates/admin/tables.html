@@ -74,7 +74,15 @@
             <summary class="btn btn-sm">{{ ui.icon('plus') }} {{ t('hall_add_zone', ui_lang) }}</summary>
             <form method="post" action="/admin/zones" class="row" style="align-items:flex-end">
               {% include "partials/csrf.html" %}
-              <input type="hidden" name="floor" value="{{ floor }}">
+              {#
+                Qavat ikki maydon bilan uzatiladi: musbat raqam va yerto'la
+                belgisi. Bu yerda ular yashirin, chunki bo'lim allaqachon
+                ma'lum qavatga qo'shilyapti. Manfiy sonni to'g'ridan-to'g'ri
+                yuborib bo'lmaydi — server uni musbatga aylantirib yuboradi
+                va yerto'ladagi bo'lim 1-qavatga tushib qolardi.
+              #}
+              <input type="hidden" name="floor" value="{{ floor if floor > 0 else -floor }}">
+              {% if floor < 0 %}<input type="hidden" name="basement" value="1">{% endif %}
               <div class="field grow">
                 <label class="sr-only" for="nz-{{ floor }}">{{ t('zone_name', ui_lang) }}</label>
                 <input id="nz-{{ floor }}" name="name" maxlength="64" required
@@ -101,14 +109,9 @@
     <summary>{{ ui.icon('plus') }} {{ t('hall_add_floor', ui_lang) }}</summary>
     <form method="post" action="/admin/zones" class="row" style="align-items:flex-end">
       {% include "partials/csrf.html" %}
-      <div class="field" style="width:150px">
-        <label for="new-floor">{{ t('zone_floor', ui_lang) }}</label>
-        <select id="new-floor" name="floor">
-          {% for number, name in floor_choices %}
-            <option value="{{ number }}" {{ 'selected' if number == next_floor }}>{{ name }}</option>
-          {% endfor %}
-        </select>
-      </div>
+      {% with id_suffix = 'new', floor_value = next_floor %}
+        {% include "admin/_floor_field.html" %}
+      {% endwith %}
       <div class="field grow">
         <label for="new-zone">{{ t('zone_name', ui_lang) }}</label>
         <input id="new-zone" name="name" maxlength="64" required

@@ -81,7 +81,7 @@ def rename_zone(db: Session, zone: Zone, name: str, sort_order: int, floor: int 
     db.commit()
 
 
-MIN_FLOOR = -3  # 3-yerto'la
+MIN_FLOOR = -9  # yerto'laning eng chuqur darajasi
 MAX_FLOOR = 50
 
 
@@ -105,18 +105,21 @@ def _clean_floor(value) -> int:
     return floor
 
 
-def floor_choices(lang: str) -> list[tuple[int, str]]:
-    """Formadagi qavat ro'yxati — tepadan pastga, so'z bilan.
+def signed_floor(number, is_basement: bool) -> int:
+    """Formadagi ikki maydondan bitta qavat raqamini yasaydi.
 
-    Egasi manfiy son kiritib o'tirmaydi: u ro'yxatdan "1-yerto'la" ni
-    tanlaydi. Ro'yxat 50 qavatgacha emas, 5 qavatgacha — bunday balandlikda
-    restoran zali bo'lmaydi, va uzun ro'yxat tanlashni qiyinlashtiradi.
-    Bazada chegara baribir 50, ya'ni eski ma'lumot yo'qolmaydi.
+    Egasiga manfiy son ko'rsatilmaydi: u "3" deb yozadi va kerak bo'lsa
+    "yerto'la" katakchasini belgilaydi. Ilgari bu yerda tayyor ro'yxat
+    turardi ("5-qavat"dan "3-yerto'la"gacha) — u qavat sonini oldindan
+    cheklab qo'yardi va binosi balandroq restoranga yo'l yo'q edi.
     """
-    from app.templating import floor_label
-
-    floors = list(range(5, 0, -1)) + [-1, -2, -3]
-    return [(floor, floor_label(floor, lang)) for floor in floors]
+    try:
+        level = abs(int(number))
+    except (TypeError, ValueError):
+        level = 1
+    if level == 0:
+        level = 1
+    return -level if is_basement else level
 
 
 def by_floor(zones: list[Zone]) -> list[tuple[int, list[Zone]]]:

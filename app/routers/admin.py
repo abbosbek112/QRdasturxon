@@ -689,7 +689,6 @@ def tables_page(request: Request, db: DbSession, user: AdminUser):
         for floor, group in areas.by_floor(zones)
     ]
 
-    lang = resolve_lang(request)
     return templates.TemplateResponse(
         request,
         "admin/tables.html",
@@ -701,7 +700,6 @@ def tables_page(request: Request, db: DbSession, user: AdminUser):
             "tables": rows,
             "zones": zones,
             "kinds": list(TableKind),
-            "floor_choices": areas.floor_choices(lang),
             # Keyingi bo'sh qavat — "qavat qo'shish" formasi bo'sh kelmasin
             "next_floor": max((zone.floor for zone in zones), default=0) + 1,
         },
@@ -1052,9 +1050,16 @@ def create_zone(
     name: Annotated[str, Form()],
     sort_order: Annotated[int, Form()] = 0,
     floor: Annotated[int, Form()] = 1,
+    basement: Annotated[bool, Form()] = False,
 ):
     try:
-        areas.create_zone(db, get_restaurant(db, user), name, sort_order, floor)
+        areas.create_zone(
+            db,
+            get_restaurant(db, user),
+            name,
+            sort_order,
+            areas.signed_floor(floor, basement),
+        )
     except HTTPException as error:
         return form_failed(request, error, "/admin/tables")
     return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
@@ -1068,9 +1073,14 @@ def update_zone(
     name: Annotated[str, Form()],
     sort_order: Annotated[int, Form()] = 0,
     floor: Annotated[int, Form()] = 1,
+    basement: Annotated[bool, Form()] = False,
 ):
     areas.rename_zone(
-        db, areas.owned_zone(db, user.restaurant_id, zone_id), name, sort_order, floor
+        db,
+        areas.owned_zone(db, user.restaurant_id, zone_id),
+        name,
+        sort_order,
+        areas.signed_floor(floor, basement),
     )
     return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
 

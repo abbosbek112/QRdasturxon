@@ -9,6 +9,7 @@ ichida.** Stol ham, bo'lim ham begona bo'lsa amal bajarilmaydi.
 """
 
 import html
+import re
 
 import pytest
 
@@ -208,6 +209,106 @@ def test_another_restaurants_zone_cannot_be_filled(client, db, hall, tenant_b):
 
     assert response.status_code == 404
     assert db.query(Table).filter_by(zone_id=foreign_zone.id).count() == 0
+
+
+# --- qavat maydoni ---------------------------------------------------------
+
+
+def test_the_owner_types_the_floor_instead_of_picking_it(client, db, hall):
+    """Qavat tayyor ro'yxatdan tanlanmaydi — egasi o'zi yozadi.
+
+    Ilgari bu yerda "5-qavat"dan "3-yerto'la"gacha tayyor ro'yxat turardi
+    va u qavat sonini oldindan cheklab qo'yardi: balandroq binoli restoran
+    o'z qavatini umuman qo'sha olmasdi.
+    """
+    restaurant, _, _ = hall
+    login(client, "osh", "adminpass123")
+
+    client.post(
+        "/admin/zones",
+        data={"csrf_token": csrf(client, "/admin/tables"), "name": "Yettinchi", "floor": "7"},
+    )
+
+    assert db.query(Zone).filter_by(name="Yettinchi").one().floor == 7
+
+
+def test_the_basement_tick_makes_the_floor_negative(client, db, hall):
+    """Egasiga manfiy son ko'rsatilmaydi: "2" + yerto'la belgisi."""
+    restaurant, _, _ = hall
+    login(client, "osh", "adminpass123")
+
+    client.post(
+        "/admin/zones",
+        data={
+            "csrf_token": csrf(client, "/admin/tables"),
+            "name": "Sovutgich",
+            "floor": "2",
+            "basement": "1",
+        },
+    )
+
+    zone = db.query(Zone).filter_by(name="Sovutgich").one()
+    assert zone.floor == -2
+    body = html.unescape(client.get("/admin/tables?lang=uz").text)
+    assert "2-yerto'la" in body
+
+
+def test_adding_an_area_to_a_basement_stays_in_the_basement(client, db, hall):
+    """Yerto'ladagi "Bo'lim qo'shish" yangi bo'limni yuqoriga chiqarib yubormasin.
+
+    Qavat ikki maydon bilan uzatiladi (musbat raqam + yerto'la belgisi).
+    Yashirin maydonda manfiy son yuborilsa server uni musbatga aylantirib,
+    yerto'lada yasalgan bo'lim 1-qavatga tushib qolardi.
+    """
+    restaurant, _, _ = hall
+    areas.create_zone(db, restaurant, "Sovutgich", floor=-1)
+
+    login(client, "osh", "adminpass123")
+    body = html.unescape(client.get("/admin/tables?lang=uz").text)
+    block = body.split("1-yerto'la")[1].split("</section>")[0]
+    hidden = re.findall(r'<input type="hidden" name="(floor|basement)" value="([^"]*)"', block)
+
+    assert dict(hidden) == {"floor": "1", "basement": "1"}
+
+    client.post(
+        "/admin/zones",
+        data={
+            "csrf_token": csrf(client, "/admin/tables"),
+            "name": "Omborxona",
+            **dict(hidden),
+        },
+    )
+    assert db.query(Zone).filter_by(name="Omborxona").one().floor == -1
+
+
+def test_editing_a_basement_keeps_it_underground(client, db, hall):
+    """Yerto'ladagi bo'limni tahrirlaganda u yuqoriga sakrab chiqmasin."""
+    restaurant, _, _ = hall
+    zone = areas.create_zone(db, restaurant, "Sovutgich", floor=-2)
+
+    login(client, "osh", "adminpass123")
+    body = client.get("/admin/tables").text
+    block = body.split('data-zone="%d"' % zone.id)[1].split("</article>")[0]
+
+    # Forma katakchani belgilangan holda chizadi va raqamni musbat ko'rsatadi.
+    # Aks holda egasi nomni tuzatib "Saqlash" bosishi bilan bo'lim jimgina
+    # yerto'ladan 2-qavatga chiqib ketardi.
+    tick = re.search(r'name="basement"[^>]*>', block, re.S).group(0)
+    number = re.search(r'name="floor"[^>]*>', block, re.S).group(0)
+    assert "checked" in tick
+    assert 'value="2"' in number
+
+    client.post(
+        f"/admin/zones/{zone.id}",
+        data={
+            "csrf_token": csrf(client, "/admin/tables"),
+            "name": "Sovutgich",
+            "floor": "2",
+            "basement": "1",
+        },
+    )
+    db.refresh(zone)
+    assert zone.floor == -2
 
 
 # --- bino ko'rinishi -------------------------------------------------------

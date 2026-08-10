@@ -1,0 +1,28 @@
+{#
+  Qavat maydoni: raqam + "yerto'la" katakchasi.
+
+  Ataylab tayyor ro'yxat emas. Ro'yxat qavat sonini oldindan cheklab
+  qo'yardi ("5-qavat"gacha) va binosi balandroq restoranga yo'l qolmasdi.
+  Egasi endi o'zi yozadi va kerakli qavatni istalgan payt qo'shadi.
+
+  Manfiy son ham ko'rsatilmaydi: "-2 qavat" degan yozuvni hech kim o'ylab
+  topmaydi, "2" va "yerto'la" esa o'z-o'zidan tushunarli. Ikkisini bitta
+  songa `areas.signed_floor` aylantiradi.
+
+  `id_suffix` — bitta sahifada bir nechta shunday maydon bo'ladi.
+#}
+{% set uid = id_suffix | default('new') %}
+{% set level = (floor_value | default(1)) %}
+<div class="field floor-field">
+  <label for="fl-{{ uid }}">{{ t('zone_floor', ui_lang) }}</label>
+  <div class="floor-input">
+    <input id="fl-{{ uid }}" name="floor" type="number" min="1" max="50"
+           value="{{ level if level > 0 else -level }}" required>
+    <label class="floor-basement" for="fb-{{ uid }}">
+      <input id="fb-{{ uid }}" name="basement" type="checkbox" value="1"
+             {{ 'checked' if level < 0 }}
+             >
+      {{ t('floor_basement', ui_lang) }}
+    </label>
+  </div>
+</div>

@@ -2128,6 +2128,17 @@ html.js .dish-add {
 .floor-new { margin-top: 1rem; }
 .floor-new > summary { cursor: pointer; font-weight: 600; }
 
+/* Qavat maydoni: raqam + "yerto'la" katakchasi yonma-yon */
+.floor-field { min-width: 190px; }
+.floor-input { display: flex; align-items: center; gap: .5rem; }
+.floor-input > input[type="number"] { width: 72px; }
+.floor-basement {
+  display: flex; align-items: center; gap: .3rem;
+  font-size: var(--text-sm); color: var(--ink-2);
+  white-space: nowrap; cursor: pointer; margin: 0;
+}
+.floor-basement input { accent-color: var(--accent); cursor: pointer; }
+
 /* --- bo'lim (xona) --- */
 
 .zone {

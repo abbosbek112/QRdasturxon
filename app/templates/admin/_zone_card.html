@@ -22,18 +22,9 @@
             <label for="zn-{{ zone.id }}">{{ t('zone_name', ui_lang) }}</label>
             <input id="zn-{{ zone.id }}" name="name" value="{{ zone.name }}" maxlength="64" required>
           </div>
-          <div class="field">
-            <label for="zf-{{ zone.id }}">{{ t('zone_floor', ui_lang) }}</label>
-            <select id="zf-{{ zone.id }}" name="floor">
-              {% for number, name in floor_choices %}
-                <option value="{{ number }}" {{ 'selected' if zone.floor == number }}>{{ name }}</option>
-              {% endfor %}
-              {# Ro'yxatdan tashqaridagi eski qavat yo'qolib qolmasin #}
-              {% if zone.floor not in floor_choices | map(attribute=0) | list %}
-                <option value="{{ zone.floor }}" selected>{{ floor_label(zone.floor, ui_lang) }}</option>
-              {% endif %}
-            </select>
-          </div>
+          {% with id_suffix = zone.id, floor_value = zone.floor %}
+            {% include "admin/_floor_field.html" %}
+          {% endwith %}
           <div class="field">
             <label for="zo-{{ zone.id }}">{{ t('field_order', ui_lang) }}</label>
             <input id="zo-{{ zone.id }}" name="sort_order" type="number" value="{{ zone.sort_order }}">
