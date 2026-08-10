@@ -1,11 +1,11 @@
 {% extends "admin/_shell.html" %}
 {% import "partials/icons.html" as ui %}
-{% block title %}Stollar{% endblock %}
+{% block title %}{{ t('hall_title', ui_lang) }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>{{ t('tables_title', ui_lang) }}</h1>
-  <p class="muted small">{{ t('tables_sub', ui_lang) }}</p>
+  <h1>{{ t('hall_title', ui_lang) }}</h1>
+  <p class="muted small">{{ t('hall_sub', ui_lang) }}</p>
 </div>
 
 {% if not restaurant.orders_enabled %}
@@ -16,102 +16,162 @@
   </div>
 {% endif %}
 
-<div class="grid-2">
-  <div class="card stack">
-    <h2>{{ t('tables_bulk', ui_lang) }}</h2>
-    <form method="post" action="/admin/tables/bulk" class="row" style="align-items:flex-end">
-      {% include "partials/csrf.html" %}
-      <div class="field" style="width:120px">
-        <label class="sr-only" for="count">{{ t('tables_bulk', ui_lang) }}</label>
-        <input id="count" name="count" type="number" min="1" max="200" value="{{ next_count }}" required>
-      </div>
-      {% include "admin/_seat_fields.html" %}
-      <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} {{ t('tables_bulk_action', ui_lang) }}</button>
-    </form>
-    <p class="hint">{{ t('tables_bulk_hint', ui_lang) }}</p>
-  </div>
+{#
+  Butun bino uchun BITTA ko'chirish formasi. U bo'sh: ichida faqat CSRF
+  belgisi. Stollardagi katakchalar va bo'limlardagi tugmalar unga
+  `form="hall-move"` orqali ulanadi.
 
-  <div class="card stack">
-    <h2>{{ t('tables_one', ui_lang) }}</h2>
-    <form method="post" action="/admin/tables" class="row" style="align-items:flex-end">
-      {% include "partials/csrf.html" %}
-      <div class="field grow">
-        <label for="label">{{ t('tables_label', ui_lang) }}</label>
-        <input id="label" name="label" maxlength="32" required>
-      </div>
-      {% include "admin/_seat_fields.html" %}
-      <button class="btn" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
-    </form>
-    <p class="hint">{{ t('tables_label_hint', ui_lang) }}</p>
-  </div>
-</div>
+  Nega shunday: HTML'da forma ichida forma bo'lmaydi. Bo'limlar va stollar
+  o'z tahrir formalariga ega, ya'ni ularni ko'chirish formasi ichiga solib
+  bo'lmasdi. `form` atributi aynan shu holat uchun bor va u JS talab
+  qilmaydi — belgilab, tugmani bosasiz.
+#}
+<form id="hall-move" method="post" action="/admin/tables/move"
+      data-t-selected="{{ t('hall_selected', ui_lang) }}"
+      data-t-clear="{{ t('hall_clear', ui_lang) }}">
+  {% include "partials/csrf.html" %}
+</form>
 
-{% if not tables %}
-  <div class="empty" style="margin-top:1rem">
-    <strong>{{ t('tables_empty', ui_lang) }}</strong>
-    {{ t('tables_bulk_hint', ui_lang) }}
+{% if not building and not loose %}
+  {# Nol holat: bitta forma bilan butun zal yig'iladi #}
+  <div class="card stack hall-start">
+    <h2>{{ t('hall_start_title', ui_lang) }}</h2>
+    <form method="post" action="/admin/tables/build" class="row" style="align-items:flex-end">
+      {% include "partials/csrf.html" %}
+      <div class="field" style="width:130px">
+        <label for="floors">{{ t('hall_start_floors', ui_lang) }}</label>
+        <input id="floors" name="floors" type="number" min="1" max="5" value="1" required>
+      </div>
+      <div class="field" style="width:170px">
+        <label for="per_floor">{{ t('hall_start_tables', ui_lang) }}</label>
+        <input id="per_floor" name="per_floor" type="number" min="1" max="50" value="10" required>
+      </div>
+      <button class="btn btn-primary" type="submit">
+        {{ ui.icon('plus') }} {{ t('hall_start_action', ui_lang) }}
+      </button>
+    </form>
+    <p class="hint">{{ t('hall_start_hint', ui_lang) }}</p>
   </div>
 {% else %}
-  <div class="spread" style="margin-top:1.2rem; align-items:center">
-    <p class="section-label" style="margin:0">{{ tables | length }} ta stol</p>
+
+  <div class="spread hall-bar">
+    <p class="hint" style="margin:0">{{ t('hall_pick_hint', ui_lang) }}</p>
     <a class="btn btn-primary btn-sm" href="/admin/tables/print" target="_blank" rel="noopener">
       {{ ui.icon('printer') }} {{ t('tables_print', ui_lang) }}
     </a>
   </div>
 
-  <div class="table-grid">
-    {% for table in tables %}
-      <div class="card table-card-item">
-        <div class="spread">
-          <strong class="table-name">{{ table.label }}</strong>
-          <a class="btn btn-sm" href="/admin/tables/{{ table.id }}/qr.png" download>
-            {{ ui.icon('download') }} PNG
-          </a>
-        </div>
-        <p class="muted small table-code">/t/{{ table.code }}</p>
+  <div class="building">
+    {% for floor, zone_rows in building %}
+      {% set floor_tables = zone_rows | sum(attribute=1, start=[]) | length %}
+      <section class="floor" data-floor="{{ floor }}">
+        <header class="floor-head">
+          <h2 class="floor-name">{{ floor_label(floor, ui_lang) }}</h2>
+          <span class="muted small">
+            {{ t('hall_zone_count', ui_lang).replace('{z}', zone_rows | length | string).replace('{t}', floor_tables | string) }}
+          </span>
+          <details class="floor-add">
+            <summary class="btn btn-sm">{{ ui.icon('plus') }} {{ t('hall_add_zone', ui_lang) }}</summary>
+            <form method="post" action="/admin/zones" class="row" style="align-items:flex-end">
+              {% include "partials/csrf.html" %}
+              <input type="hidden" name="floor" value="{{ floor }}">
+              <div class="field grow">
+                <label class="sr-only" for="nz-{{ floor }}">{{ t('zone_name', ui_lang) }}</label>
+                <input id="nz-{{ floor }}" name="name" maxlength="64" required
+                       placeholder="{{ t('zone_name_example', ui_lang) }}">
+              </div>
+              <button class="btn btn-primary btn-sm" type="submit">{{ t('action_add', ui_lang) }}</button>
+            </form>
+          </details>
+        </header>
 
-        <form method="post" action="/admin/tables/{{ table.id }}" class="stack-sm">
-          {% include "partials/csrf.html" %}
-          <input type="hidden" name="label" value="{{ table.label }}">
-          <div class="row">
-            <div class="field grow">
-              <label class="sr-only" for="k-{{ table.id }}">{{ t('field_kind', ui_lang) }}</label>
-              <select id="k-{{ table.id }}" name="kind">
-                {% for option in kinds %}
-                  <option value="{{ option.value }}" {{ 'selected' if table.kind == option }}>
-                    {{ t('kind_' ~ option.value ~ '_name', ui_lang) }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="field grow">
-              <label class="sr-only" for="z-{{ table.id }}">{{ t('field_zone', ui_lang) }}</label>
-              <select id="z-{{ table.id }}" name="zone_id">
-                <option value="">{{ t('zone_none', ui_lang) }}</option>
-                {% for zone in zones %}
-                  <option value="{{ zone.id }}" {{ 'selected' if table.zone_id == zone.id }}>{{ zone.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <button class="btn btn-sm btn-primary" type="submit">{{ t('action_save', ui_lang) }}</button>
-          </div>
-        </form>
-
-        <div class="row">
-          <a class="btn btn-sm" href="/admin/tables/{{ table.id }}/qr.svg" download>SVG</a>
-          <form method="post" action="/admin/tables/{{ table.id }}/code"
-                data-confirm="{{ t('tables_new_code_hint', ui_lang) }}">
-            {% include "partials/csrf.html" %}
-            <button class="btn btn-sm" type="submit">{{ t('tables_new_code', ui_lang) }}</button>
-          </form>
-          <form method="post" action="/admin/tables/{{ table.id }}/delete"
-                data-confirm="{{ table.label }} — stol o'chirilsinmi?">
-            {% include "partials/csrf.html" %}
-            <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
-          </form>
+        <div class="floor-zones">
+          {% for zone, seats in zone_rows %}
+            {% include "admin/_zone_card.html" %}
+          {% else %}
+            <p class="muted small">{{ t('hall_floor_empty', ui_lang) }}</p>
+          {% endfor %}
         </div>
-      </div>
+      </section>
     {% endfor %}
   </div>
+
+  {# Yangi qavat bo'lim bilan birga tug'iladi — bo'sh qavat saqlanmaydi #}
+  <details class="card stack floor-new">
+    <summary>{{ ui.icon('plus') }} {{ t('hall_add_floor', ui_lang) }}</summary>
+    <form method="post" action="/admin/zones" class="row" style="align-items:flex-end">
+      {% include "partials/csrf.html" %}
+      <div class="field" style="width:150px">
+        <label for="new-floor">{{ t('zone_floor', ui_lang) }}</label>
+        <select id="new-floor" name="floor">
+          {% for number, name in floor_choices %}
+            <option value="{{ number }}" {{ 'selected' if number == next_floor }}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field grow">
+        <label for="new-zone">{{ t('zone_name', ui_lang) }}</label>
+        <input id="new-zone" name="name" maxlength="64" required
+               placeholder="{{ t('zone_name_example', ui_lang) }}">
+      </div>
+      <button class="btn btn-primary" type="submit">{{ t('action_add', ui_lang) }}</button>
+    </form>
+    <p class="hint">{{ t('hall_add_zone_hint', ui_lang) }}</p>
+  </details>
+
+  {#
+    Javondagi g'ishtchalar: hali biror bo'limga qo'yilmagan stollar.
+    Bo'lim yo'q bo'lsa hamma stol shu yerda turadi va sahifa baribir
+    ishlaydi — egasi bo'lim yasamasdan ham stol qo'sha oladi.
+  #}
+  <section class="zone zone-loose" data-zone="">
+    <header class="zone-head">
+      <div>
+        <strong class="zone-name">{{ t('hall_unassigned', ui_lang) }}</strong>
+        <span class="muted small">{{ loose | length }} {{ t('zone_tables', ui_lang) }}</span>
+      </div>
+      <button class="btn btn-sm zone-drop" type="submit" form="hall-move"
+              name="zone_id" value="" data-drop="">
+        {{ ui.icon('back') }} {{ t('hall_take_out', ui_lang) }}
+      </button>
+    </header>
+
+    {% if loose %}
+      <p class="hint">{{ t('hall_unassigned_hint', ui_lang) }}</p>
+    {% endif %}
+
+    <div class="zone-bricks">
+      {% for table in loose %}
+        {% include "admin/_table_chip.html" %}
+      {% else %}
+        <p class="muted small zone-blank">{{ t('hall_zone_empty', ui_lang) }}</p>
+      {% endfor %}
+    </div>
+
+    <footer class="zone-foot">
+      <form method="post" action="/admin/tables" class="row zone-add">
+        {% include "partials/csrf.html" %}
+        <div class="field" style="width:130px">
+          <label class="sr-only" for="loose-label">{{ t('tables_label', ui_lang) }}</label>
+          <input id="loose-label" name="label" maxlength="32" required
+                 placeholder="{{ t('tables_label', ui_lang) }}">
+        </div>
+        <div class="field" style="width:130px">
+          <label class="sr-only" for="loose-kind">{{ t('field_kind', ui_lang) }}</label>
+          <select id="loose-kind" name="kind">
+            {% for option in kinds %}
+              <option value="{{ option.value }}">{{ t('kind_' ~ option.value ~ '_name', ui_lang) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-sm" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
+      </form>
+      <p class="hint">{{ t('tables_label_hint', ui_lang) }}</p>
+    </footer>
+  </section>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/hall-plan.js?v={{ asset_v }}" defer></script>
 {% endblock %}

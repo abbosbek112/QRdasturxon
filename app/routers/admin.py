@@ -8,13 +8,14 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.flash import set_flash
+from app.i18n import resolve_lang, t
 from app.models import Category, ItemComment, MenuItem, Restaurant, Role, TableKind, User
 from app.plans import limits_for, refresh_status, trial_days_left
 from app.security import hash_password, require_restaurant_admin, verify_csrf
 from app import themes
 from app.services import areas, comments, onboarding, orders, qr, stats, tables
 from app.services.images import delete_image, save_image
-from app.templating import templates
+from app.templating import floor_label, templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -666,19 +667,43 @@ def qr_svg(db: DbSession, user: AdminUser):
 
 @router.get("/tables")
 def tables_page(request: Request, db: DbSession, user: AdminUser):
+    """Zal — bino kesim ko'rinishida.
+
+    Ilgari bu ikki sahifa edi: qavat va bo'limlar `/admin/zones` da, stollar
+    shu yerda. Ikkalasi bir-birini ko'rsatmasdi va egasi stol qaysi qavatda
+    turganini hech qayerda ko'ra olmasdi.
+    """
     restaurant = get_restaurant(db, user)
     rows = tables.list_for(db, restaurant.id)
+    zones = areas.list_zones(db, restaurant.id)
+
+    grouped: dict[int | None, list] = {None: []}
+    for zone in zones:
+        grouped[zone.id] = []
+    for table in rows:
+        grouped.setdefault(table.zone_id, []).append(table)
+
+    # [(qavat, [(bo'lim, [stollar]), ...]), ...] — tepada yuqori qavat
+    building = [
+        (floor, [(zone, grouped.get(zone.id, [])) for zone in group])
+        for floor, group in areas.by_floor(zones)
+    ]
+
+    lang = resolve_lang(request)
     return templates.TemplateResponse(
         request,
         "admin/tables.html",
         {
             "user": user,
             "restaurant": restaurant,
+            "building": building,
+            "loose": grouped.get(None, []),
             "tables": rows,
-            "zones": areas.list_zones(db, restaurant.id),
+            "zones": zones,
             "kinds": list(TableKind),
-            # Keyingi bo'sh raqam — forma bo'sh kelmasin
-            "next_count": max(len(rows) + 1, 10),
+            "floor_choices": areas.floor_choices(lang),
+            # Keyingi bo'sh qavat — "qavat qo'shish" formasi bo'sh kelmasin
+            "next_floor": max((zone.floor for zone in zones), default=0) + 1,
         },
     )
 
@@ -710,6 +735,77 @@ def create_tables_bulk(
 ):
     try:
         tables.bulk_create(db, get_restaurant(db, user), count, kind, zone_id)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/tables")
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+# Bu ikkalasi `/tables/{table_id}` dan OLDIN turishi shart: FastAPI
+# marshrutlarni tartib bo'yicha tekshiradi va "move" so'zi `table_id: int`
+# ga tushmay 422 bo'lib qolardi.
+
+
+@router.post("/tables/build", dependencies=[Depends(verify_csrf)])
+def build_hall(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    floors: Annotated[int, Form()] = 1,
+    per_floor: Annotated[int, Form()] = 10,
+):
+    """Bo'sh restoranni bitta bosishda ishlaydigan zalga aylantiradi.
+
+    Har qavatga bitta bo'lim va unga stollar. Egasi keyin nomlarini
+    o'zgartiradi — lekin nol holatdan chiqish uchun undan hech narsa
+    o'ylab topish talab qilinmaydi.
+    """
+    restaurant = get_restaurant(db, user)
+    lang = resolve_lang(request)
+    try:
+        for floor in range(1, max(1, min(floors, 5)) + 1):
+            zone = areas.create_zone(
+                db,
+                restaurant,
+                f"{floor_label(floor, lang)} · {t('zone_name_example', lang)}",
+                sort_order=floor,
+                floor=floor,
+            )
+            tables.add_next(db, restaurant, per_floor, "stol", zone.id)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/tables")
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/move", dependencies=[Depends(verify_csrf)])
+def move_tables(
+    db: DbSession,
+    user: AdminUser,
+    table_id: Annotated[list[int] | None, Form()] = None,
+    zone_id: Annotated[str, Form()] = "",
+):
+    """Belgilangan stollarni bo'limga ko'chiradi.
+
+    Butun bino bitta forma: har bo'limda o'z `zone_id` qiymatini olib
+    keladigan tugma bor. Shuning uchun JS'siz ham ishlaydi — sudrab tashlash
+    esa shu formani o'sha tugma bilan yuboradi, alohida marshrut kerak emas.
+    """
+    tables.move_many(db, user.restaurant_id, table_id or [], zone_id)
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/zone/{zone_id}/add", dependencies=[Depends(verify_csrf)])
+def add_tables_to_zone(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    zone_id: int,
+    count: Annotated[int, Form()] = 1,
+    kind: Annotated[str, Form()] = "stol",
+):
+    """Bo'lim ichiga tez stol qo'shish — raqamlash keyingi bo'shdan davom etadi."""
+    zone = areas.owned_zone(db, user.restaurant_id, zone_id)
+    try:
+        tables.add_next(db, get_restaurant(db, user), count, kind, zone.id)
     except HTTPException as error:
         return form_failed(request, error, "/admin/tables")
     return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
@@ -938,26 +1034,14 @@ def orders_page(
 
 
 @router.get("/zones")
-def zones_page(request: Request, db: DbSession, user: AdminUser):
-    restaurant = get_restaurant(db, user)
-    rows = areas.list_zones(db, restaurant.id)
-    all_tables = tables.list_for(db, restaurant.id)
-    counts = {zone.id: 0 for zone in rows}
-    for table in all_tables:
-        if table.zone_id in counts:
-            counts[table.zone_id] += 1
-    return templates.TemplateResponse(
-        request,
-        "admin/zones.html",
-        {
-            "user": user,
-            "restaurant": restaurant,
-            "zones": rows,
-            "floors": areas.by_floor(rows),
-            "counts": counts,
-            "loose": sum(1 for table in all_tables if table.zone_id is None),
-        },
-    )
+def zones_page(user: AdminUser):
+    """Bo'limlar endi "Zal" sahifasining ichida.
+
+    Marshrut o'chirilmadi: eski xatcho'p va panel ichidagi havolalar 404
+    bo'lib qolmasin. `POST /zones*` marshrutlari esa hamon kerak — yangi
+    sahifa aynan ulardan foydalanadi.
+    """
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/zones", dependencies=[Depends(verify_csrf)])
@@ -972,8 +1056,8 @@ def create_zone(
     try:
         areas.create_zone(db, get_restaurant(db, user), name, sort_order, floor)
     except HTTPException as error:
-        return form_failed(request, error, "/admin/zones")
-    return RedirectResponse("/admin/zones", status.HTTP_303_SEE_OTHER)
+        return form_failed(request, error, "/admin/tables")
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/zones/{zone_id}", dependencies=[Depends(verify_csrf)])
@@ -988,14 +1072,14 @@ def update_zone(
     areas.rename_zone(
         db, areas.owned_zone(db, user.restaurant_id, zone_id), name, sort_order, floor
     )
-    return RedirectResponse("/admin/zones", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/zones/{zone_id}/delete", dependencies=[Depends(verify_csrf)])
 def delete_zone(db: DbSession, user: AdminUser, zone_id: int):
     # Stollar qoladi, faqat bo'limsiz bo'lib qoladi — chop etilgan QR omon
     areas.delete_zone(db, areas.owned_zone(db, user.restaurant_id, zone_id))
-    return RedirectResponse("/admin/zones", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/staff/{staff_id}/area", dependencies=[Depends(verify_csrf)])

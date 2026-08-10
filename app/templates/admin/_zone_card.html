@@ -1,0 +1,88 @@
+{#
+  Bo'lim — qavat ichidagi xona: "Asosiy zal", "VIP xonalar", "Terassa".
+
+  Uch narsa qiladi: stollarini ko'rsatadi, belgilangan stollarni qabul
+  qiladi ("Shu yerga ko'chirish") va o'z nomini tahrirlashga beradi.
+
+  "Shu yerga" tugmasi `form="hall-move"` bilan sahifa tepasidagi bitta
+  ko'chirish formasiga tegishli va o'z `zone_id` qiymatini olib keladi —
+  shuning uchun JS'siz ham ishlaydi va marshrut bitta.
+#}
+<article class="zone" data-zone="{{ zone.id }}">
+  <header class="zone-head">
+    <details class="zone-edit">
+      <summary>
+        <strong class="zone-name">{{ zone.name }}</strong>
+        <span class="muted small">{{ seats | length }} {{ t('zone_tables', ui_lang) }}</span>
+      </summary>
+      <div class="zone-edit-body">
+        <form method="post" action="/admin/zones/{{ zone.id }}" class="stack-sm">
+          {% include "partials/csrf.html" %}
+          <div class="field">
+            <label for="zn-{{ zone.id }}">{{ t('zone_name', ui_lang) }}</label>
+            <input id="zn-{{ zone.id }}" name="name" value="{{ zone.name }}" maxlength="64" required>
+          </div>
+          <div class="field">
+            <label for="zf-{{ zone.id }}">{{ t('zone_floor', ui_lang) }}</label>
+            <select id="zf-{{ zone.id }}" name="floor">
+              {% for number, name in floor_choices %}
+                <option value="{{ number }}" {{ 'selected' if zone.floor == number }}>{{ name }}</option>
+              {% endfor %}
+              {# Ro'yxatdan tashqaridagi eski qavat yo'qolib qolmasin #}
+              {% if zone.floor not in floor_choices | map(attribute=0) | list %}
+                <option value="{{ zone.floor }}" selected>{{ floor_label(zone.floor, ui_lang) }}</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="zo-{{ zone.id }}">{{ t('field_order', ui_lang) }}</label>
+            <input id="zo-{{ zone.id }}" name="sort_order" type="number" value="{{ zone.sort_order }}">
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit">{{ t('action_save', ui_lang) }}</button>
+        </form>
+        {#
+          Bo'lim o'chirilsa stollar QOLADI — faqat bo'limsiz bo'lib qoladi.
+          Aks holda bo'limni o'chirish stollar bilan chop etilgan QR kodlarni
+          ham o'ldirardi.
+        #}
+        <form method="post" action="/admin/zones/{{ zone.id }}/delete" class="zone-delete"
+              data-confirm="{{ zone.name }} — {{ t('action_delete', ui_lang) }}? {{ t('zones_delete_keeps_tables', ui_lang) }}">
+          {% include "partials/csrf.html" %}
+          <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
+        </form>
+      </div>
+    </details>
+
+    <button class="btn btn-sm zone-drop" type="submit" form="hall-move"
+            name="zone_id" value="{{ zone.id }}" data-drop="{{ zone.id }}">
+      {{ ui.icon('back') }} {{ t('hall_move_here', ui_lang) }}
+    </button>
+  </header>
+
+  <div class="zone-bricks">
+    {% for table in seats %}
+      {% include "admin/_table_chip.html" %}
+    {% else %}
+      <p class="muted small zone-blank">{{ t('hall_zone_empty', ui_lang) }}</p>
+    {% endfor %}
+  </div>
+
+  <footer class="zone-foot">
+    <form method="post" action="/admin/tables/zone/{{ zone.id }}/add" class="row zone-add">
+      {% include "partials/csrf.html" %}
+      <div class="field" style="width:80px">
+        <label class="sr-only" for="zc-{{ zone.id }}">{{ t('hall_add_tables', ui_lang) }}</label>
+        <input id="zc-{{ zone.id }}" name="count" type="number" min="1" max="50" value="4">
+      </div>
+      <div class="field" style="width:130px">
+        <label class="sr-only" for="zk-{{ zone.id }}">{{ t('field_kind', ui_lang) }}</label>
+        <select id="zk-{{ zone.id }}" name="kind">
+          {% for option in kinds %}
+            <option value="{{ option.value }}">{{ t('kind_' ~ option.value ~ '_name', ui_lang) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-sm" type="submit">{{ ui.icon('plus') }} {{ t('hall_add_tables', ui_lang) }}</button>
+    </form>
+  </footer>
+</article>

@@ -248,6 +248,10 @@ class Zone(Base):
     name: Mapped[str] = mapped_column(String(64))
     # Qavat bo'limning O'ZIDA turadi, stolda emas: bitta bo'lim ikki qavatga
     # bo'linib ketmaydi, ya'ni bu tabiiy joy va uchinchi daraja qo'shilmaydi.
+    #
+    # Manfiy son — yerto'la darajasi (-1 = 1-yerto'la). `0` ishlatilmaydi:
+    # ilgari u "yerto'la" degani edi, `b8d3f1a52c04` migratsiyasi uni -1 ga
+    # o'tkazdi. Chegaralar `services/areas.py` da.
     floor: Mapped[int] = mapped_column(Integer, default=1)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow_naive)

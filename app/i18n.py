@@ -352,6 +352,7 @@ UI: dict[str, dict[str, str]] = {
     "zone_floor": {"uz": "Qavat", "ru": "Этаж", "en": "Floor"},
     "floor_n": {"uz": "{n}-qavat", "ru": "{n}-й этаж", "en": "Floor {n}"},
     "floor_basement": {"uz": "Yerto'la", "ru": "Подвал", "en": "Basement"},
+    "floor_basement_n": {"uz": "{n}-yerto'la", "ru": "{n}-й подвал", "en": "Basement {n}"},
     "zone_tables": {"uz": "stol", "ru": "столов", "en": "tables"},
     "zone_none": {"uz": "Bo'limsiz", "ru": "Без зоны", "en": "No area"},
     "field_kind": {"uz": "Turi", "ru": "Тип", "en": "Type"},
@@ -689,6 +690,68 @@ UI: dict[str, dict[str, str]] = {
         "en": "The old QR stops working immediately. Use it if a photo of the code got around.",
     },
     "tables_scan_me": {"uz": "Skanerlang va buyurtma bering", "ru": "Отсканируйте и закажите", "en": "Scan to see the menu and order"},
+
+    # --- Zal: binoni yig'ish ---
+    "hall_title": {"uz": "Zal", "ru": "Зал", "en": "The room"},
+    "hall_sub": {
+        "uz": "Binongizni shu yerda yig'asiz: qavat, bo'lim, stol. Har stolning "
+              "o'z QR kodi bor — afitsant buyurtma qaysi stoldan kelganini biladi.",
+        "ru": "Здесь вы собираете своё здание: этаж, зона, стол. У каждого стола "
+              "свой QR-код — официант видит, с какого стола пришёл заказ.",
+        "en": "Build your building here: floor, area, table. Every table gets its "
+              "own QR code, so the waiter knows which table ordered.",
+    },
+    "hall_start_title": {"uz": "Zalni yig'amiz", "ru": "Соберём зал", "en": "Let's build the room"},
+    "hall_start_floors": {"uz": "Nechta qavat?", "ru": "Сколько этажей?", "en": "How many floors?"},
+    "hall_start_tables": {"uz": "Har qavatda nechta stol?", "ru": "Сколько столов на этаже?", "en": "Tables per floor?"},
+    "hall_start_action": {"uz": "Zalni yig'ish", "ru": "Собрать зал", "en": "Build the room"},
+    "hall_start_hint": {
+        "uz": "Har qavatga bitta bo'lim va stollar yasaladi. Keyin nomlarini "
+              "o'zgartirasiz, bo'lim qo'shasiz, stollarni ko'chirasiz.",
+        "ru": "На каждом этаже появится одна зона со столами. Потом переименуете, "
+              "добавите зоны и перенесёте столы.",
+        "en": "Each floor gets one area with tables. You can rename, add more areas "
+              "and move tables afterwards.",
+    },
+    "hall_add_floor": {"uz": "Qavat qo'shish", "ru": "Добавить этаж", "en": "Add a floor"},
+    "hall_add_zone": {"uz": "Bo'lim qo'shish", "ru": "Добавить зону", "en": "Add an area"},
+    "hall_add_zone_hint": {
+        "uz": "Qavat bo'lim bilan tug'iladi: bo'sh qavat saqlanmaydi.",
+        "ru": "Этаж появляется вместе с зоной: пустой этаж не сохраняется.",
+        "en": "A floor is born with its area — an empty floor is not stored.",
+    },
+    "hall_add_tables": {"uz": "Stol qo'shish", "ru": "Добавить столы", "en": "Add tables"},
+    "hall_move_here": {"uz": "Shu yerga ko'chirish", "ru": "Перенести сюда", "en": "Move here"},
+    "hall_unassigned": {"uz": "Bo'limsiz stollar", "ru": "Столы без зоны", "en": "Tables without an area"},
+    "hall_unassigned_hint": {
+        "uz": "Bu stollar zalning biror bo'limiga tegishli emas. Afitsantga "
+              "biriktirib bo'lmaydi — buyurtmasi hammaga ketadi.",
+        "ru": "Эти столы не принадлежат ни одной зоне. Их нельзя закрепить за "
+              "официантом — заказ уйдёт всем.",
+        "en": "These tables belong to no area. They cannot be assigned to a waiter — "
+              "their orders go to everyone.",
+    },
+    "hall_take_out": {"uz": "Bo'limdan chiqarish", "ru": "Убрать из зоны", "en": "Take out of the area"},
+    "hall_selected": {"uz": "{n} ta belgilandi", "ru": "Выбрано: {n}", "en": "{n} selected"},
+    "hall_clear": {"uz": "Bekor qilish", "ru": "Отменить", "en": "Clear"},
+    "hall_pick_hint": {
+        "uz": "Stolni bosib belgilang, keyin bo'limdagi \"Shu yerga ko'chirish\" "
+              "tugmasini bosing. Kompyuterda stolni sudrab ham tashlash mumkin.",
+        "ru": "Отметьте столы, затем нажмите «Перенести сюда» в нужной зоне. "
+              "На компьютере стол можно и перетащить.",
+        "en": "Tap tables to select them, then press \"Move here\" on an area. "
+              "On a computer you can also drag a table across.",
+    },
+    "hall_zone_empty": {"uz": "Bu bo'limda stol yo'q", "ru": "В этой зоне нет столов", "en": "No tables in this area"},
+    "hall_floor_empty": {"uz": "Bu qavatda bo'lim yo'q", "ru": "На этом этаже нет зон", "en": "No areas on this floor"},
+    "hall_zone_count": {"uz": "{z} bo'lim · {t} stol", "ru": "зон: {z} · столов: {t}", "en": "{z} areas · {t} tables"},
+    "hall_open_table": {"uz": "Stolni ochish", "ru": "Открыть стол", "en": "Open table"},
+    "zone_name_example": {"uz": "Asosiy zal", "ru": "Основной зал", "en": "Main room"},
+    "zones_delete_keeps_tables": {
+        "uz": "Stollar qoladi, faqat bo'limsiz bo'ladi.",
+        "ru": "Столы останутся, просто окажутся без зоны.",
+        "en": "The tables stay — they simply end up without an area.",
+    },
 
     # --- xodimlar (egasi) ---
     "staff_title": {"uz": "Xodimlar", "ru": "Сотрудники", "en": "Staff"},

@@ -67,8 +67,14 @@ def seat_label(kind, label: str, lang: str) -> str:
 
 
 def floor_label(floor: int, lang: str) -> str:
-    """"2-qavat" yoki "Yerto'la" — 0 yerto'la deb hisoblanadi."""
-    if not floor:
+    """"2-qavat" yoki "1-yerto'la" — manfiy son yerto'la darajasini bildiradi.
+
+    `0` eski ma'lumotda "yerto'la" degani edi; migratsiya uni `-1` ga
+    o'tkazadi, lekin qaerdadir qolib ketgan bo'lsa ham to'g'ri o'qilsin.
+    """
+    if floor < 0:
+        return t("floor_basement_n", lang).replace("{n}", str(-floor))
+    if floor == 0:
         return t("floor_basement", lang)
     return t("floor_n", lang).replace("{n}", str(floor))
 

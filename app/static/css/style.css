@@ -2083,6 +2083,145 @@ html.js .dish-add {
   word-break: break-all;
 }
 
+/* ==========================================================================
+   Zal — bino kesim ko'rinishida
+
+   Yuqori qavat tepada, yerto'la pastda. Chapdagi vertikal chiziq qavatlarni
+   bir binoga bog'lab turadi: aks holda ular shunchaki uchta alohida ro'yxat
+   bo'lib ko'rinardi.
+   ========================================================================== */
+
+.hall-bar { align-items: center; gap: 1rem; margin: 1rem 0 .8rem; }
+.hall-start { margin-top: 1rem; }
+
+.building {
+  position: relative;
+  padding-left: 1.15rem;
+  border-left: 3px solid var(--surface-3);
+  border-radius: 3px;
+}
+
+.floor { padding: .2rem 0 1rem; }
+.floor + .floor { border-top: 1px dashed var(--line-2); padding-top: 1rem; }
+
+.floor-head {
+  display: flex; align-items: center; gap: .6rem;
+  flex-wrap: wrap; margin-bottom: .6rem;
+}
+.floor-name {
+  margin: 0; font-size: var(--text-lg);
+  font-family: var(--font-head); letter-spacing: var(--head-spacing);
+}
+/* Qavat belgisi — chapdagi chiziqqa "ulanadigan" nuqta */
+.floor-head::before {
+  content: ""; flex: 0 0 auto;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent); margin-left: -1.6rem; margin-right: .35rem;
+}
+.floor-add { margin-left: auto; position: relative; }
+.floor-add > summary { list-style: none; cursor: pointer; }
+.floor-add > summary::-webkit-details-marker { display: none; }
+.floor-add[open] > form,
+.floor-new[open] > form { margin-top: .6rem; }
+
+.floor-zones { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.floor-new { margin-top: 1rem; }
+.floor-new > summary { cursor: pointer; font-weight: 600; }
+
+/* --- bo'lim (xona) --- */
+
+.zone {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: .85rem; box-shadow: var(--shadow-xs);
+}
+.zone-loose { margin-top: 1.2rem; background: var(--surface-2); border-style: dashed; }
+.zone-head { display: flex; align-items: flex-start; gap: .5rem; flex-wrap: wrap; }
+.zone-edit { flex: 1 1 auto; min-width: 0; }
+.zone-edit > summary { cursor: pointer; list-style: none; }
+.zone-edit > summary::-webkit-details-marker { display: none; }
+.zone-name { font-size: var(--text-base); }
+.zone-edit-body { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line); }
+.zone-delete { margin-top: .6rem; }
+.zone-drop { flex: 0 0 auto; }
+.zone-blank { margin: .4rem 0; }
+.zone-foot { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line); }
+.zone-add { align-items: flex-end; gap: .4rem; }
+
+/* Sudrab kelingan stol shu bo'lim ustida turganda */
+.zone.is-target { border-color: var(--accent); background: var(--accent-wash); }
+
+/* --- stol g'ishtchasi --- */
+
+.zone-bricks {
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-top: .6rem; align-items: flex-start;
+}
+
+.brick { position: relative; }
+.brick-detail { display: block; }
+
+.brick-face {
+  display: flex; align-items: center; gap: .3rem;
+  min-width: 62px; padding: .45rem .55rem .45rem 1.5rem;
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: var(--r-sm); cursor: pointer;
+  list-style: none; user-select: none;
+}
+.brick-face::-webkit-details-marker { display: none; }
+.brick-face:hover { border-color: var(--accent-edge); }
+.brick-label { font-weight: 600; font-size: var(--text-sm); }
+.brick-icon { display: inline-flex; color: var(--ink-2); }
+.brick-icon svg { width: 14px; height: 14px; }
+
+/* Belgilash katakchasi g'ishtchaning chap burchagida. `<details>` dan
+   TASHQARIDA turadi: `<summary>` ichida bo'lsa bosilganda brauzer ayni
+   paytda tahrirni ham ochib yuborardi. */
+.brick-tick {
+  position: absolute; z-index: 2; top: 0; left: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 1.5rem; height: 1.95rem; cursor: pointer;
+}
+.brick-tick input { width: 13px; height: 13px; cursor: pointer; accent-color: var(--accent); }
+
+.brick:has(input:checked) .brick-face {
+  background: var(--accent-wash); border-color: var(--accent);
+}
+.brick.is-dragging { opacity: .45; }
+
+/* Ochilgan stol butun qatorni egallaydi. Aks holda oyna g'ishtcha turgan
+   joydan boshlanib ekran chetidan chiqib ketardi va tor telefonda matn
+   qirqilib qolardi. */
+.brick:has(.brick-detail[open]) { flex: 1 0 100%; }
+
+.brick-body {
+  margin-top: .4rem; padding: .7rem;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); max-width: 320px;
+}
+.brick-tools { flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+
+/* Tanlov tasmasi — faqat JS bor bo'lganda va biror narsa belgilanganda */
+.hall-tray {
+  position: sticky; bottom: .6rem; z-index: 5;
+  display: flex; align-items: center; gap: .7rem;
+  margin-top: 1rem; padding: .6rem .85rem;
+  background: var(--ink); color: #fff;
+  border-radius: var(--r-full); box-shadow: var(--shadow-md);
+}
+.hall-tray[hidden] { display: none; }
+.hall-tray strong { font-size: var(--text-sm); }
+.hall-tray button {
+  margin-left: auto; background: transparent; color: inherit;
+  border: 1px solid rgba(255, 255, 255, .35); border-radius: var(--r-full);
+  padding: .25rem .7rem; font: inherit; font-size: var(--text-sm); cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .building { padding-left: .8rem; }
+  .floor-head::before { margin-left: -1.2rem; }
+  .floor-zones { grid-template-columns: 1fr; }
+}
+
 /* Chop etiladigan kartochkalar */
 .tent-grid {
   display: grid; gap: .5rem;

@@ -332,6 +332,7 @@ def test_the_owner_manages_zones(client, db, cafe):
 
 
 def test_a_duplicate_zone_keeps_you_on_the_page(client, db, cafe):
+    """Xato zal sahifasining o'zida chiqadi, boshqa yoqqa otvormaydi."""
     restaurant, _, _ = cafe
     login(client, "osh", "adminpass123")
     response = client.post(
@@ -339,8 +340,16 @@ def test_a_duplicate_zone_keeps_you_on_the_page(client, db, cafe):
         data={"csrf_token": csrf(client, "/admin/zones"), "name": "Chap tomon"},
     )
     assert response.status_code == 200
-    assert response.url.path == "/admin/zones"
+    assert response.url.path == "/admin/tables"
     assert "allaqachon bor" in html.unescape(response.text)
+
+
+def test_the_old_areas_link_still_leads_somewhere(client, cafe):
+    """Bo'limlar "Zal" ichiga ko'chdi — eski xatcho'p 404 bo'lib qolmasin."""
+    login(client, "osh", "adminpass123")
+    response = client.get("/admin/zones", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/admin/tables"
 
 
 def test_deleting_a_zone_keeps_the_tables_and_their_codes(client, db, cafe):
@@ -409,28 +418,44 @@ def test_the_page_groups_zones_by_floor(client, db, cafe):
     login(client, "osh", "adminpass123")
     body = html.unescape(client.get("/admin/zones?lang=uz").text)
     assert "1-qavat" in body and "2-qavat" in body
-    # Qavat tartibda: birinchi qavat yuqorida
-    assert body.index("1-qavat") < body.index("2-qavat")
+    # Bino kesim kabi chiziladi: yuqori qavat tepada
+    assert body.index("2-qavat") < body.index("1-qavat")
+
+
+def test_a_basement_sits_at_the_bottom(client, db, cafe):
+    """Yerto'la eng pastda — binoning haqiqiy tartibi."""
+    restaurant, _, _ = cafe
+    areas.create_zone(db, restaurant, "Sovutgich", floor=-1)
+    areas.create_zone(db, restaurant, "Terasa", floor=2)
+
+    login(client, "osh", "adminpass123")
+    body = html.unescape(client.get("/admin/zones?lang=uz").text)
+    assert body.index("2-qavat") < body.index("1-qavat") < body.index("1-yerto'la")
 
 
 def test_a_basement_reads_as_a_word(client, db, cafe):
-    """0 — yerto'la. "0-qavat" degan yozuv g'alati ko'rinardi."""
+    """Yerto'la darajasi so'z bilan: "-1-qavat" degan yozuv g'alati ko'rinardi.
+
+    Zona nomi ataylab "yerto'la" so'zisiz — aks holda test qavat yorlig'i
+    umuman chiqmasa ham nom tufayli o'tib ketardi.
+    """
     restaurant, _, _ = cafe
-    areas.create_zone(db, restaurant, "Yerto'la zali", floor=0)
+    areas.create_zone(db, restaurant, "Sovutgich", floor=-2)
 
     login(client, "osh", "adminpass123")
-    assert "Yerto'la" in html.unescape(client.get("/admin/zones?lang=uz").text)
+    assert "2-yerto'la" in html.unescape(client.get("/admin/zones?lang=uz").text)
 
 
 def test_a_silly_floor_falls_back_to_the_first(client, db, cafe):
     """Formadan aql bovar qilmaydigan son kelsa xato ko'rsatmaymiz."""
     restaurant, _, _ = cafe
     login(client, "osh", "adminpass123")
-    client.post(
-        "/admin/zones",
-        data={"csrf_token": csrf(client, "/admin/zones"), "name": "G'alati", "floor": 999},
-    )
-    assert db.query(Zone).filter(Zone.name == "G'alati").one().floor == 1
+    for number, name in ((999, "Baland"), (-99, "Chuqur"), (0, "Nol")):
+        client.post(
+            "/admin/zones",
+            data={"csrf_token": csrf(client, "/admin/zones"), "name": name, "floor": number},
+        )
+        assert db.query(Zone).filter(Zone.name == name).one().floor == 1
 
 
 def test_the_floor_shows_on_the_printed_card(client, db, cafe):

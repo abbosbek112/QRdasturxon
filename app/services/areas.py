@@ -81,8 +81,17 @@ def rename_zone(db: Session, zone: Zone, name: str, sort_order: int, floor: int 
     db.commit()
 
 
+MIN_FLOOR = -3  # 3-yerto'la
+MAX_FLOOR = 50
+
+
 def _clean_floor(value) -> int:
-    """Qavat 0 dan 50 gacha. Yerto'la uchun 0, aks holda odatdagi qavatlar.
+    """Qavat: manfiy — yerto'la, musbat — odatdagi qavat.
+
+    `0` ataylab ishlatilmaydi. Ilgari u "yerto'la" degani edi, lekin bir
+    nechta yerto'la kerak bo'lgach raqam va nom orasidagi bog'liqlik
+    chalkashib ketardi (`0` = 1-yerto'la, `-1` = 2-yerto'la). Endi
+    `-1` = 1-yerto'la, ya'ni raqamning o'zi darajani aytib turadi.
 
     Formadan aql bovar qilmaydigan son kelsa birinchi qavatga tushiriladi —
     xato ko'rsatib egani ushlab turishning ma'nosi yo'q.
@@ -91,15 +100,35 @@ def _clean_floor(value) -> int:
         floor = int(value)
     except (TypeError, ValueError):
         return 1
-    return floor if 0 <= floor <= 50 else 1
+    if floor == 0 or not MIN_FLOOR <= floor <= MAX_FLOOR:
+        return 1
+    return floor
+
+
+def floor_choices(lang: str) -> list[tuple[int, str]]:
+    """Formadagi qavat ro'yxati — tepadan pastga, so'z bilan.
+
+    Egasi manfiy son kiritib o'tirmaydi: u ro'yxatdan "1-yerto'la" ni
+    tanlaydi. Ro'yxat 50 qavatgacha emas, 5 qavatgacha — bunday balandlikda
+    restoran zali bo'lmaydi, va uzun ro'yxat tanlashni qiyinlashtiradi.
+    Bazada chegara baribir 50, ya'ni eski ma'lumot yo'qolmaydi.
+    """
+    from app.templating import floor_label
+
+    floors = list(range(5, 0, -1)) + [-1, -2, -3]
+    return [(floor, floor_label(floor, lang)) for floor in floors]
 
 
 def by_floor(zones: list[Zone]) -> list[tuple[int, list[Zone]]]:
-    """Bo'limlarni qavatlarga guruhlaydi — sahifada shunday ko'rinadi."""
+    """Bo'limlarni qavatlarga guruhlaydi — binoning kesimi kabi.
+
+    Tartib kamayish bo'yicha: yuqori qavat tepada, yerto'la pastda. Sahifada
+    bino aynan shunday chiziladi va odam uni ko'rgan zahoti tushunadi.
+    """
     groups: dict[int, list[Zone]] = {}
     for zone in zones:
         groups.setdefault(zone.floor, []).append(zone)
-    return sorted(groups.items())
+    return sorted(groups.items(), reverse=True)
 
 
 def delete_zone(db: Session, zone: Zone) -> None:

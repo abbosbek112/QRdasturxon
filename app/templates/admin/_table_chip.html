@@ -1,0 +1,87 @@
+{#
+  Bitta stol — zaldagi g'ishtcha.
+
+  Ikki qismdan iborat va ikkalasi ham JS'siz ishlaydi:
+
+  * chapdagi katakcha — belgilash. U `form="hall-move"` orqali sahifa
+    tepasidagi ko'chirish formasiga tegishli, ya'ni pastdagi tahrirlash
+    formasi bilan aralashmaydi va HTML ichma-ich forma bo'lib qolmaydi;
+  * qolgan yuzasi — `<details>`. Bosilsa ichidan to'liq tahrir ochiladi.
+
+  Katakcha ataylab `<details>` dan TASHQARIDA: `<summary>` ichidagi katakcha
+  bosilganda brauzer ayni paytda tahrirni ham ochib yuborardi.
+#}
+<div class="brick" data-table="{{ table.id }}" draggable="true">
+  <label class="brick-tick">
+    <input type="checkbox" name="table_id" value="{{ table.id }}" form="hall-move">
+    <span class="sr-only">{{ table.label }}</span>
+  </label>
+
+  <details class="brick-detail">
+    <summary class="brick-face" title="{{ t('hall_open_table', ui_lang) }}">
+      <span class="brick-icon" aria-hidden="true">
+        {%- if table.kind.value == 'vip' %}{{ ui.icon('star') }}
+        {%- elif table.kind.value == 'xona' %}{{ ui.icon('store') }}
+        {%- elif table.kind.value == 'divan' %}{{ ui.icon('home') }}
+        {%- else %}{{ ui.icon('grid') }}{% endif -%}
+      </span>
+      <span class="brick-label">{{ table.label }}</span>
+    </summary>
+
+    <div class="brick-body">
+      <p class="muted small table-code">/t/{{ table.code }}</p>
+
+      <form method="post" action="/admin/tables/{{ table.id }}" class="stack-sm">
+        {% include "partials/csrf.html" %}
+        <div class="field">
+          <label for="tl-{{ table.id }}">{{ t('tables_label', ui_lang) }}</label>
+          <input id="tl-{{ table.id }}" name="label" value="{{ table.label }}" maxlength="32" required>
+        </div>
+        <div class="field">
+          <label for="tk-{{ table.id }}">{{ t('field_kind', ui_lang) }}</label>
+          <select id="tk-{{ table.id }}" name="kind">
+            {% for option in kinds %}
+              <option value="{{ option.value }}" {{ 'selected' if table.kind == option }}>
+                {{ t('kind_' ~ option.value ~ '_name', ui_lang) }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {#
+          Bo'limni bu yerdan ham o'zgartirish mumkin. Ko'chirish uchun asosiy
+          yo'l — belgilab ko'chirish, lekin bitta stolni tezda boshqa joyga
+          olish uchun shu ro'yxat qulayroq.
+        #}
+        <div class="field">
+          <label for="tz-{{ table.id }}">{{ t('field_zone', ui_lang) }}</label>
+          <select id="tz-{{ table.id }}" name="zone_id">
+            <option value="">{{ t('zone_none', ui_lang) }}</option>
+            {% for zone in zones %}
+              <option value="{{ zone.id }}" {{ 'selected' if table.zone_id == zone.id }}>
+                {{ floor_label(zone.floor, ui_lang) }} · {{ zone.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" type="submit">{{ t('action_save', ui_lang) }}</button>
+      </form>
+
+      <div class="row brick-tools">
+        <a class="btn btn-sm" href="/admin/tables/{{ table.id }}/qr.png" download>
+          {{ ui.icon('download') }} PNG
+        </a>
+        <a class="btn btn-sm" href="/admin/tables/{{ table.id }}/qr.svg" download>SVG</a>
+        <form method="post" action="/admin/tables/{{ table.id }}/code"
+              data-confirm="{{ t('tables_new_code_hint', ui_lang) }}">
+          {% include "partials/csrf.html" %}
+          <button class="btn btn-sm" type="submit">{{ t('tables_new_code', ui_lang) }}</button>
+        </form>
+        <form method="post" action="/admin/tables/{{ table.id }}/delete"
+              data-confirm="{{ seat_label(table.kind, table.label, ui_lang) }} — {{ t('action_delete', ui_lang) }}?">
+          {% include "partials/csrf.html" %}
+          <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
+        </form>
+      </div>
+    </div>
+  </details>
+</div>

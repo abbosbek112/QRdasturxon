@@ -166,6 +166,83 @@ def bulk_create(
     return created
 
 
+def add_next(
+    db: Session,
+    restaurant: Restaurant,
+    count: int,
+    kind: str = "stol",
+    zone_id: int | None = None,
+) -> list[Table]:
+    """Bo'limga "yana N ta stol" — mavjud raqamlardan keyin davom etadi.
+
+    `bulk_create` dan farqi: u "1 dan N gacha" degani va boshlang'ich
+    sozlash uchun. Bu esa zal allaqachon yig'ilgandan keyin ishlatiladi —
+    VIP xonaga uchta stol qo'shsangiz ular 1, 2, 3 emas, keyingi bo'sh
+    raqamlardan boshlanadi va borlari bilan urishmaydi.
+    """
+    if count < 1:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Stol soni kamida 1 bo'lsin")
+
+    have = _labels(db, restaurant.id)
+    if len(have) + count > MAX_TABLES:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, f"{MAX_TABLES} tadan ortiq stol qo'shib bo'lmaydi"
+        )
+
+    # Eng katta raqamdan davom etamiz. Raqam bo'lmagan nomlar ("Terasa A")
+    # hisobga olinmaydi — ular alohida qatorda yashaydi.
+    numbers = [int(label) for label in have if label.isdigit()]
+    start = max(numbers, default=0) + 1
+
+    chosen_kind = _clean_kind(kind)
+    chosen_zone = _clean_zone(db, restaurant.id, zone_id)
+    created, number = [], start
+    while len(created) < count:
+        label = str(number)
+        number += 1
+        if label in have:
+            continue
+        created.append(
+            Table(
+                restaurant_id=restaurant.id,
+                label=label,
+                kind=chosen_kind,
+                zone_id=chosen_zone,
+                code=new_code(),
+            )
+        )
+    db.add_all(created)
+    db.commit()
+    return created
+
+
+def move_many(db: Session, restaurant_id: int, table_ids: list[int], zone_id) -> int:
+    """Bir necha stolni bitta bo'limga ko'chiradi. Nechtasi ko'chganini qaytaradi.
+
+    Ikkala tomon ham tekshiriladi: stollar ham, bo'lim ham SHU restoranniki
+    bo'lishi kerak. Begona raqam jimgina tashlanadi — `areas.set_assignment`
+    va `_clean_zone` dagi bir xil yondashuv.
+
+    `zone_id` bo'sh bo'lsa stollar bo'limdan chiqariladi. Bu xato emas,
+    ataylab: "bo'limsiz stollar" javonga qaytarish shu bilan bo'ladi.
+    """
+    if not table_ids:
+        return 0
+
+    target = _clean_zone(db, restaurant_id, zone_id)
+    ours = list(
+        db.scalars(
+            select(Table).where(
+                Table.restaurant_id == restaurant_id, Table.id.in_(table_ids)
+            )
+        ).all()
+    )
+    for table in ours:
+        table.zone_id = target
+    db.commit()
+    return len(ours)
+
+
 def regenerate_code(db: Session, table: Table) -> None:
     """Stolga yangi kod beradi — eski QR o'sha zahoti ishlamay qoladi.
 
