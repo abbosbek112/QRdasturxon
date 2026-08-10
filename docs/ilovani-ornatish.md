@@ -82,16 +82,27 @@ eas init
 
 `projectId` muhim: push tokeni aynan shu raqamga bog'lanadi.
 
-**Android bildirishnomasi uchun Firebase kerak** (bepul):
+**Android bildirishnomasi uchun Firebase kerak** (bepul). Ikki tomoni bor va
+**ikkalasi ham** bo'lmasa push kelmaydi:
 
-1. `console.firebase.google.com` da loyiha yarating
-2. Android ilova qo'shing, paket nomi: `tech.qrdasturxon.zal`
-3. `google-services.json` ni yuklab olib `mobile/` ga qo'ying
-4. `app.json` ga qo'shing: `"android": { "googleServicesFile": "./google-services.json", ... }`
-5. Firebase → Project settings → Service accounts → yangi kalit yarating va uni
-   `expo.dev` dagi loyiha → Credentials → FCM V1 ga yuklang
+| Tomon | Nima | Holat |
+|---|---|---|
+| Telefon tomoni | `google-services.json` — ilovaga qaysi Firebase loyihasi ekanini aytadi | ✅ qilingan (`mobile/google-services.json`, `app.json` da ko'rsatilgan) |
+| Server tomoni | **Service account kaliti** — Expo'ga FCM'ga xabar yuborish huquqini beradi | ⬜ qilinishi kerak |
 
-Busiz ilova ishlaydi, lekin **push kelmaydi**.
+Server tomonini qo'shish:
+
+1. `console.firebase.google.com` → loyiha `qrdasturxon` → ⚙️ **Project settings**
+2. **Service accounts** → **Generate new private key** → JSON yuklab olinadi
+3. Bu **haqiqiy maxfiy kalit** — repoga qo'ymang, hech kimga yubormang
+4. `expo.dev` → loyiha → **Credentials** → Android → **FCM V1** → o'sha JSON'ni yuklang
+
+Shundan keyin yangi APK yig'ilishi kerak — `google-services.json` build paytida
+ilova ichiga kiradi, mavjud APK'da u yo'q.
+
+> `google-services.json` repoda turadi va bu normal: ichidagi kalit maxfiy emas,
+> u har bir APK ichida ham bor va paket nomi bilan cheklangan. Service account
+> kaliti esa butunlay boshqa narsa — u hech qachon repoga tushmasligi kerak.
 
 ### Android APK
 
