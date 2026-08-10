@@ -35,21 +35,35 @@ MIN_USERNAME_LENGTH = 3
 MIN_PASSWORD_LENGTH = 8
 
 
-def _bad(message: str) -> HTTPException:
-    return HTTPException(status.HTTP_400_BAD_REQUEST, message)
+class FieldError(HTTPException):
+    """Forma xatosi va u QAYSI maydonga tegishli.
+
+    Maydonsiz xato foydalanuvchini adashtiradi: "'admin' logini band" degan
+    yozuv forma tepasida turganda, odam uni restoran nomiga tegishli deb
+    o'ylashi mumkin — ayniqsa login maydonini brauzer o'zi to'ldirib qo'ygan
+    va u unga qaramagan bo'lsa.
+    """
+
+    def __init__(self, message: str, field: str = ""):
+        super().__init__(status.HTTP_400_BAD_REQUEST, message)
+        self.field = field
+
+
+def _bad(message: str, field: str = "") -> HTTPException:
+    return FieldError(message, field)
 
 
 def clean_slug(raw: str, db: Session, exclude_id: int | None = None) -> str:
     slug = slugify(raw)[:64]
     if not slug:
-        raise _bad("Manzil (slug) noto'g'ri")
+        raise _bad("Manzil (slug) noto'g'ri", "slug")
     if slug in RESERVED_SLUGS:
-        raise _bad(f"'{slug}' band so'z, boshqasini tanlang")
+        raise _bad(f"'{slug}' band so'z, boshqasini tanlang", "slug")
     query = select(Restaurant.id).where(Restaurant.slug == slug)
     if exclude_id is not None:
         query = query.where(Restaurant.id != exclude_id)
     if db.scalar(query):
-        raise _bad(f"'{slug}' allaqachon band")
+        raise _bad(f"'{slug}' allaqachon band", "slug")
     return slug
 
 
@@ -66,15 +80,15 @@ def create_restaurant_with_admin(
 ) -> Restaurant:
     name = name.strip()
     if not name:
-        raise _bad("Restoran nomi bo'sh bo'lmasin")
+        raise _bad("Restoran nomi bo'sh bo'lmasin", "name")
 
     username = username.strip().lower()
     if len(username) < MIN_USERNAME_LENGTH:
-        raise _bad(f"Login kamida {MIN_USERNAME_LENGTH} belgidan iborat bo'lsin")
+        raise _bad(f"Login kamida {MIN_USERNAME_LENGTH} belgidan iborat bo'lsin", "username")
     if len(password) < MIN_PASSWORD_LENGTH:
-        raise _bad(f"Parol kamida {MIN_PASSWORD_LENGTH} belgidan iborat bo'lsin")
+        raise _bad(f"Parol kamida {MIN_PASSWORD_LENGTH} belgidan iborat bo'lsin", "password")
     if db.scalar(select(User.id).where(User.username == username)):
-        raise _bad(f"'{username}' logini band")
+        raise _bad(f"'{username}' logini band", "username")
 
     restaurant = Restaurant(
         name=name,
@@ -97,6 +111,35 @@ def create_restaurant_with_admin(
     )
     db.commit()
     return restaurant
+
+
+def create_waiter(db: Session, restaurant: Restaurant, username: str, password: str) -> User:
+    """Zal xodimi uchun hisob.
+
+    Egasidan farqi bitta: roli `waiter`, ya'ni u faqat buyurtmalar taxtasini
+    ko'radi. Menyu, narx va sozlamalarga yo'li yo'q — shuning uchun egasi o'z
+    parolini afitsantga berishi shart emas.
+
+    Login butun tizimda yagona bo'lishi kerak, shuning uchun forma odatda
+    restoran slug'i bilan boshlanadigan nom taklif qiladi.
+    """
+    username = username.strip().lower()
+    if len(username) < MIN_USERNAME_LENGTH:
+        raise _bad(f"Login kamida {MIN_USERNAME_LENGTH} belgidan iborat bo'lsin", "username")
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise _bad(f"Parol kamida {MIN_PASSWORD_LENGTH} belgidan iborat bo'lsin", "password")
+    if db.scalar(select(User.id).where(User.username == username)):
+        raise _bad(f"'{username}' logini band", "username")
+
+    user = User(
+        username=username,
+        password_hash=hash_password(password),
+        role=Role.waiter,
+        restaurant_id=restaurant.id,
+    )
+    db.add(user)
+    db.commit()
+    return user
 
 
 @dataclass(frozen=True)

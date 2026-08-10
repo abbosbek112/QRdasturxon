@@ -23,6 +23,19 @@
       <label for="slug">Manzil (slug)</label>
       <input id="slug" name="slug" value="{{ restaurant.slug if restaurant else '' }}" placeholder="osh-markazi">
       <p class="hint">Menyu manzili <code>/r/&lt;slug&gt;</code> ko'rinishida bo'ladi. Bo'sh qoldirilsa nomdan avtomatik yasaladi.</p>
+      {#
+        Chop etilgan QR kod ichida aynan shu manzil yozilgan. Slug o'zgarsa
+        stollardagi hamma kod jimgina ishlamay qoladi va buni restoran
+        mijoz shikoyat qilgandagina biladi — shuning uchun ogohlantirish.
+      #}
+      {% if restaurant %}
+        <div class="notice notice-warn" style="margin-top:.6rem">
+          <strong>Slug o'zgarsa chop etilgan QR kodlar ishlamay qoladi.</strong>
+          Menyu QR'i ham, stollardagi kodlar ham — hammasi qaytadan chop etiladi.
+          Menyu mazmunini (taom, narx, rasm) o'zgartirish QR'ga ta'sir qilmaydi —
+          faqat shu maydon qiladi.
+        </div>
+      {% endif %}
     </div>
     <div class="field">
       <label for="phone">Telefon</label>

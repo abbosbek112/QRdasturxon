@@ -17,20 +17,36 @@
       </p>
     </div>
 
-    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+    {#
+      Xato AYNAN aybdor maydon yonida chiqadi. Ilgari u faqat forma tepasida
+      turardi va odam qaysi maydon haqida ekanini tushunmasdi — ayniqsa
+      brauzer login maydonini o'zi to'ldirib qo'ygan bo'lsa.
+    #}
+    {% macro field_error(name) %}
+      {% if error and error_field == name %}
+        <p class="field-error">{{ error }}</p>
+      {% endif %}
+    {% endmacro %}
+    {% if error and not error_field %}<div class="alert">{{ error }}</div>{% endif %}
 
     <form method="post" action="/signup" class="stack">
       {% include "partials/csrf.html" %}
 
       <div class="field">
         <label for="name">{{ t('field_restaurant_name', lang) }}</label>
-        <input id="name" name="name" value="{{ form.get('name', '') }}" required autofocus
+        <input id="name" name="name" value="{{ form.get('name', '') }}" required
+               {{ 'autofocus' if error_field in ('', 'name') }}
+               aria-invalid="{{ 'true' if error_field == 'name' else 'false' }}"
                placeholder="Osh Markazi">
+        {{ field_error('name') }}
       </div>
 
       <div class="field">
         <label for="slug">{{ t('field_menu_address', lang) }}</label>
-        <input id="slug" name="slug" value="{{ form.get('slug', '') }}" placeholder="osh-markazi">
+        <input id="slug" name="slug" value="{{ form.get('slug', '') }}" placeholder="osh-markazi"
+               {{ 'autofocus' if error_field == 'slug' }}
+               aria-invalid="{{ 'true' if error_field == 'slug' else 'false' }}">
+        {{ field_error('slug') }}
         <p class="hint">Menyu <code>qrdasturxon.uz/r/&lt;manzil&gt;</code> da ochiladi.
           Bo'sh qoldirsangiz nomdan avtomatik yasaladi.</p>
       </div>
@@ -39,12 +55,19 @@
         <div class="field">
           <label for="username">{{ t('field_login', lang) }}</label>
           <input id="username" name="username" value="{{ form.get('username', '') }}"
-                 required minlength="3" autocomplete="username">
+                 required minlength="3" autocomplete="username"
+                 {{ 'autofocus' if error_field == 'username' }}
+                 aria-invalid="{{ 'true' if error_field == 'username' else 'false' }}">
+          {{ field_error('username') }}
+          <p class="hint">{{ t('signup_username_hint', lang) }}</p>
         </div>
         <div class="field">
           <label for="password">{{ t('field_password', lang) }}</label>
           <input id="password" name="password" type="password" required minlength="8"
-                 autocomplete="new-password">
+                 autocomplete="new-password"
+                 {{ 'autofocus' if error_field == 'password' }}
+                 aria-invalid="{{ 'true' if error_field == 'password' else 'false' }}">
+          {{ field_error('password') }}
           <p class="hint">{{ t('password_hint', lang) }}</p>
         </div>
       </div>

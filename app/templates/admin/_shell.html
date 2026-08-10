@@ -36,6 +36,20 @@
   <a href="/admin" class="{{ 'active' if path == '/admin' }}">{{ ui.icon('home') }} {{ t('nav_home', ui_lang) }}</a>
   <a href="/admin/categories" class="{{ 'active' if path.startswith('/admin/categories') }}">{{ ui.icon('grid') }} {{ t('nav_categories', ui_lang) }}</a>
   <a href="/admin/items" class="{{ 'active' if path.startswith('/admin/items') }}">{{ ui.icon('list') }} {{ t('nav_items', ui_lang) }}</a>
+  {#
+    Buyurtma bo'limlari faqat u yoqilganda ko'rinadi — menyu uchungina kelgan
+    kafe panelida ishlatmaydigan uchta bo'lim turishi shart emas.
+  #}
+  {% if user and user.restaurant and user.restaurant.orders_enabled %}
+    <a href="/admin/orders" class="{{ 'active' if path.startswith('/admin/orders') }}">
+      {{ ui.icon('list') }} {{ t('nav_orders', ui_lang) }}
+      {% set waiting = new_order_count(user.restaurant) %}
+      {% if waiting %}<span class="pill-count">{{ waiting }}</span>{% endif %}
+    </a>
+    <a href="/admin/tables" class="{{ 'active' if path.startswith('/admin/tables') }}">{{ ui.icon('grid') }} {{ t('nav_tables', ui_lang) }}</a>
+    <a href="/admin/zones" class="{{ 'active' if path.startswith('/admin/zones') }}">{{ ui.icon('store') }} {{ t('nav_zones', ui_lang) }}</a>
+    <a href="/admin/staff" class="{{ 'active' if path.startswith('/admin/staff') }}">{{ ui.icon('users') }} {{ t('nav_staff', ui_lang) }}</a>
+  {% endif %}
   <a href="/admin/stats" class="{{ 'active' if path.startswith('/admin/stats') }}">{{ ui.icon('chart') }} {{ t('nav_stats', ui_lang) }}</a>
   <a href="/admin/comments" class="{{ 'active' if path.startswith('/admin/comments') }}">{{ ui.icon('chat') }} {{ t('nav_comments', ui_lang) }}</a>
   <a href="/admin/qr" class="{{ 'active' if path.startswith('/admin/qr') }}">{{ ui.icon('qr') }} {{ t('nav_qr', ui_lang) }}</a>

@@ -9,3 +9,11 @@ __pycache__/
 *.sqlite3
 media/
 .pytest_cache/
+
+# Afitsant ilovasi
+app/static/app/*.apk
+mobile/node_modules/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/dist/

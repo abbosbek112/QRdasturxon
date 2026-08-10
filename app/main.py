@@ -9,7 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import BASE_DIR, settings
 from app.i18n import resolve_lang, t
 from app.logging_setup import configure_logging
-from app.routers import admin, auth, public, superadmin
+from app.routers import admin, api, auth, hall, public, superadmin
 from app.templating import templates
 
 configure_logging(settings.debug)
@@ -62,7 +62,27 @@ app.mount("/media", StaticFiles(directory=settings.media_path), name="media")
 app.include_router(auth.router)
 app.include_router(public.router)
 app.include_router(admin.router)
+app.include_router(api.router)
+app.include_router(hall.root)  # /sw.js — ildizdan berilishi shart
+app.include_router(hall.router)
 app.include_router(superadmin.router)
+
+
+def _way_back(request: Request) -> str:
+    """Xato sahifasidagi "Orqaga" qayerga olib borsin.
+
+    Avval doim "/" edi — panelda ishlayotgan odam xatoga uchrasa reklama
+    sahifasiga tashlanardi. Endi kelgan sahifasiga qaytadi.
+
+    Referer FAQAT o'z saytimizniki bo'lsa ishlatiladi: u brauzerdan keladi,
+    ya'ni begona manzil qo'yib yuborish mumkin va busiz sahifamiz boshqa
+    saytga yo'naltirish quroliga aylanardi.
+    """
+    referer = request.headers.get("referer") or ""
+    here = str(request.base_url).rstrip("/")
+    if referer.startswith(here + "/") and referer != str(request.url):
+        return referer
+    return "/"
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -70,13 +90,22 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     location = (exc.headers or {}).get("Location")
     if location:
         return RedirectResponse(location, status_code=exc.status_code)
-    if request.url.path.startswith("/media"):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+    # Ilova va media JSON kutadi — ularga HTML xato sahifasi yuborilsa
+    # ilova uni o'qiy olmay "noma'lum xato" ko'rsatardi
+    if request.url.path.startswith(("/media", "/api/")):
+        return JSONResponse(
+            {"detail": exc.detail}, status_code=exc.status_code, headers=exc.headers
+        )
     lang = resolve_lang(request)
     return templates.TemplateResponse(
         request,
         "error.html",
-        {"lang": lang, "status_code": exc.status_code, "message": exc.detail or t("not_found", lang)},
+        {
+            "lang": lang,
+            "status_code": exc.status_code,
+            "message": exc.detail or t("not_found", lang),
+            "back_url": _way_back(request),
+        },
         status_code=exc.status_code,
     )
 
@@ -85,11 +114,18 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 async def unhandled_exception_handler(request: Request, exc: Exception):
     """Kutilmagan xato — logga to'liq yoziladi, mijozga esa oddiy sahifa."""
     log.exception("So'rovda kutilmagan xato: %s %s", request.method, request.url.path)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "Server xatosi"}, status_code=500)
     lang = resolve_lang(request)
     return templates.TemplateResponse(
         request,
         "error.html",
-        {"lang": lang, "status_code": 500, "message": t("not_found", lang)},
+        {
+            "lang": lang,
+            "status_code": 500,
+            "message": t("not_found", lang),
+            "back_url": _way_back(request),
+        },
         status_code=500,
     )
 

@@ -30,7 +30,13 @@ log = logging.getLogger(__name__)
 
 
 def home_url_for(user: User) -> str:
-    return "/superadmin" if user.role is Role.superadmin else "/admin"
+    if user.role is Role.superadmin:
+        return "/superadmin"
+    # Afitsant panelga umuman kira olmaydi — uni to'g'ridan-to'g'ri o'z
+    # taxtasiga yuboramiz, aks holda login'dan keyin 403 ga urilardi
+    if user.role is Role.waiter:
+        return "/zal"
+    return "/admin"
 
 
 @router.get("/login")
@@ -143,6 +149,8 @@ def signup(
             "signup.html",
             {
                 "error": error.detail,
+                # Qaysi maydon aybdor — shablon xatoni o'sha yerga qo'yadi
+                "error_field": getattr(error, "field", ""),
                 "trial_days": TRIAL_DAYS,
                 "form": submitted,
                 "lang": resolve_lang(request),

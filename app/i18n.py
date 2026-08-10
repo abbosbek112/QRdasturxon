@@ -307,8 +307,232 @@ UI: dict[str, dict[str, str]] = {
         "ru": "Приносим извинения \u2014 заказ можно сделать у официанта.",
         "en": "Sorry about that \u2014 you can order from the staff.",
     },
+    # --- buyurtma: mijoz tomoni ---
+    "order_table": {"uz": "{n}-stol", "ru": "Стол {n}", "en": "Table {n}"},
+    # O'tirish joyi turlari. Mijoz "7-stol" yoki "VIP 2" deb ko'radi —
+    # restoranda faqat stol bo'lmaydi.
+    "kind_stol": {"uz": "{n}-stol", "ru": "Стол {n}", "en": "Table {n}"},
+    "kind_xona": {"uz": "{n}-xona", "ru": "Комната {n}", "en": "Room {n}"},
+    "kind_divan": {"uz": "{n}-divan", "ru": "Диван {n}", "en": "Sofa {n}"},
+    "kind_vip": {"uz": "VIP {n}", "ru": "VIP {n}", "en": "VIP {n}"},
+    "kind_stol_name": {"uz": "Stol", "ru": "Стол", "en": "Table"},
+    "kind_xona_name": {"uz": "Xona", "ru": "Комната", "en": "Room"},
+    "kind_divan_name": {"uz": "Divan", "ru": "Диван", "en": "Sofa"},
+    "kind_vip_name": {"uz": "VIP xona", "ru": "VIP-комната", "en": "VIP room"},
+
+    # --- zal bo'limlari ---
+    "nav_zones": {"uz": "Bo'limlar", "ru": "Зоны", "en": "Areas"},
+    "zones_title": {"uz": "Zal bo'limlari", "ru": "Зоны зала", "en": "Areas of the room"},
+    "zones_sub": {
+        "uz": "Zalni bo'limlarga ajratasiz: \"Asosiy zal\", \"VIP xonalar\", \"Terasa\". "
+              "Afitsantlar shu bo'limlar bo'yicha taqsimlanadi.",
+        "ru": "Разделите зал на зоны: «Основной зал», «VIP-комнаты», «Терраса». "
+              "Официанты распределяются по этим зонам.",
+        "en": "Split the room into areas: \"Main hall\", \"VIP rooms\", \"Terrace\". "
+              "Waiters are then assigned to those areas.",
+    },
+    "zones_empty": {"uz": "Hali bo'lim yo'q", "ru": "Зон пока нет", "en": "No areas yet"},
+    "zones_empty_text": {
+        "uz": "Bo'lim bo'lmasa ham hammasi ishlaydi — barcha afitsant butun zalni ko'radi. "
+              "Bo'lim bir nechta afitsant ishlaganda kerak bo'ladi.",
+        "ru": "Без зон тоже всё работает — каждый официант видит весь зал. "
+              "Зоны нужны, когда официантов несколько.",
+        "en": "Everything works without areas too — every waiter sees the whole room. "
+              "Areas start to matter once there is more than one waiter.",
+    },
+    "signup_username_hint": {
+        "uz": "Panelga shu login bilan kirasiz. Brauzer bu maydonni o'zi "
+              "to'ldirib qo'yishi mumkin — yuborishdan oldin tekshiring.",
+        "ru": "С этим логином вы будете входить в панель. Браузер может "
+              "заполнить поле сам — проверьте перед отправкой.",
+        "en": "This is the login you will use for the dashboard. The browser "
+              "may fill it in for you — check it before you submit.",
+    },
+    "zone_name": {"uz": "Bo'lim nomi", "ru": "Название зоны", "en": "Area name"},
+    "zone_floor": {"uz": "Qavat", "ru": "Этаж", "en": "Floor"},
+    "floor_n": {"uz": "{n}-qavat", "ru": "{n}-й этаж", "en": "Floor {n}"},
+    "floor_basement": {"uz": "Yerto'la", "ru": "Подвал", "en": "Basement"},
+    "zone_tables": {"uz": "stol", "ru": "столов", "en": "tables"},
+    "zone_none": {"uz": "Bo'limsiz", "ru": "Без зоны", "en": "No area"},
+    "field_kind": {"uz": "Turi", "ru": "Тип", "en": "Type"},
+    "field_zone": {"uz": "Bo'lim", "ru": "Зона", "en": "Area"},
+
+    # --- afitsant javobgarligi ---
+    "staff_area": {"uz": "Javobgarlik", "ru": "Зона ответственности", "en": "Responsibility"},
+    "staff_area_all": {"uz": "Butun zal", "ru": "Весь зал", "en": "The whole room"},
+    "staff_area_hint": {
+        "uz": "Hech narsa tanlanmasa afitsant butun zalni ko'radi. Bir nechta "
+              "afitsant bo'lsa har biriga o'z bo'limini bering — shunda "
+              "bildirishnoma ham faqat o'ziga keladi.",
+        "ru": "Если ничего не выбрано, официант видит весь зал. Когда официантов "
+              "несколько, дайте каждому свою зону — тогда и уведомления придут "
+              "только ему.",
+        "en": "With nothing selected the waiter sees the whole room. Once there is "
+              "more than one waiter, give each their own area — notifications then "
+              "reach only them.",
+    },
+    "staff_area_extra": {"uz": "Alohida stollar", "ru": "Отдельные столы", "en": "Individual tables"},
+
+    # --- taxtadagi filtr ---
+    "hall_mine": {"uz": "Mening bo'limim", "ru": "Моя зона", "en": "My area"},
+    "hall_all": {"uz": "Hammasi", "ru": "Все", "en": "All"},
+    "order_add": {"uz": "Qo'shish", "ru": "Добавить", "en": "Add"},
+    "order_cart": {"uz": "Savat", "ru": "Корзина", "en": "Cart"},
+    "order_cart_empty": {"uz": "Savat bo'sh", "ru": "Корзина пуста", "en": "Your cart is empty"},
+    "order_total": {"uz": "Jami", "ru": "Итого", "en": "Total"},
+    "order_note": {
+        "uz": "Izoh (masalan: piyozsiz)",
+        "ru": "Комментарий (например: без лука)",
+        "en": "Note (for example: no onion)",
+    },
+    "order_send": {"uz": "Buyurtma berish", "ru": "Заказать", "en": "Place order"},
+    "order_clear": {"uz": "Tozalash", "ru": "Очистить", "en": "Clear"},
+    "order_placed": {"uz": "Buyurtmangiz yuborildi", "ru": "Заказ отправлен", "en": "Your order has been sent"},
+    "order_placed_text": {
+        "uz": "Afitsant uni ko'radi va tez orada oldingizga keladi.",
+        "ru": "Официант увидит его и скоро подойдёт к вам.",
+        "en": "A waiter will see it and come over shortly.",
+    },
+    "order_number": {"uz": "Buyurtma", "ru": "Заказ", "en": "Order"},
+    "order_back_to_menu": {"uz": "Menyuga qaytish", "ru": "Вернуться в меню", "en": "Back to the menu"},
+    "order_status_new": {"uz": "Yuborildi", "ru": "Отправлен", "en": "Sent"},
+    "order_status_accepted": {"uz": "Qabul qilindi", "ru": "Принят", "en": "Accepted"},
+    "order_status_served": {"uz": "Berildi", "ru": "Подан", "en": "Served"},
+    "order_status_cancelled": {"uz": "Bekor qilindi", "ru": "Отменён", "en": "Cancelled"},
+    "order_cancelled_text": {
+        "uz": "Afitsant bu buyurtmani bekor qildi. Sababi haqida undan so'rang.",
+        "ru": "Официант отменил этот заказ. Спросите у него о причине.",
+        "en": "The waiter cancelled this order. Please ask them why.",
+    },
+    "order_window_over": {"uz": "Buyurtma muddati tugadi", "ru": "Время заказа истекло", "en": "The ordering window has closed"},
+    "order_window_over_text": {
+        "uz": "Stoldagi QR kodni yana bir marta skanerlang — buyurtma qayta ochiladi.",
+        "ru": "Отсканируйте QR-код на столе ещё раз — заказ снова откроется.",
+        "en": "Scan the QR code on your table once more and ordering opens again.",
+    },
+    "order_scan_first": {
+        "uz": "Buyurtma berish uchun stoldagi QR kodni skanerlang.",
+        "ru": "Чтобы сделать заказ, отсканируйте QR-код на столе.",
+        "en": "To place an order, scan the QR code on your table.",
+    },
+
+    # --- buyurtma: afitsant taxtasi ---
+    "hall_title": {"uz": "Buyurtmalar", "ru": "Заказы", "en": "Orders"},
+    "hall_empty": {"uz": "Hozircha buyurtma yo'q", "ru": "Заказов пока нет", "en": "No orders yet"},
+    "hall_empty_text": {
+        "uz": "Stoldan buyurtma kelganda u shu yerda o'zi paydo bo'ladi.",
+        "ru": "Когда заказ придёт со стола, он появится здесь сам.",
+        "en": "When an order comes in from a table it will appear here on its own.",
+    },
+    "hall_accept": {"uz": "Qabul qildim", "ru": "Принять", "en": "Accept"},
+    "hall_serve": {"uz": "Berildi", "ru": "Подан", "en": "Served"},
+    "hall_cancel": {"uz": "Bekor qilish", "ru": "Отменить", "en": "Cancel"},
+    "hall_waiting": {"uz": "kutmoqda", "ru": "ожидает", "en": "waiting"},
+    "hall_minutes_ago": {"uz": "{n} daqiqa oldin", "ru": "{n} мин назад", "en": "{n} min ago"},
+    "hall_just_now": {"uz": "hozirgina", "ru": "только что", "en": "just now"},
+
+    # --- ilova (PWA) ---
+    "app_install": {"uz": "Ilovani o'rnatish", "ru": "Установить приложение", "en": "Install the app"},
+    "app_install_why": {
+        "uz": "Bosh ekranga qo'yiladi — manzil terish shart emas, to'liq ekranda ochiladi.",
+        "ru": "Появится на главном экране — адрес вводить не нужно, откроется на весь экран.",
+        "en": "It goes on your home screen — no address to type, opens full screen.",
+    },
+    "app_install_ios": {
+        "uz": "iPhone'da: pastdagi \"Ulashish\" belgisini bosing, so'ng \"Bosh ekranga qo'shish\".",
+        "ru": "На iPhone: нажмите значок «Поделиться» внизу, затем «На экран «Домой»».",
+        "en": "On iPhone: tap the Share icon at the bottom, then \"Add to Home Screen\".",
+    },
+    "app_notify_on": {"uz": "Bildirishnomani yoqish", "ru": "Включить уведомления", "en": "Turn on notifications"},
+    "app_notify_why": {
+        "uz": "Telefon cho'ntakda bo'lsa ham yangi buyurtma bildiradi.",
+        "ru": "Сообщит о новом заказе, даже если телефон в кармане.",
+        "en": "It tells you about a new order even when the phone is in your pocket.",
+    },
+    "app_notify_ready": {"uz": "Bildirishnoma yoqilgan", "ru": "Уведомления включены", "en": "Notifications are on"},
+    "app_notify_blocked": {
+        "uz": "Bildirishnoma brauzer sozlamalarida taqiqlangan. Uni o'sha yerdan ochish kerak.",
+        "ru": "Уведомления запрещены в настройках браузера. Разрешить нужно там же.",
+        "en": "Notifications are blocked in the browser settings and have to be allowed there.",
+    },
+    "app_notify_ios": {
+        "uz": "iPhone'da bildirishnoma faqat ilova bosh ekranga qo'shilgandan keyin ishlaydi.",
+        "ru": "На iPhone уведомления работают только после добавления приложения на главный экран.",
+        "en": "On iPhone notifications only work once the app has been added to the home screen.",
+    },
+    "app_new_order": {"uz": "Yangi buyurtma", "ru": "Новый заказ", "en": "New order"},
+    "app_later": {"uz": "Keyinroq", "ru": "Позже", "en": "Later"},
+
+    # --- ilovani yuklab olish sahifasi ---
+    "dl_title": {"uz": "Afitsant ilovasi", "ru": "Приложение для официанта", "en": "The waiter app"},
+    "dl_lead": {
+        "uz": "Stollardan kelgan buyurtmalar telefoningizga tushadi. Ilova yopiq bo'lsa "
+              "ham xabar beradi — brauzerni ochib o'tirish shart emas.",
+        "ru": "Заказы со столов приходят на ваш телефон. Уведомление придёт, даже если "
+              "приложение закрыто — открывать браузер не нужно.",
+        "en": "Orders from the tables land on your phone. It tells you even when the app "
+              "is closed, so there is no browser to keep open.",
+    },
+    "dl_android": {"uz": "Android uchun yuklab olish", "ru": "Скачать для Android", "en": "Download for Android"},
+    "dl_ios": {"uz": "iPhone uchun o'rnatish", "ru": "Установить для iPhone", "en": "Install for iPhone"},
+    "dl_size": {"uz": "hajmi", "ru": "размер", "en": "size"},
+    "dl_version": {"uz": "Versiya", "ru": "Версия", "en": "Version"},
+    "dl_protect_title": {
+        "uz": "\"App blocked\" degan oyna chiqsa",
+        "ru": "Если появится окно «App blocked»",
+        "en": "If you see an \"App blocked\" dialog",
+    },
+    "dl_protect_text": {
+        "uz": "Bu virus emas. Google bu ilovani birinchi marta ko'rayotgani uchun "
+              "shunday deydi. \"More details\" ni bosing, ostidan \"Install anyway\" "
+              "chiqadi — o'shani tanlang.",
+        "ru": "Это не вирус. Google просто видит это приложение впервые. Нажмите "
+              "«More details», ниже появится «Install anyway» — выберите его.",
+        "en": "This is not a virus. Google is simply seeing this app for the first "
+              "time. Tap \"More details\" and pick \"Install anyway\" underneath.",
+    },
+    "dl_android_how": {
+        "uz": "Yuklab olgach faylni oching. Telefon \"noma'lum manbadan o'rnatishga\" "
+              "ruxsat so'raydi — ruxsat bering, keyin \"O'rnatish\" ni bosing.",
+        "ru": "После скачивания откройте файл. Телефон попросит разрешение на установку "
+              "из неизвестного источника — разрешите и нажмите «Установить».",
+        "en": "Open the file once it downloads. The phone asks for permission to install "
+              "from an unknown source — allow it, then tap Install.",
+    },
+    "dl_ios_how": {
+        "uz": "Havola TestFlight orqali ochiladi. Avval TestFlight ilovasini o'rnatasiz, "
+              "so'ng u orqali \"Zal\" ilovasi o'rnatiladi.",
+        "ru": "Ссылка откроется через TestFlight. Сначала установите TestFlight, затем "
+              "через него — приложение «Zal».",
+        "en": "The link opens through TestFlight. Install TestFlight first, then get the "
+              "Zal app through it.",
+    },
+    "dl_ios_pwa": {
+        "uz": "iPhone ilovasi hozircha tayyorlanmoqda. Shu paytgacha menyu manzilini "
+              "Safari'da ochib, \"Ulashish\" → \"Bosh ekranga qo'shish\" qiling — ilova "
+              "kabi ishlaydi.",
+        "ru": "Приложение для iPhone готовится. А пока откройте адрес в Safari и выберите "
+              "«Поделиться» → «На экран «Домой»» — работать будет как приложение.",
+        "en": "The iPhone app is still being prepared. Until then open the address in "
+              "Safari and pick Share → Add to Home Screen — it works like an app.",
+    },
+    "dl_soon": {"uz": "Tez orada", "ru": "Скоро", "en": "Coming soon"},
+    "dl_scan": {
+        "uz": "Telefoningizda ochish uchun skanerlang",
+        "ru": "Отсканируйте, чтобы открыть на телефоне",
+        "en": "Scan to open this on your phone",
+    },
+    "dl_login_note": {
+        "uz": "Kirish uchun restoran egangiz bergan login va parolni ishlating.",
+        "ru": "Для входа используйте логин и пароль, которые дал владелец ресторана.",
+        "en": "Sign in with the username and password your restaurant owner gave you.",
+    },
+
     # --- admin panel: navigatsiya va umumiy ---
     "nav_home": {"uz": "Bosh sahifa", "ru": "Главная", "en": "Home"},
+    "nav_orders": {"uz": "Buyurtmalar", "ru": "Заказы", "en": "Orders"},
+    "nav_tables": {"uz": "Stollar", "ru": "Столы", "en": "Tables"},
+    "nav_staff": {"uz": "Xodimlar", "ru": "Сотрудники", "en": "Staff"},
     "nav_categories": {"uz": "Kategoriyalar", "ru": "Разделы", "en": "Categories"},
     "nav_items": {"uz": "Taomlar", "ru": "Блюда", "en": "Dishes"},
     "nav_stats": {"uz": "Statistika", "ru": "Статистика", "en": "Statistics"},
@@ -424,6 +648,121 @@ UI: dict[str, dict[str, str]] = {
         "en": "Pick SVG for printing \u2014 it scales to any size without losing quality.",
     },
     "qr_open": {"uz": "Ochish", "ru": "Открыть", "en": "Open"},
+
+    # --- stollar (egasi) ---
+    "tables_title": {"uz": "Stollar", "ru": "Столы", "en": "Tables"},
+    "tables_sub": {
+        "uz": "Har stolning o'z QR kodi bor — shunda afitsant buyurtma qaysi stoldan "
+              "kelganini biladi.",
+        "ru": "У каждого стола свой QR-код — официант видит, с какого стола пришёл заказ.",
+        "en": "Every table gets its own QR code, so the waiter knows which table ordered.",
+    },
+    "tables_empty": {"uz": "Hali stol qo'shilmagan", "ru": "Столы ещё не добавлены", "en": "No tables yet"},
+    "tables_bulk": {"uz": "Zalda nechta stol bor?", "ru": "Сколько столов в зале?", "en": "How many tables are in the room?"},
+    "tables_bulk_action": {"uz": "Stollarni yasash", "ru": "Создать столы", "en": "Create tables"},
+    "tables_bulk_hint": {
+        "uz": "1 dan shu songacha raqamlanadi. Borlari o'z kodini saqlab qoladi — "
+              "chop etilgan QR kodlar ishlayveradi.",
+        "ru": "Нумерация от 1 до этого числа. Существующие сохраняют свой код — "
+              "распечатанные QR-коды продолжат работать.",
+        "en": "Numbered from 1 up to this number. Existing tables keep their code, so "
+              "already printed QR codes keep working.",
+    },
+    "tables_one": {"uz": "Bitta stol qo'shish", "ru": "Добавить один стол", "en": "Add a single table"},
+    "tables_label": {"uz": "Stol nomi", "ru": "Название стола", "en": "Table name"},
+    "tables_label_hint": {
+        "uz": "Faqat raqam yozing: 7. Turini yonidagi ro'yxatdan tanlaysiz — "
+              "nomga \"VIP\" yoki \"stol\" so'zini qo'shish shart emas, "
+              "mijoz uni baribir \"VIP 7\" deb ko'radi.",
+        "ru": "Пишите только номер: 7. Тип выбирается в списке рядом — "
+              "добавлять слово «VIP» или «стол» в название не нужно, гость "
+              "всё равно увидит «VIP 7».",
+        "en": "Just the number: 7. Pick the type from the list beside it — "
+              "there is no need to put \"VIP\" or \"table\" in the name, the "
+              "guest sees \"VIP 7\" either way.",
+    },
+    "tables_print": {"uz": "Chop etish uchun varaq", "ru": "Лист для печати", "en": "Printable sheet"},
+    "tables_new_code": {"uz": "Kodni yangilash", "ru": "Обновить код", "en": "Refresh code"},
+    "tables_new_code_hint": {
+        "uz": "Eski QR o'sha zahoti ishlamay qoladi. QR rasmi tarqalib ketgan bo'lsa ishlating.",
+        "ru": "Старый QR сразу перестанет работать. Пригодится, если фото кода разошлось.",
+        "en": "The old QR stops working immediately. Use it if a photo of the code got around.",
+    },
+    "tables_scan_me": {"uz": "Skanerlang va buyurtma bering", "ru": "Отсканируйте и закажите", "en": "Scan to see the menu and order"},
+
+    # --- xodimlar (egasi) ---
+    "staff_title": {"uz": "Xodimlar", "ru": "Сотрудники", "en": "Staff"},
+    "staff_sub": {
+        "uz": "Afitsant o'z logini bilan kiradi va faqat buyurtmalar taxtasini ko'radi — "
+              "menyu va narxlarga tega olmaydi.",
+        "ru": "Официант входит под своим логином и видит только доску заказов — "
+              "меню и цены ему недоступны.",
+        "en": "A waiter signs in with their own login and sees only the order board — "
+              "the menu and prices stay out of reach.",
+    },
+    "staff_empty": {"uz": "Hali afitsant qo'shilmagan", "ru": "Официанты ещё не добавлены", "en": "No waiters yet"},
+    "staff_add": {"uz": "Afitsant qo'shish", "ru": "Добавить официанта", "en": "Add a waiter"},
+    "staff_login": {"uz": "Login", "ru": "Логин", "en": "Username"},
+    "staff_password": {"uz": "Parol", "ru": "Пароль", "en": "Password"},
+    "staff_new_password": {"uz": "Yangi parol", "ru": "Новый пароль", "en": "New password"},
+    "staff_reset": {"uz": "Parolni almashtirish", "ru": "Сменить пароль", "en": "Change password"},
+    "staff_block": {"uz": "Bloklash", "ru": "Заблокировать", "en": "Block"},
+    "staff_unblock": {"uz": "Blokdan chiqarish", "ru": "Разблокировать", "en": "Unblock"},
+    "pw_show": {"uz": "Parolni ko'rsatish", "ru": "Показать пароль", "en": "Show password"},
+    "pw_hide": {"uz": "Parolni yashirish", "ru": "Скрыть пароль", "en": "Hide password"},
+    "pw_make": {"uz": "Parol yasash", "ru": "Сгенерировать", "en": "Generate"},
+    "pw_copy": {"uz": "Nusxa olish", "ru": "Копировать", "en": "Copy"},
+    "pw_copied": {"uz": "Nusxa olindi", "ru": "Скопировано", "en": "Copied"},
+    "pw_cannot_show": {
+        "uz": "Qo'yilgan parolni keyin ko'rsatib bo'lmaydi — u qaytmaydigan qilib "
+              "shifrlangan. Unutsangiz shu yerdan yangisini qo'yasiz.",
+        "ru": "Уже заданный пароль показать нельзя — он зашифрован необратимо. "
+              "Если забыли, задайте здесь новый.",
+        "en": "An existing password cannot be shown — it is hashed one-way. "
+              "If it is forgotten, set a new one here.",
+    },
+    "staff_link_hint": {
+        "uz": "Afitsant {url} manziliga o'z logini bilan kiradi.",
+        "ru": "Официант заходит на {url} под своим логином.",
+        "en": "The waiter signs in at {url} with their own login.",
+    },
+
+    # --- buyurtmalar tarixi (egasi) ---
+    "orders_title": {"uz": "Buyurtmalar", "ru": "Заказы", "en": "Orders"},
+    "orders_sub": {
+        "uz": "Stoldan kelgan buyurtmalar tarixi.",
+        "ru": "История заказов со столов.",
+        "en": "The history of orders placed from tables.",
+    },
+    "orders_live": {"uz": "Jonli taxta", "ru": "Живая доска", "en": "Live board"},
+    "orders_empty": {"uz": "Bu oraliqda buyurtma yo'q", "ru": "За этот период заказов нет", "en": "No orders in this range"},
+    "orders_off": {"uz": "Buyurtma o'chirilgan", "ru": "Приём заказов выключен", "en": "Ordering is off"},
+    "orders_off_text": {
+        "uz": "Sozlamalardan yoqing, so'ng stollar uchun QR kod chop eting.",
+        "ru": "Включите его в настройках, затем распечатайте QR-коды для столов.",
+        "en": "Turn it on in settings, then print the QR codes for your tables.",
+    },
+    "orders_no_tables": {
+        "uz": "Buyurtma yoqilgan, lekin stol qo'shilmagan — mijoz buyurtma bera olmaydi.",
+        "ru": "Приём заказов включён, но столов нет — гость не сможет заказать.",
+        "en": "Ordering is on but there are no tables yet, so guests cannot order.",
+    },
+    "field_orders_enabled": {"uz": "Menyudan buyurtma qabul qilish", "ru": "Принимать заказы из меню", "en": "Accept orders from the menu"},
+    "field_order_window": {"uz": "Buyurtma oynasi (daqiqa)", "ru": "Окно заказа (минут)", "en": "Ordering window (minutes)"},
+    "field_order_window_hint": {
+        "uz": "QR skanerlangandan keyin shuncha daqiqa buyurtma berish mumkin. 0 — cheksiz. "
+              "Bu havolani nusxalab tashqariga yuborishni to'xtatadi; tashqaridan kelgan "
+              "buyurtmani esa afitsant tasdiqlamay rad etadi.",
+        "ru": "Столько минут после сканирования можно заказывать. 0 — без ограничения. "
+              "Это останавливает скопированную ссылку; заказ извне всё равно отклонит официант.",
+        "en": "How long ordering stays open after a scan. 0 means no limit. It stops a copied "
+              "link from being reused; an order from outside is still rejected by the waiter.",
+    },
+    "col_table": {"uz": "Stol", "ru": "Стол", "en": "Table"},
+    "col_total": {"uz": "Summa", "ru": "Сумма", "en": "Total"},
+    "col_status": {"uz": "Holat", "ru": "Статус", "en": "Status"},
+    "col_time": {"uz": "Vaqt", "ru": "Время", "en": "Time"},
+
     # --- admin panel: qolgan matnlar ---
     "state_inactive": {"uz": "Faol emas", "ru": "Не активен", "en": "Inactive"},
     "setup_title": {"uz": "Menyuni ishga tushiramiz", "ru": "Запускаем меню", "en": "Let's get the menu running"},

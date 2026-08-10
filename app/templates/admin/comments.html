@@ -55,7 +55,7 @@
             </form>
           {% endif %}
           <form method="post" action="/admin/comments/{{ comment.id }}/delete"
-                onsubmit="return confirm('Izoh o\'chirilsinmi?')">
+                data-confirm="Izoh o'chirilsinmi?">
             {% include "partials/csrf.html" %}
             <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
           </form>

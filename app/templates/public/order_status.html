@@ -1,0 +1,68 @@
+{% extends "public/base.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ t('order_number', lang) }} — {{ restaurant.name }}{% endblock %}
+
+{% block head %}
+{#
+  O'zi yangilanadi. Ataylab `meta refresh`: JS o'chiq bo'lsa ham ishlaydi va
+  bu sahifada boshqa hech qanday harakat yo'q, ya'ni yangilanish hech narsani
+  yo'qotmaydi. Buyurtma yopilgach yangilanish ham to'xtaydi.
+#}
+{% if order.status.is_open %}<meta http-equiv="refresh" content="15">{% endif %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block body %}
+<div class="closed-shell">
+  <div class="lp-panel order-card">
+    {% set state = order.status.value %}
+    <span class="order-mark order-mark-{{ state }}">
+      {{ ui.icon('check' if state in ('accepted', 'served') else 'plate') }}
+    </span>
+
+    <h1>
+      {% if state == 'cancelled' %}{{ t('order_status_cancelled', lang) }}
+      {% else %}{{ t('order_placed', lang) }}{% endif %}
+    </h1>
+
+    <p class="muted">
+      {% if state == 'cancelled' %}{{ t('order_cancelled_text', lang) }}
+      {% else %}{{ t('order_placed_text', lang) }}{% endif %}
+    </p>
+
+    {# Uch bosqich. Bekor qilingan buyurtmada yo'l ko'rsatishning ma'nosi yo'q. #}
+    {% if state != 'cancelled' %}
+      <ol class="order-steps">
+        <li class="done">{{ t('order_status_new', lang) }}</li>
+        <li class="{{ 'done' if state in ('accepted', 'served') }}">{{ t('order_status_accepted', lang) }}</li>
+        <li class="{{ 'done' if state == 'served' }}">{{ t('order_status_served', lang) }}</li>
+      </ol>
+    {% endif %}
+
+    <div class="order-lines">
+      {% for line in order.lines %}
+        <div class="order-line">
+          <span class="grow">{{ line.name }}</span>
+          <span class="muted">× {{ line.quantity }}</span>
+          <b>{{ line.line_total | price }}</b>
+        </div>
+      {% endfor %}
+      <div class="order-line order-line-total">
+        <span class="grow">{{ t('order_total', lang) }}</span>
+        <b>{{ order.total | price }} {{ restaurant.currency }}</b>
+      </div>
+    </div>
+
+    {% if order.note %}<p class="muted small">{{ order.note }}</p>{% endif %}
+
+    <p class="muted small">
+      {{ seat_label(order.table_kind, order.table_label, lang) }}
+      · {{ (order.created_at | localtime).strftime('%H:%M') }}
+    </p>
+
+    <a class="btn btn-xl" href="/r/{{ restaurant.slug }}{{ '?lang=' ~ lang if lang != 'uz' }}">
+      {{ t('order_back_to_menu', lang) }}
+    </a>
+  </div>
+</div>
+{% endblock %}

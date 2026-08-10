@@ -1,0 +1,65 @@
+{#
+  Buyurtmalar ro'yxati. Ikki joyda ishlatiladi: taxtaning o'zida va
+  /zal/list bo'lagida — sahifa uni bir necha soniyada bir yangilab turadi.
+
+  Eng eskisi tepada: uzoq kutgan stol birinchi navbatda javob olishi kerak,
+  aks holda taxta to'lganda aynan o'sha unutiladi.
+#}
+{% import "partials/icons.html" as ui %}
+<div class="hall-list" id="hallList" data-new="{{ orders | selectattr('status.value', 'equalto', 'new') | list | length }}">
+  {% if not orders %}
+    <div class="empty hall-empty">
+      <strong>{{ t('hall_empty', ui_lang) }}</strong>
+      {{ t('hall_empty_text', ui_lang) }}
+    </div>
+  {% endif %}
+
+  {% for order in orders %}
+    {% set fresh = order.status.value == 'new' %}
+    <article class="hall-card {{ 'is-new' if fresh }}">
+      <header class="hall-card-top">
+        <span class="hall-table">{{ order.table_label }}</span>
+        {% if order.table_kind != 'stol' %}<span class="hall-kind">{{ t('kind_' ~ order.table_kind ~ '_name', ui_lang) }}</span>{% endif %}
+        <span class="hall-when" data-since="{{ order.created_at.isoformat() }}Z">
+          {{ (order.created_at | localtime).strftime('%H:%M') }}
+        </span>
+        {% if not fresh %}
+          <span class="badge badge-ok">{{ t('order_status_accepted', ui_lang) }}</span>
+        {% endif %}
+      </header>
+
+      <ul class="hall-lines">
+        {% for line in order.lines %}
+          <li><b>{{ line.quantity }}×</b> {{ line.name }}</li>
+        {% endfor %}
+      </ul>
+
+      {% if order.note %}
+        <p class="hall-note">{{ ui.icon('chat') }} {{ order.note }}</p>
+      {% endif %}
+
+      <p class="hall-total">{{ order.total | price }} {{ restaurant.currency }}</p>
+
+      <div class="hall-actions">
+        {% if fresh %}
+          <form method="post" action="/zal/orders/{{ order.id }}/status">
+            {% include "partials/csrf.html" %}
+            <input type="hidden" name="target" value="accepted">
+            <button class="btn btn-primary btn-xl" type="submit">{{ t('hall_accept', ui_lang) }}</button>
+          </form>
+        {% endif %}
+        <form method="post" action="/zal/orders/{{ order.id }}/status">
+          {% include "partials/csrf.html" %}
+          <input type="hidden" name="target" value="served">
+          <button class="btn btn-xl" type="submit">{{ ui.icon('check') }} {{ t('hall_serve', ui_lang) }}</button>
+        </form>
+        <form method="post" action="/zal/orders/{{ order.id }}/status"
+              data-confirm="{{ order.table_label }} — buyurtma bekor qilinsinmi?">
+          {% include "partials/csrf.html" %}
+          <input type="hidden" name="target" value="cancelled">
+          <button class="btn btn-danger btn-xl" type="submit">{{ t('hall_cancel', ui_lang) }}</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+</div>

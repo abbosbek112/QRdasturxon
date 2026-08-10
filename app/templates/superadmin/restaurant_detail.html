@@ -94,7 +94,7 @@
         </button>
       </form>
       <form method="post" action="/superadmin/restaurants/{{ restaurant.id }}/delete"
-            onsubmit="return confirm('{{ restaurant.name }} va uning butun menyusi butunlay o\'chiriladi. Davom etasizmi?')">
+            data-confirm="{{ restaurant.name }} va uning butun menyusi butunlay o'chiriladi. Davom etasizmi?">
         {% include "partials/csrf.html" %}
         <button class="btn btn-danger btn-sm" type="submit">Butunlay o'chirish</button>
       </form>

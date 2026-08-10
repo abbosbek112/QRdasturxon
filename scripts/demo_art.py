@@ -505,13 +505,19 @@ def cover(accent: Color = (180, 83, 9)) -> Image.Image:
     return _finish(base, COVER_SIZE)
 
 
-def logo(accent: Color = (180, 83, 9)) -> Image.Image:
-    """Doira ichida bodom shakli — kafening belgisi."""
+def logo(accent: Color = (180, 83, 9), mark_scale: float = 1.0) -> Image.Image:
+    """Doira ichida bodom shakli — kafening belgisi.
+
+    `mark_scale` — belgining kattaligi. Android ilova ikonkasini o'z shakliga
+    (doira, tomchi, kvadrat) qirqadi va faqat markazdagi ~80% doira saqlanishi
+    kafolatlanadi. Shuning uchun "maskable" variantda belgi kichraytiriladi,
+    fon esa chetdan chetga to'liq qoladi.
+    """
     big = (LOGO_SIZE[0] * SCALE, LOGO_SIZE[1] * SCALE)
     base = _gradient(big, _mix(accent, (255, 255, 255), 0.14), _mix(accent, (0, 0, 0), 0.24))
     draw = ImageDraw.Draw(base, "RGBA")
     cx, cy = big[0] / 2, big[1] / 2
-    s = big[0] * 0.30
+    s = big[0] * 0.30 * mark_scale
 
     # Bodom — uchi o'tkir, o'rtasi keng. Eni sin() bo'yicha o'zgaradi, shuning
     # uchun ikki uchi tabiiy ravishda nolga keladi.
@@ -644,6 +650,28 @@ def og_card(accent: Color = (180, 83, 9)) -> Image.Image:
     return _finish(base, OG_SIZE)
 
 
+# Afitsant ilovasi (PWA) ikonkalari. 192 — bosh ekran, 512 — o'rnatish
+# oynasi va splash. Maskali variant Android uchun: u ikonkani o'z shakliga
+# qirqadi va belgi chetga yaqin tursa kesilib ketardi.
+PWA_ICONS = ((192, "icon-192.png", 1.0), (512, "icon-512.png", 1.0),
+             (512, "icon-maskable.png", 0.62))
+
+
+def write_pwa_icons(static_dir) -> list[str]:
+    """Ilova ikonkalarini app/static/img/ ga yozadi."""
+    from pathlib import Path
+
+    out = Path(static_dir) / "img"
+    out.mkdir(parents=True, exist_ok=True)
+    written = []
+    for size, name, mark in PWA_ICONS:
+        path = out / name
+        # PNG, WEBP emas: eski Android va iOS manifest ikonkasida PNG kutadi
+        logo(mark_scale=mark).resize((size, size), Image.LANCZOS).save(path, "PNG", optimize=True)
+        written.append(str(path))
+    return written
+
+
 def write_landing_thumbs(static_dir) -> list[str]:
     """Maket uchun kichik rasmlarni app/static/img/ ga yozadi."""
     from pathlib import Path
@@ -666,6 +694,8 @@ if __name__ == "__main__":
 
     static = BASE_DIR / "app" / "static"
     for name in write_landing_thumbs(static):
+        print(name)
+    for name in write_pwa_icons(static):
         print(name)
 
     # JPEG, PNG emas: kartochkada gradient bor va PNG uni yomon siqadi.

@@ -1,0 +1,156 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}Xodimlar{% endblock %}
+
+{#
+  Parol maydoni: yozilgani yashirin turadi, ko'z tugmasi bilan ochiladi.
+  Yonida "yasash" va "nusxa olish" — egasi parolni o'ylab o'tirmasin va uni
+  afitsantga yozib berishda adashmasin.
+
+  Muhim: bu FAQAT yangi qo'yilayotgan parol uchun. Bazadagi parol qaytmaydigan
+  qilib xeshlangan, uni hech qayerdan ochib bo'lmaydi.
+#}
+{% macro password_box(field_id, ui) %}
+  <div class="pw">
+    <input id="{{ field_id }}" name="password" type="password" minlength="8" required
+           autocomplete="new-password" spellcheck="false">
+    <button class="pw-btn" type="button" data-pw-toggle
+            title="{{ t('pw_show', ui_lang) }}" aria-label="{{ t('pw_show', ui_lang) }}"
+            data-show="{{ t('pw_show', ui_lang) }}" data-hide="{{ t('pw_hide', ui_lang) }}">
+      <span class="pw-on">{{ ui.icon('eye') }}</span>
+      <span class="pw-off">{{ ui.icon('eye-off') }}</span>
+    </button>
+    <button class="pw-btn" type="button" data-pw-make
+            title="{{ t('pw_make', ui_lang) }}" aria-label="{{ t('pw_make', ui_lang) }}">
+      {{ ui.icon('dice') }}
+    </button>
+    <button class="pw-btn" type="button" data-pw-copy
+            title="{{ t('pw_copy', ui_lang) }}" aria-label="{{ t('pw_copy', ui_lang) }}"
+            data-done="{{ t('pw_copied', ui_lang) }}">
+      {{ ui.icon('copy') }}
+    </button>
+  </div>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('staff_title', ui_lang) }}</h1>
+  <p class="muted small">{{ t('staff_sub', ui_lang) }}</p>
+</div>
+
+<div class="card stack">
+  <h2>{{ t('staff_add', ui_lang) }}</h2>
+  <form method="post" action="/admin/staff" class="row" style="align-items:flex-end">
+    {% include "partials/csrf.html" %}
+    <div class="field grow">
+      <label for="username">{{ t('staff_login', ui_lang) }}</label>
+      <input id="username" name="username" value="{{ suggested }}" minlength="3" maxlength="64" required>
+    </div>
+    <div class="field grow">
+      <label for="password">{{ t('staff_password', ui_lang) }}</label>
+      {{ password_box('password', ui) }}
+    </div>
+    <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
+  </form>
+  <p class="hint">
+    {{ t('staff_link_hint', ui_lang).replace('{url}', BASE_URL ~ '/login') }}
+    {{ t('pw_cannot_show', ui_lang) }}
+  </p>
+</div>
+
+{% if not staff %}
+  <div class="empty" style="margin-top:1rem">
+    <strong>{{ t('staff_empty', ui_lang) }}</strong>
+    {{ t('staff_sub', ui_lang) }}
+  </div>
+{% else %}
+  <p class="section-label">{{ staff | length }} ta xodim</p>
+  {% for person in staff %}
+    <div class="editor-row">
+      <div class="spread" style="align-items:flex-start">
+        <div>
+          <strong>{{ person.username }}</strong>
+          {% if person.is_active %}
+            <span class="badge badge-ok">{{ t('state_active', ui_lang) }}</span>
+          {% else %}
+            <span class="badge badge-off">{{ t('staff_block', ui_lang) }}</span>
+          {% endif %}
+          <div class="muted small">{{ person.created_at.strftime('%d.%m.%Y') }}</div>
+        </div>
+        <div class="row">
+          <form method="post" action="/admin/staff/{{ person.id }}/toggle">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-sm" type="submit">
+              {{ t('staff_unblock', ui_lang) if not person.is_active else t('staff_block', ui_lang) }}
+            </button>
+          </form>
+          <form method="post" action="/admin/staff/{{ person.id }}/delete"
+                data-confirm="{{ person.username }} — hisob o'chirilsinmi?">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
+          </form>
+        </div>
+      </div>
+
+      <form method="post" action="/admin/staff/{{ person.id }}/password"
+            class="row" style="align-items:flex-end; margin-top:.7rem">
+        {% include "partials/csrf.html" %}
+        <div class="field grow">
+          <label for="pw-{{ person.id }}">{{ t('staff_new_password', ui_lang) }}</label>
+          {{ password_box('pw-' ~ person.id, ui) }}
+        </div>
+        <button class="btn btn-sm" type="submit">{{ t('staff_reset', ui_lang) }}</button>
+      </form>
+
+      {#
+        Javobgarlik doirasi. Hech narsa tanlanmasa afitsant butun zalni
+        ko'radi — bitta afitsantli kafeda hech narsa sozlanmasin.
+      #}
+      {% if zones or tables %}
+        {% set chosen_zones, chosen_tables = assignment[person.id] %}
+        <form method="post" action="/admin/staff/{{ person.id }}/area" style="margin-top:.9rem">
+          {% include "partials/csrf.html" %}
+          <p class="section-label" style="margin-top:0">
+            {{ t('staff_area', ui_lang) }}
+            {% if not chosen_zones and not chosen_tables %}
+              <span class="badge badge-ok">{{ t('staff_area_all', ui_lang) }}</span>
+            {% endif %}
+          </p>
+
+          {% if zones %}
+            <div class="pick-row">
+              {% for zone in zones %}
+                <label class="pick">
+                  <input type="checkbox" name="zone_ids" value="{{ zone.id }}"
+                         {{ 'checked' if zone.id in chosen_zones }}>
+                  <span>{{ floor_label(zone.floor, ui_lang) }} · {{ zone.name }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if tables %}
+            <details class="pick-more">
+              <summary>{{ t('staff_area_extra', ui_lang) }}</summary>
+              <div class="pick-row">
+                {% for table in tables %}
+                  <label class="pick pick-sm">
+                    <input type="checkbox" name="table_ids" value="{{ table.id }}"
+                           {{ 'checked' if table.id in chosen_tables }}>
+                    <span>{{ seat_label(table.kind, table.label, ui_lang) }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
+
+          <div class="row" style="margin-top:.6rem">
+            <button class="btn btn-sm btn-primary" type="submit">{{ t('action_save', ui_lang) }}</button>
+            <span class="hint" style="margin:0">{{ t('staff_area_hint', ui_lang) }}</span>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}

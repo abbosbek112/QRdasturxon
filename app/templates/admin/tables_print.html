@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ restaurant.name }} — stol QR kodlari</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css?v={{ asset_v }}">
+</head>
+<body class="print-page">
+
+{# Chop etishda bu panel chiqmaydi #}
+<div class="print-bar no-print">
+  <div class="print-bar-inner">
+    <a class="btn btn-sm" href="/admin/tables">← Stollarga qaytish</a>
+    <div class="grow"></div>
+    <span class="muted small">Qalin qog'ozga chop eting va chiziq bo'ylab qirqing</span>
+    <button class="btn btn-sm btn-primary" type="button" data-print>Chop etish</button>
+  </div>
+</div>
+
+<main class="print-sheet">
+  {% if not cards %}
+    <p class="muted">Hali stol qo'shilmagan.</p>
+  {% endif %}
+
+  {#
+    Har kartochka bitta stol uchun. Kesish chizig'i bo'ylab qirqiladi va
+    stolga qo'yiladi. QR ichida o'sha stolning o'z kodi bor — shuning uchun
+    kartochkalarni almashtirib qo'yib bo'lmaydi, raqami ham ustida yozilgan.
+  #}
+  <div class="tent-grid">
+    {% for table, code in cards %}
+      <div class="tent">
+        <div class="tent-top">
+          <span class="tent-place">{{ restaurant.name }}</span>
+          <span class="tent-label">{{ table.label }}</span>
+          {% if table.kind.value != 'stol' %}
+            <span class="tent-kind">{{ t('kind_' ~ table.kind.value ~ '_name', 'uz') }}</span>
+          {% endif %}
+          {% if table.zone %}
+            <span class="tent-zone">
+              {{ floor_label(table.zone.floor, 'uz') }} · {{ table.zone.name }}
+            </span>
+          {% endif %}
+        </div>
+        <div class="tent-qr">{{ code | safe }}</div>
+        <p class="tent-call">Skanerlang va buyurtma bering</p>
+        {% if restaurant.wifi_password %}
+          <p class="tent-wifi">Wi-Fi: {{ restaurant.wifi_name or '—' }} · {{ restaurant.wifi_password }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</main>
+
+<script src="/static/js/admin.js?v={{ asset_v }}" defer></script>
+</body>
+</html>

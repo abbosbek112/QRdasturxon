@@ -16,7 +16,7 @@
     <a class="btn btn-sm" href="/admin">← Boshqaruvga qaytish</a>
     <div class="grow"></div>
     <span class="muted small">Chop etish oynasida "Maqsad: PDF sifatida saqlash" ni tanlang</span>
-    <button class="btn btn-sm btn-primary" type="button" onclick="window.print()">Chop etish</button>
+    <button class="btn btn-sm btn-primary" type="button" data-print>Chop etish</button>
   </div>
 </div>
 
@@ -63,5 +63,8 @@
   </footer>
 </main>
 
+{# "Chop etish" tugmasi shu fayldagi ishlovchiga tayanadi — CSP inline
+   onclick'ni bloklaydi, ya'ni tugma busiz umuman ishlamas edi #}
+<script src="/static/js/admin.js?v={{ asset_v }}" defer></script>
 </body>
 </html>

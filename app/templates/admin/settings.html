@@ -57,6 +57,31 @@
   </div>
 
   <div class="card stack">
+    <h2>{{ t('nav_orders', ui_lang) }}</h2>
+    <p class="hint" style="margin-top:-.5rem">
+      Yoqsangiz mijoz menyudan to'g'ridan-to'g'ri buyurtma bera oladi va u
+      afitsant taxtasiga tushadi. Buning uchun stollarga alohida QR kod kerak.
+    </p>
+    <div class="check">
+      <input id="orders_enabled" name="orders_enabled" type="checkbox" value="true"
+             {{ 'checked' if restaurant.orders_enabled }}>
+      <label for="orders_enabled">{{ t('field_orders_enabled', ui_lang) }}</label>
+    </div>
+    <div class="field" style="max-width:220px">
+      <label for="order_window_minutes">{{ t('field_order_window', ui_lang) }}</label>
+      <input id="order_window_minutes" name="order_window_minutes" type="number"
+             min="0" max="240" value="{{ restaurant.order_window_minutes }}">
+    </div>
+    <p class="hint">{{ t('field_order_window_hint', ui_lang) }}</p>
+    {% if restaurant.orders_enabled %}
+      <div class="row">
+        <a class="btn btn-sm" href="/admin/tables">{{ t('nav_tables', ui_lang) }}</a>
+        <a class="btn btn-sm" href="/admin/staff">{{ t('nav_staff', ui_lang) }}</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card stack">
     <h2>{{ t('settings_style', ui_lang) }}</h2>
     <p class="hint" style="margin-top:-.5rem">
       Uslub shrift, burchak yumaloqligi va sukut bo'yicha rangni birga o'zgartiradi.

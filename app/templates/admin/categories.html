@@ -54,7 +54,7 @@
       </div>
     </form>
     <form method="post" action="/admin/categories/{{ category.id }}/delete" style="margin-top:.8rem"
-          onsubmit="return confirm('Kategoriya va uning barcha taomlari o\'chiriladi. Davom etasizmi?')">
+          data-confirm="Kategoriya va uning barcha taomlari o'chiriladi. Davom etasizmi?">
       {% include "partials/csrf.html" %}
       <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
     </form>

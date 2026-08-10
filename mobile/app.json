@@ -1,0 +1,76 @@
+{
+  "expo": {
+    "name": "QRdasturxon Zal",
+    "slug": "qrdasturxon-zal",
+    "scheme": "qrdasturxon",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "tech.qrdasturxon.zal",
+      "buildNumber": "1",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification",
+          "remote-notification"
+        ]
+      }
+    },
+    "android": {
+      "package": "tech.qrdasturxon.zal",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#b45309",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#b45309"
+        }
+      ],
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#b45309"
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://qrdasturxon.tech",
+      "eas": {
+        "projectId": "7d02d155-add6-42a1-9ff5-7b37c154793f"
+      }
+    },
+    "owner": "abbosazizov",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7d02d155-add6-42a1-9ff5-7b37c154793f"
+    }
+  }
+}

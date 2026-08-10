@@ -95,6 +95,21 @@ def require_restaurant_admin(user: CurrentUser) -> User:
     return user
 
 
+def require_hall_access(user: CurrentUser) -> User:
+    """Buyurtmalar taxtasi: afitsant va restoran egasi.
+
+    Egasi ham kiritilgan — kichik kafeda ko'pincha o'zi zalda yuradi va
+    buning uchun alohida hisob ochib o'tirishi kerak emas. Teskarisi esa
+    ishlamaydi: afitsant `require_restaurant_admin` dan o'tolmaydi, ya'ni
+    menyu va narxlarga umuman yaqinlasha olmaydi.
+    """
+    if user is None:
+        raise _redirect_to_login()
+    if user.role not in (Role.waiter, Role.restaurant_admin) or user.restaurant_id is None:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Ruxsat yo'q")
+    return user
+
+
 # --- IP bo'yicha cheklov ----------------------------------------------------
 #
 # Ikki xil urinish bir jadvalda yotadi, lekin ALOHIDA sanaladi. Sabab

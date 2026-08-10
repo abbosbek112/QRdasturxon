@@ -7,11 +7,12 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Category, ItemComment, MenuItem, Restaurant, User
+from app.flash import set_flash
+from app.models import Category, ItemComment, MenuItem, Restaurant, Role, TableKind, User
 from app.plans import limits_for, refresh_status, trial_days_left
-from app.security import require_restaurant_admin, verify_csrf
+from app.security import hash_password, require_restaurant_admin, verify_csrf
 from app import themes
-from app.services import comments, onboarding, qr, stats
+from app.services import areas, comments, onboarding, orders, qr, stats, tables
 from app.services.images import delete_image, save_image
 from app.templating import templates
 
@@ -68,6 +69,26 @@ def check_category_limit(db: Session, restaurant: Restaurant) -> None:
             f"Tarifingizda {limit} tagacha kategoriya mumkin. "
             "Ko'proq kerak bo'lsa tarifni ko'taring.",
         )
+
+
+def form_failed(request: Request, error: HTTPException, target: str) -> RedirectResponse:
+    """Forma xatosini o'sha sahifaning o'ziga qaytaradi.
+
+    Ilgari har qanday xato to'liq xato sahifasiga otvorib yuborardi: egasi
+    stollarni ketma-ket kiritib o'tirganda bitta takror raqam uni ishidan
+    uzib, boshqa sahifaga tashlardi. Endi xabar sahifa tepasida chiqadi.
+
+    Faqat FOYDALANUVCHI xatosi ushlanadi. 403/404 kabilar o'z holicha
+    o'tadi — ular forma xatosi emas va ularni yumshoq xabarga aylantirish
+    haqiqiy muammoni yashirardi.
+    """
+    if error.status_code not in (
+        status.HTTP_400_BAD_REQUEST,
+        status.HTTP_429_TOO_MANY_REQUESTS,
+    ):
+        raise error
+    set_flash(request, error.detail)
+    return RedirectResponse(target, status.HTTP_303_SEE_OTHER)
 
 
 def owned_category(db: Session, user: User, category_id: int) -> Category:
@@ -207,6 +228,8 @@ async def update_settings(
     theme: Annotated[str, Form()] = "",
     theme_color: Annotated[str, Form()] = "#c2410c",
     currency: Annotated[str, Form()] = "so'm",
+    orders_enabled: Annotated[bool, Form()] = False,
+    order_window_minutes: Annotated[int, Form()] = 30,
     logo: Annotated[UploadFile | None, File()] = None,
     cover_image: Annotated[UploadFile | None, File()] = None,
 ):
@@ -224,6 +247,11 @@ async def update_settings(
         restaurant.theme = theme
     restaurant.theme_color = theme_color.strip() or restaurant.theme_color
     restaurant.currency = currency.strip() or restaurant.currency
+    restaurant.orders_enabled = orders_enabled
+    # 0 = cheksiz. Yuqori chegara — formadan tasodifan katta son kelib qolmasin
+    restaurant.order_window_minutes = (
+        0 if order_window_minutes <= 0 else min(order_window_minutes, 240)
+    )
 
     if logo is not None and logo.filename:
         old = restaurant.logo
@@ -255,6 +283,7 @@ def categories_page(request: Request, db: DbSession, user: AdminUser):
 
 @router.post("/categories", dependencies=[Depends(verify_csrf)])
 def create_category(
+    request: Request,
     db: DbSession,
     user: AdminUser,
     name_uz: Annotated[str, Form()],
@@ -262,9 +291,12 @@ def create_category(
     name_en: Annotated[str, Form()] = "",
     sort_order: Annotated[int, Form()] = 0,
 ):
-    if not name_uz.strip():
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kategoriya nomi bo'sh bo'lmasin")
-    check_category_limit(db, get_restaurant(db, user))
+    try:
+        if not name_uz.strip():
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kategoriya nomi bo'sh bo'lmasin")
+        check_category_limit(db, get_restaurant(db, user))
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/categories")
     db.add(
         Category(
             restaurant_id=user.restaurant_id,
@@ -377,6 +409,7 @@ def edit_item_form(request: Request, db: DbSession, user: AdminUser, item_id: in
 
 @router.post("/items", dependencies=[Depends(verify_csrf)])
 async def create_item(
+    request: Request,
     db: DbSession,
     user: AdminUser,
     category_id: Annotated[int, Form()],
@@ -403,9 +436,12 @@ async def create_item(
     image: Annotated[UploadFile | None, File()] = None,
 ):
     category = owned_category(db, user, category_id)
-    if not name_uz.strip():
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Taom nomi bo'sh bo'lmasin")
-    check_item_limit(db, get_restaurant(db, user))
+    try:
+        if not name_uz.strip():
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Taom nomi bo'sh bo'lmasin")
+        check_item_limit(db, get_restaurant(db, user))
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/items/new")
 
     item = MenuItem(
         restaurant_id=user.restaurant_id,
@@ -605,7 +641,7 @@ def qr_page(request: Request, db: DbSession, user: AdminUser):
 def qr_png(db: DbSession, user: AdminUser):
     restaurant = get_restaurant(db, user)
     return Response(
-        qr.png_bytes(restaurant.slug),
+        qr.png_bytes(qr.menu_url(restaurant.slug)),
         media_type="image/png",
         headers={"Content-Disposition": f'attachment; filename="{restaurant.slug}-qr.png"'},
     )
@@ -615,7 +651,364 @@ def qr_png(db: DbSession, user: AdminUser):
 def qr_svg(db: DbSession, user: AdminUser):
     restaurant = get_restaurant(db, user)
     return Response(
-        qr.svg_bytes(restaurant.slug),
+        qr.svg_bytes(qr.menu_url(restaurant.slug)),
         media_type="image/svg+xml",
         headers={"Content-Disposition": f'attachment; filename="{restaurant.slug}-qr.svg"'},
     )
+
+
+# --- stollar --------------------------------------------------------------
+#
+# Har stolning o'z QR kodi bor: shunda afitsant buyurtma qaysi stoldan
+# kelganini biladi. Kod tasodifiy, chunki manzilda stol raqami tursa
+# (`/t/7`) restoran tashqarisidagi odam uni terib buyurtma bera olardi.
+
+
+@router.get("/tables")
+def tables_page(request: Request, db: DbSession, user: AdminUser):
+    restaurant = get_restaurant(db, user)
+    rows = tables.list_for(db, restaurant.id)
+    return templates.TemplateResponse(
+        request,
+        "admin/tables.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "tables": rows,
+            "zones": areas.list_zones(db, restaurant.id),
+            "kinds": list(TableKind),
+            # Keyingi bo'sh raqam — forma bo'sh kelmasin
+            "next_count": max(len(rows) + 1, 10),
+        },
+    )
+
+
+@router.post("/tables", dependencies=[Depends(verify_csrf)])
+def create_table(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    label: Annotated[str, Form()],
+    kind: Annotated[str, Form()] = "stol",
+    zone_id: Annotated[int | None, Form()] = None,
+):
+    try:
+        tables.create(db, get_restaurant(db, user), label, kind, zone_id)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/tables")
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/bulk", dependencies=[Depends(verify_csrf)])
+def create_tables_bulk(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    count: Annotated[int, Form()],
+    kind: Annotated[str, Form()] = "stol",
+    zone_id: Annotated[int | None, Form()] = None,
+):
+    try:
+        tables.bulk_create(db, get_restaurant(db, user), count, kind, zone_id)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/tables")
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/{table_id}", dependencies=[Depends(verify_csrf)])
+def update_table(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    table_id: int,
+    label: Annotated[str, Form()],
+    kind: Annotated[str, Form()] = "stol",
+    zone_id: Annotated[int | None, Form()] = None,
+):
+    table = tables.owned(db, user.restaurant_id, table_id)
+    try:
+        tables.update(db, table, label, kind, zone_id)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/tables")
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/{table_id}/code", dependencies=[Depends(verify_csrf)])
+def refresh_table_code(db: DbSession, user: AdminUser, table_id: int):
+    tables.regenerate_code(db, tables.owned(db, user.restaurant_id, table_id))
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/{table_id}/delete", dependencies=[Depends(verify_csrf)])
+def delete_table(db: DbSession, user: AdminUser, table_id: int):
+    # Buyurtmalar qolaveradi: table_id bo'shaydi, lekin table_label nusxasi
+    # saqlangani uchun tarixda "7" ko'rinib turadi
+    db.delete(tables.owned(db, user.restaurant_id, table_id))
+    db.commit()
+    return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/tables/print")
+def print_tables(request: Request, db: DbSession, user: AdminUser):
+    """Qirqib stollarga qo'yish uchun kartochkalar varaqi.
+
+    QR'lar keshlanmagan `inline_svg` bilan yasaladi: bir yugurishda 30 tagacha
+    turli kod chiqadi va ular keshni to'ldirib, foyda o'rniga zarar qilardi.
+    """
+    restaurant = get_restaurant(db, user)
+    rows = tables.list_for(db, restaurant.id)
+    return templates.TemplateResponse(
+        request,
+        "admin/tables_print.html",
+        {
+            "restaurant": restaurant,
+            "cards": [
+                (table, qr.inline_svg(qr.table_url(restaurant.slug, table.code)))
+                for table in rows
+            ],
+        },
+    )
+
+
+@router.get("/tables/{table_id}/qr.png")
+def table_qr_png(db: DbSession, user: AdminUser, table_id: int):
+    restaurant = get_restaurant(db, user)
+    table = tables.owned(db, restaurant.id, table_id)
+    return Response(
+        qr.png_bytes(qr.table_url(restaurant.slug, table.code)),
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="{restaurant.slug}-stol-{table.label}.png"'
+        },
+    )
+
+
+@router.get("/tables/{table_id}/qr.svg")
+def table_qr_svg(db: DbSession, user: AdminUser, table_id: int):
+    restaurant = get_restaurant(db, user)
+    table = tables.owned(db, restaurant.id, table_id)
+    return Response(
+        qr.svg_bytes(qr.table_url(restaurant.slug, table.code)),
+        media_type="image/svg+xml",
+        headers={
+            "Content-Disposition": f'attachment; filename="{restaurant.slug}-stol-{table.label}.svg"'
+        },
+    )
+
+
+# --- xodimlar -------------------------------------------------------------
+
+
+def owned_waiter(db: Session, user: User, staff_id: int) -> User:
+    """Faqat SHU restoranning afitsanti.
+
+    Rol ham tekshiriladi: aks holda egasi bu marshrutlar orqali o'z hisobini
+    (yoki boshqa admin hisobini) o'chirib qo'ya olardi.
+    """
+    staff = db.scalar(
+        select(User).where(
+            User.id == staff_id,
+            User.restaurant_id == user.restaurant_id,
+            User.role == Role.waiter,
+        )
+    )
+    if staff is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Xodim topilmadi")
+    return staff
+
+
+@router.get("/staff")
+def staff_page(request: Request, db: DbSession, user: AdminUser):
+    restaurant = get_restaurant(db, user)
+    staff = db.scalars(
+        select(User)
+        .where(User.restaurant_id == restaurant.id, User.role == Role.waiter)
+        .order_by(User.username)
+    ).all()
+    return templates.TemplateResponse(
+        request,
+        "admin/staff.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "staff": staff,
+            "zones": areas.list_zones(db, restaurant.id),
+            "tables": tables.list_for(db, restaurant.id),
+            "assignment": {person.id: areas.assignment_of(db, person) for person in staff},
+            # Login butun tizimda yagona — slug bilan boshlangani band bo'lish
+            # ehtimoli kam va kimga tegishliligi ham ko'rinib turadi
+            "suggested": f"{restaurant.slug}-afitsant{len(staff) + 1}",
+        },
+    )
+
+
+@router.post("/staff", dependencies=[Depends(verify_csrf)])
+def create_staff(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    username: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+):
+    try:
+        onboarding.create_waiter(db, get_restaurant(db, user), username, password)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/staff")
+    return RedirectResponse("/admin/staff", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/staff/{staff_id}/password", dependencies=[Depends(verify_csrf)])
+def reset_staff_password(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    staff_id: int,
+    password: Annotated[str, Form()],
+):
+    if len(password) < onboarding.MIN_PASSWORD_LENGTH:
+        return form_failed(
+            request,
+            HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"Parol kamida {onboarding.MIN_PASSWORD_LENGTH} belgidan iborat bo'lsin",
+            ),
+            "/admin/staff",
+        )
+    staff = owned_waiter(db, user, staff_id)
+    staff.password_hash = hash_password(password)
+    db.commit()
+    return RedirectResponse("/admin/staff", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/staff/{staff_id}/toggle", dependencies=[Depends(verify_csrf)])
+def toggle_staff(db: DbSession, user: AdminUser, staff_id: int):
+    staff = owned_waiter(db, user, staff_id)
+    staff.is_active = not staff.is_active
+    db.commit()
+    return RedirectResponse("/admin/staff", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/staff/{staff_id}/delete", dependencies=[Depends(verify_csrf)])
+def delete_staff(db: DbSession, user: AdminUser, staff_id: int):
+    db.delete(owned_waiter(db, user, staff_id))
+    db.commit()
+    return RedirectResponse("/admin/staff", status.HTTP_303_SEE_OTHER)
+
+
+# --- buyurtmalar tarixi ---------------------------------------------------
+
+
+@router.get("/orders")
+def orders_page(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    period: str = "hafta",
+    start: str | None = None,
+    end: str | None = None,
+):
+    """Egasi uchun tarix. Jonli taxta esa /zal da — u afitsantga ham ochiq."""
+    restaurant = get_restaurant(db, user)
+    first, last, preset = stats.resolve_range(period, start, end, 365)
+    rows = orders.history(db, restaurant.id, first, last)
+    done = [order for order in rows if order.status.value == "served"]
+
+    return templates.TemplateResponse(
+        request,
+        "admin/orders.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "orders": rows,
+            "presets": stats.PRESETS,
+            "preset": preset,
+            "start": first,
+            "end": last,
+            "served_count": len(done),
+            # Summa faqat berilgan buyurtmalar bo'yicha — bekor qilingani
+            # tushumga kirmaydi va uni hisobga qo'shish egani chalg'itardi
+            "served_total": sum((order.total for order in done), start=0),
+            "table_count": len(tables.list_for(db, restaurant.id)),
+            "open_count": len(orders.open_orders(db, restaurant.id)),
+        },
+    )
+
+
+# --- zal bo'limlari -------------------------------------------------------
+
+
+@router.get("/zones")
+def zones_page(request: Request, db: DbSession, user: AdminUser):
+    restaurant = get_restaurant(db, user)
+    rows = areas.list_zones(db, restaurant.id)
+    all_tables = tables.list_for(db, restaurant.id)
+    counts = {zone.id: 0 for zone in rows}
+    for table in all_tables:
+        if table.zone_id in counts:
+            counts[table.zone_id] += 1
+    return templates.TemplateResponse(
+        request,
+        "admin/zones.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "zones": rows,
+            "floors": areas.by_floor(rows),
+            "counts": counts,
+            "loose": sum(1 for table in all_tables if table.zone_id is None),
+        },
+    )
+
+
+@router.post("/zones", dependencies=[Depends(verify_csrf)])
+def create_zone(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    name: Annotated[str, Form()],
+    sort_order: Annotated[int, Form()] = 0,
+    floor: Annotated[int, Form()] = 1,
+):
+    try:
+        areas.create_zone(db, get_restaurant(db, user), name, sort_order, floor)
+    except HTTPException as error:
+        return form_failed(request, error, "/admin/zones")
+    return RedirectResponse("/admin/zones", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/zones/{zone_id}", dependencies=[Depends(verify_csrf)])
+def update_zone(
+    db: DbSession,
+    user: AdminUser,
+    zone_id: int,
+    name: Annotated[str, Form()],
+    sort_order: Annotated[int, Form()] = 0,
+    floor: Annotated[int, Form()] = 1,
+):
+    areas.rename_zone(
+        db, areas.owned_zone(db, user.restaurant_id, zone_id), name, sort_order, floor
+    )
+    return RedirectResponse("/admin/zones", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/zones/{zone_id}/delete", dependencies=[Depends(verify_csrf)])
+def delete_zone(db: DbSession, user: AdminUser, zone_id: int):
+    # Stollar qoladi, faqat bo'limsiz bo'lib qoladi — chop etilgan QR omon
+    areas.delete_zone(db, areas.owned_zone(db, user.restaurant_id, zone_id))
+    return RedirectResponse("/admin/zones", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/staff/{staff_id}/area", dependencies=[Depends(verify_csrf)])
+async def set_staff_area(request: Request, db: DbSession, user: AdminUser, staff_id: int):
+    """Xodimning javobgarlik doirasi.
+
+    Forma ko'p qiymatli katakchalardan iborat, shuning uchun `request.form()`
+    orqali o'qiladi — FastAPI'ning `list[int]` shakli bo'sh tanlovda umuman
+    kelmaydi va "hammasini olib tashlash" ishlamay qolardi.
+    """
+    staff = owned_waiter(db, user, staff_id)
+    form = await request.form()
+    zone_ids = [int(v) for v in form.getlist("zone_ids") if str(v).isdigit()]
+    table_ids = [int(v) for v in form.getlist("table_ids") if str(v).isdigit()]
+    areas.set_assignment(db, staff, zone_ids, table_ids)
+    return RedirectResponse("/admin/staff", status.HTTP_303_SEE_OTHER)

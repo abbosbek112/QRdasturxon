@@ -1,0 +1,22 @@
+{#
+  Stol qo'shish formalarida takrorlanadigan ikki maydon: turi va bo'limi.
+  Ikkala forma ham (bitta stol va ommaviy) shu bo'lakni ishlatadi — matn va
+  variantlar bir joyda tursin.
+#}
+<div class="field" style="width:150px">
+  <label class="sr-only" for="kind-{{ form_id | default('new') }}">{{ t('field_kind', ui_lang) }}</label>
+  <select id="kind-{{ form_id | default('new') }}" name="kind">
+    {% for option in kinds %}
+      <option value="{{ option.value }}">{{ t('kind_' ~ option.value ~ '_name', ui_lang) }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% if zones %}
+  <div class="field" style="width:170px">
+    <label class="sr-only" for="zone-{{ form_id | default('new') }}">{{ t('field_zone', ui_lang) }}</label>
+    <select id="zone-{{ form_id | default('new') }}" name="zone_id">
+      <option value="">{{ t('zone_none', ui_lang) }}</option>
+      {% for zone in zones %}<option value="{{ zone.id }}">{{ zone.name }}</option>{% endfor %}
+    </select>
+  </div>
+{% endif %}

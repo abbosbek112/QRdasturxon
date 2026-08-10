@@ -1,16 +1,25 @@
 """Menyu ko'rishlarining kunlik hisobi.
 
-Shaxsiy ma'lumot saqlanmaydi — na IP, na cookie, na qurilma haqida narsa.
-Faqat "shu kuni shuncha marta ochildi" degan son. Shuning uchun bu ko'rsatkich
-"necha kishi" emas, "necha marta ochildi" deb ataladi.
+**Bazada shaxsiy ma'lumot saqlanmaydi** — na IP, na qurilma haqida narsa,
+faqat "shu kuni shuncha marta ochildi" degan son.
+
+Takroriy ochilishlar imzolangan sessiya cookie'si yordamida ajratiladi
+(`viewed()` ga qarang). Cookie brauzerda yashaydi va u yerda ham faqat
+qisqa kalitlar bilan vaqt turadi — bazaga hech narsa qo'shilmaydi.
+
+Busiz ko'rsatkich yolg'on chiqardi: mijoz tilni uch marta almashtirsa
+"menyu 4 marta ochildi" deb yozilardi.
 
 Sanalar UTC bo'yicha — restoran vaqt mintaqasi hisobga olinmaydi.
 """
 
 import logging
+import time
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -21,6 +30,39 @@ log = logging.getLogger(__name__)
 
 def today() -> date:
     return datetime.now(timezone.utc).date()
+
+
+# Bir mijozning bitta tashrifi shuncha vaqt davomida BITTA ochilish sanaladi.
+# Yarim soat — odam kafeda o'tirib menyuni bir necha marta ochishi mumkin
+# bo'lgan oraliq; ertaga qaytib kelsa yangi tashrif deb hisoblanadi.
+VIEW_WINDOW_SECONDS = 30 * 60
+# Sessiya cookie'si har so'rov bilan yuriladi — uni shishirib yubormaymiz
+MAX_SEEN = 30
+
+
+def viewed(seen: dict, key: str, now: int | None = None) -> tuple[bool, dict]:
+    """(hisoblansinmi, yangilangan ro'yxat).
+
+    `key` — "m3" (3-restoran menyusi) yoki "i42" (42-taom). Shu kalit oxirgi
+    yarim soatda uchragan bo'lsa ochilish TAKRORIY deb hisoblanadi va sanoq
+    oshmaydi. Vaqt esa yangilanadi: kafede uzoq o'tirgan mijoz 31-daqiqada
+    ikkinchi marta sanalib qolmasin.
+    """
+    if now is None:
+        now = int(time.time())
+
+    fresh = {
+        name: at
+        for name, at in (seen or {}).items()
+        if isinstance(at, int) and now - at < VIEW_WINDOW_SECONDS
+    }
+    first_time = key not in fresh
+    fresh[key] = now
+
+    if len(fresh) > MAX_SEEN:
+        newest = sorted(fresh.items(), key=lambda pair: pair[1], reverse=True)
+        fresh = dict(newest[:MAX_SEEN])
+    return first_time, fresh
 
 
 def record_view(db: Session, restaurant_id: int, item_id: int | None = None) -> None:
@@ -37,15 +79,46 @@ def record_view(db: Session, restaurant_id: int, item_id: int | None = None) -> 
 
 
 def _bump(db: Session, restaurant_id: int, item_id: int | None) -> None:
-    day = today()
-    match = [MenuView.restaurant_id == restaurant_id, MenuView.day == day]
-    match.append(MenuView.item_id.is_(None) if item_id is None else MenuView.item_id == item_id)
+    """Bugungi qatorni bittaga oshiradi — bitta ATOMIK amal bilan.
 
-    result = db.execute(
-        update(MenuView).where(*match).values(count=MenuView.count + 1)
+    Ilgari bu ikki qadam edi: avval UPDATE, qator topilmasa INSERT. Bir
+    vaqtda kelgan mijozlarda u ikki xil buzilardi:
+
+    * menyu qatori (item_id NULL) hech qanday cheklov bilan himoyalanmagan
+      edi, ya'ni ikkala so'rov ham qator qo'shib qo'yardi. Shundan keyin
+      keyingi HAR BIR ochilish ikkalasini ham oshirib, son ikki barobar
+      shishardi;
+    * taom qatorida cheklov bor edi va ikkinchi so'rov `IntegrityError`
+      olardi. Xato yuqorida yutilgani uchun o'sha ochilish YO'QOLARDI —
+      bir vaqtda bitta taomni ochgan 10 mijozdan 1 tasi sanalardi.
+
+    `INSERT ... ON CONFLICT DO UPDATE` ikkalasini ham yopadi: bazaning o'zi
+    qatorni qulflab, sonni oshiradi. Ikki dialekt uchun ham bir xil ishlaydi.
+    """
+    day = today()
+    make_insert = (
+        pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
     )
-    if result.rowcount == 0:
-        db.add(MenuView(restaurant_id=restaurant_id, item_id=item_id, day=day, count=1))
+    statement = make_insert(MenuView).values(
+        restaurant_id=restaurant_id, item_id=item_id, day=day, count=1
+    )
+
+    # Qaysi qisman indeksga tegishli ekanini aniq ko'rsatamiz — `models.py`
+    # dagi `uq_menu_views_menu` va `uq_menu_views_item` bilan bir xil shart
+    if item_id is None:
+        statement = statement.on_conflict_do_update(
+            index_elements=["restaurant_id", "day"],
+            index_where=text("item_id IS NULL"),
+            set_={"count": MenuView.__table__.c.count + 1},
+        )
+    else:
+        statement = statement.on_conflict_do_update(
+            index_elements=["restaurant_id", "item_id", "day"],
+            index_where=text("item_id IS NOT NULL"),
+            set_={"count": MenuView.__table__.c.count + 1},
+        )
+
+    db.execute(statement)
     db.commit()
 
 

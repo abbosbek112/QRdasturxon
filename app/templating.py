@@ -1,10 +1,22 @@
+from datetime import timedelta
+
 from fastapi.templating import Jinja2Templates
 
 from app import themes
 from app.config import BASE_DIR, settings
+from app.flash import pop_flash
 from app.i18n import LANGUAGES, resolve_lang, t, tr
 from app.plans import trial_days_left
 from app.security import csrf_token
+
+def _flash(request) -> dict:
+    """Bir martalik xabar — ko'rsatilgach o'chadi (`app/flash.py`).
+
+    Kontekst protsessori bo'lgani uchun har bir shablonda o'zi paydo bo'ladi
+    va marshrutlarga uni qo'lda uzatish kerak emas.
+    """
+    return {"flash": pop_flash(request)}
+
 
 def _language(request) -> dict:
     """Interfeys tili — har bir shablonga avtomatik qo'shiladi.
@@ -25,7 +37,7 @@ def _language(request) -> dict:
 
 templates = Jinja2Templates(
     directory=BASE_DIR / "app" / "templates",
-    context_processors=[_language],
+    context_processors=[_language, _flash],
 )
 
 
@@ -42,6 +54,39 @@ def _asset_version() -> str:
         default=0.0,
     )
     return format(int(newest), "x")
+
+
+def seat_label(kind, label: str, lang: str) -> str:
+    """O'tirish joyining mijoz ko'radigan nomi: "7-stol", "VIP 2", "3-xona".
+
+    `kind` enum ham, oddiy matn ham bo'lishi mumkin: stol modelida u enum,
+    buyurtmada esa nusxa sifatida matn bo'lib yotadi.
+    """
+    name = getattr(kind, "value", kind) or "stol"
+    return t(f"kind_{name}", lang).replace("{n}", label)
+
+
+def floor_label(floor: int, lang: str) -> str:
+    """"2-qavat" yoki "Yerto'la" — 0 yerto'la deb hisoblanadi."""
+    if not floor:
+        return t("floor_basement", lang)
+    return t("floor_n", lang).replace("{n}", str(floor))
+
+
+def new_order_count(restaurant) -> int:
+    """Panel navigatsiyasidagi "javob kutayotgan buyurtma" soni.
+
+    Marshrutlarga tegmaslik uchun global — tasma har bir admin sahifasida
+    turadi. O'z sessiyasini ochadi, chunki shablonga baza ulanishi berilmagan.
+    Buyurtma o'chirilgan restoranda so'rov umuman qilinmaydi.
+    """
+    if restaurant is None or not restaurant.orders_enabled:
+        return 0
+    from app.database import SessionLocal
+    from app.services import orders
+
+    with SessionLocal() as session:
+        return orders.new_count(session, restaurant.id)
 
 
 def theme_css(restaurant) -> str:
@@ -64,6 +109,11 @@ templates.env.globals.update(
     # Panel qobig'idagi ogohlantirish tasmasi shuni chaqiradi — marshrutlarga
     # tegmasdan har bir admin sahifasida ishlashi uchun global
     trial_days_left=trial_days_left,
+    # Navigatsiyadagi "javob kutayotgan buyurtma" belgisi
+    new_order_count=new_order_count,
+    # "7-stol" / "VIP 2" — turiga qarab
+    seat_label=seat_label,
+    floor_label=floor_label,
     # Bosh sahifadagi ko'rgazma uslublarni restoransiz chizadi: har bir
     # namuna karta o'z palitrasini shu yerdan oladi
     css_variables=themes.css_variables,
@@ -83,4 +133,18 @@ def format_price(value) -> str:
     return f"{int(value):,}".replace(",", " ")
 
 
+def localtime(value):
+    """UTC vaqtni restoran mintaqasiga o'giradi (ekran uchun).
+
+    Baza UTC saqlaydi va shundayligicha qolsin — taqqoslash shu bilan ishonchli.
+    Lekin ekranda mahalliy vaqt turishi kerak: afitsant "06:14" ni ko'rib
+    soatiga qarasa 11:14 turgan bo'lardi va buyurtma qachon kelganini
+    tushunmasdi.
+    """
+    if value is None:
+        return value
+    return value + timedelta(hours=settings.utc_offset_hours)
+
+
 templates.env.filters["price"] = format_price
+templates.env.filters["localtime"] = localtime

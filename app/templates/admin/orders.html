@@ -1,0 +1,98 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}Buyurtmalar{% endblock %}
+
+{% block content %}
+<div class="page-head spread">
+  <div>
+    <h1>{{ t('orders_title', ui_lang) }}</h1>
+    <p class="muted small">{{ t('orders_sub', ui_lang) }}</p>
+  </div>
+  <a class="btn btn-primary" href="/zal">
+    {{ ui.icon('list') }} {{ t('orders_live', ui_lang) }}
+    {% if open_count %}<span class="pill-count">{{ open_count }}</span>{% endif %}
+  </a>
+</div>
+
+{% if not restaurant.orders_enabled %}
+  <div class="notice notice-warn">
+    <strong>{{ t('orders_off', ui_lang) }}</strong>
+    {{ t('orders_off_text', ui_lang) }}
+    <a href="/admin/settings">{{ t('nav_settings', ui_lang) }}</a>
+  </div>
+{% elif not table_count %}
+  <div class="notice notice-warn">
+    <strong>{{ t('orders_no_tables', ui_lang) }}</strong>
+    <a href="/admin/tables">{{ t('nav_tables', ui_lang) }}</a>
+  </div>
+{% endif %}
+
+<div class="card range-bar">
+  <div class="chips-row">
+    {% for key, (label, _) in presets.items() %}
+      <a class="chip {{ 'active' if preset == key }}" href="/admin/orders?period={{ key }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <form method="get" action="/admin/orders" class="range-form">
+    <input type="hidden" name="period" value="custom">
+    <label class="sr-only" for="from">{{ t('range_from', ui_lang) }}</label>
+    <input id="from" type="date" name="start" value="{{ start.isoformat() }}" max="{{ end.isoformat() }}">
+    <span class="muted small">—</span>
+    <label class="sr-only" for="to">{{ t('range_to', ui_lang) }}</label>
+    <input id="to" type="date" name="end" value="{{ end.isoformat() }}">
+    <button class="btn btn-sm {{ 'btn-primary' if preset == 'custom' }}" type="submit">{{ t('action_show', ui_lang) }}</button>
+  </form>
+</div>
+
+<div class="stat-grid" style="margin-top:1rem">
+  <div class="stat"><b>{{ orders | length }}</b><span>{{ t('orders_title', ui_lang) }}</span></div>
+  <div class="stat"><b>{{ served_count }}</b><span>{{ t('order_status_served', ui_lang) }}</span></div>
+  <div class="stat">
+    <b>{{ served_total | price }}</b>
+    <span>{{ t('col_total', ui_lang) }} · {{ restaurant.currency }}</span>
+  </div>
+  <div class="stat"><b>{{ table_count }}</b><span>{{ t('nav_tables', ui_lang) }}</span></div>
+</div>
+
+{% if not orders %}
+  <div class="empty" style="margin-top:1rem">
+    <strong>{{ t('orders_empty', ui_lang) }}</strong>
+    Stoldan buyurtma kelganda u shu ro'yxatda paydo bo'ladi.
+  </div>
+{% else %}
+  <div class="table-card table-scroll table-compact" style="margin-top:1rem">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('col_time', ui_lang) }}</th>
+          <th>{{ t('col_table', ui_lang) }}</th>
+          <th>{{ t('dash_items', ui_lang) }}</th>
+          <th>{{ t('col_total', ui_lang) }}</th>
+          <th>{{ t('col_status', ui_lang) }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+          <tr>
+            <td class="muted">{{ (order.created_at | localtime).strftime('%d.%m %H:%M') }}</td>
+            <td><strong>{{ seat_label(order.table_kind, order.table_label, ui_lang) }}</strong></td>
+            <td>
+              {% for line in order.lines %}
+                <div class="small">{{ line.name }} <span class="muted">× {{ line.quantity }}</span></div>
+              {% endfor %}
+              {% if order.note %}<div class="muted small">{{ order.note }}</div>{% endif %}
+            </td>
+            <td><strong>{{ order.total | price }}</strong></td>
+            <td>
+              <span class="badge badge-{{ 'ok' if order.status.value == 'served' else 'off' }}">
+                {{ t('order_status_' ~ order.status.value, ui_lang) }}
+              </span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">Eng so'nggi 300 ta buyurtma ko'rsatiladi.</p>
+{% endif %}
+{% endblock %}

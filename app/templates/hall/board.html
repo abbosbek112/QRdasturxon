@@ -1,0 +1,75 @@
+{% extends "hall/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ t('hall_title', ui_lang) }}{% endblock %}
+
+{% block content %}
+{% if not restaurant.orders_enabled %}
+  <div class="notice notice-warn">
+    <strong>{{ t('orders_off', ui_lang) }}</strong>
+    {{ t('orders_off_text', ui_lang) }}
+  </div>
+{% endif %}
+
+{#
+  Bo'lim filtri. Faqat javobgarligi belgilangan afitsantda ko'rinadi —
+  biriktirilmaganiga tugma keraksiz, u baribir hammasini ko'radi.
+
+  Havola, JS emas: tanlangan ko'rinish manzilda qoladi va sahifa
+  yangilanganda saqlanib turadi.
+#}
+{% if has_area %}
+  <div class="chips-row hall-filter">
+    <a class="chip {{ '' if show_all else 'active' }}" href="/zal">
+      {{ t('hall_mine', ui_lang) }}
+      {% if mine_count %}<span class="pill-count">{{ mine_count }}</span>{% endif %}
+    </a>
+    <a class="chip {{ 'active' if show_all }}" href="/zal?hammasi=1">{{ t('hall_all', ui_lang) }}</a>
+  </div>
+{% endif %}
+
+{#
+  Ilova tasmalari. Ikkalasi ham `hidden` bilan boshlanadi va faqat kerak
+  bo'lganda ochiladi: brauzer o'rnatishga tayyor bo'lsa yoki bildirishnoma
+  hali so'ralmagan bo'lsa. Matn shu yerda — tarjima serverda qoladi.
+#}
+<div class="app-bar" id="installBar" hidden>
+  <span class="app-bar-mark">{{ ui.icon('download') }}</span>
+  <div class="grow">
+    <strong>{{ t('app_install', ui_lang) }}</strong>
+    <span class="muted small" id="installText">{{ t('app_install_why', ui_lang) }}</span>
+  </div>
+  <button class="btn btn-primary btn-sm" type="button" id="installGo"
+          data-ios="{{ t('app_install_ios', ui_lang) }}">{{ t('app_install', ui_lang) }}</button>
+  <button class="btn btn-sm" type="button" data-app-dismiss="install">{{ t('app_later', ui_lang) }}</button>
+</div>
+
+<div class="app-bar" id="notifyBar" hidden>
+  <span class="app-bar-mark">{{ ui.icon('chat') }}</span>
+  <div class="grow">
+    <strong>{{ t('app_notify_on', ui_lang) }}</strong>
+    <span class="muted small" id="notifyText">{{ t('app_notify_why', ui_lang) }}</span>
+  </div>
+  <button class="btn btn-primary btn-sm" type="button" id="notifyGo"
+          data-blocked="{{ t('app_notify_blocked', ui_lang) }}"
+          data-ready="{{ t('app_notify_ready', ui_lang) }}"
+          data-ios="{{ t('app_notify_ios', ui_lang) }}">{{ t('app_notify_on', ui_lang) }}</button>
+  <button class="btn btn-sm" type="button" data-app-dismiss="notify">{{ t('app_later', ui_lang) }}</button>
+</div>
+
+{#
+  Ro'yxatni hall.js shu o'ram ichida almashtirib turadi. "Necha daqiqa oldin"
+  matni shu yerdan beriladi — tarjima serverda qoladi, JS faqat sonni qo'yadi.
+#}
+<div id="hallWrap"
+     {# Avtomatik yangilash tanlangan ko'rinishni saqlab qolsin —
+        aks holda "Hammasi" 8 soniyada o'z bo'limiga qaytib ketardi #}
+     data-list-url="/zal/list{{ '?hammasi=1' if show_all }}"
+     data-just-now="{{ t('hall_just_now', ui_lang) }}"
+     data-ago="{{ t('hall_minutes_ago', ui_lang) }}"
+     data-new-order="{{ t('app_new_order', ui_lang) }}"
+     data-new-body="{{ restaurant.name }}"
+     {# Ochiq kalit — maxfiysi serverda qoladi. Bo'sh bo'lsa hall.js
+        obunani umuman qilmaydi va taxta avvalgidek ishlayveradi. #}
+     data-vapid="{{ vapid_key }}"
+     data-csrf="{{ csrf_token(request) }}">{% include "hall/_list.html" %}</div>
+{% endblock %}

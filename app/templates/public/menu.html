@@ -85,6 +85,21 @@
 </header>
 
 <div class="sheet">
+  {% if table %}
+    {# Mijoz qaysi stolda o'tirganini ko'rib tursin — buyurtma o'sha nom bilan
+       ketadi va noto'g'ri QR skanerlangani shu yerda bilinadi. #}
+    <p class="table-badge">
+      {{ ui.icon('qr') }} {{ seat_label(table.kind, table.label, lang) }}
+    </p>
+  {% endif %}
+
+  {% if window_over %}
+    <div class="notice notice-warn">
+      <strong>{{ t('order_window_over', lang) }}</strong>
+      {{ t('order_window_over_text', lang) }}
+    </div>
+  {% endif %}
+
   {% if restaurant.wifi_password %}
     {# Eng ko'p so'raladigan narsa — shuning uchun varaqning birinchi qatorida.
        Parol darrov ko'rinmaydi, bosilganda ochiladi. #}
@@ -139,6 +154,38 @@
   </div>
 </div>
 
+{% if can_order %}
+  {#
+    Savat. Mazmuni brauzerda (localStorage) yig'iladi, serverga esa BITTA
+    yuborishda ketadi — taom raqami va miqdori. Narx bu yerdan olinmaydi:
+    server uni bazadan qayta o'qiydi, ya'ni sahifadagi qiymatni o'zgartirib
+    arzonga buyurtma berib bo'lmaydi.
+  #}
+  <form class="cart" id="cart" method="post" action="/r/{{ restaurant.slug }}/order"
+        data-slug="{{ restaurant.slug }}" data-currency="{{ restaurant.currency }}"
+        data-empty="{{ t('order_cart_empty', lang) }}" hidden>
+    {% include "partials/csrf.html" %}
+
+    <button class="cart-bar" type="button" id="cartOpen" aria-expanded="false">
+      <span class="cart-count" id="cartCount">0</span>
+      <span class="grow">{{ t('order_cart', lang) }}</span>
+      <span class="cart-sum" id="cartSum"></span>
+    </button>
+
+    <div class="cart-panel" id="cartPanel" hidden>
+      <div class="cart-lines" id="cartLines"></div>
+      <label class="sr-only" for="cartNote">{{ t('order_note', lang) }}</label>
+      <input id="cartNote" name="note" maxlength="280" placeholder="{{ t('order_note', lang) }}">
+      <div class="cart-actions">
+        <button class="btn btn-sm" type="button" id="cartClear">{{ t('order_clear', lang) }}</button>
+        <button class="btn btn-primary grow" type="submit" id="cartSend">
+          {{ t('order_send', lang) }}
+        </button>
+      </div>
+    </div>
+  </form>
+{% endif %}
+
 {# Taom tafsiloti shu oynada ochiladi. Mazmuni ?partial=1 orqali yuklanadi. #}
 <div class="sheet-overlay" id="sheetOverlay" hidden></div>
 <div class="sheet-panel" id="sheetPanel" role="dialog" aria-modal="true"
@@ -150,4 +197,5 @@
 
 {% block scripts %}
 <script src="/static/js/menu.js?v={{ asset_v }}" defer></script>
+{% if can_order %}<script src="/static/js/order.js?v={{ asset_v }}" defer></script>{% endif %}
 {% endblock %}

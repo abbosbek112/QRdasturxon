@@ -30,6 +30,10 @@
   <div class="app-inner">
     {# Har bir sahifada turadigan ogohlantirish — bosh sahifadagina emas #}
     {% block banner %}{% endblock %}
+    {# Formadan qaytgan xato: sahifadan chiqarib yubormasdan shu yerda #}
+    {% if flash %}
+      <div class="notice notice-{{ flash.kind }}">{{ flash.text }}</div>
+    {% endif %}
     {% block content %}{% endblock %}
   </div>
 </main>

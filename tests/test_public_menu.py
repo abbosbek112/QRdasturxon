@@ -192,7 +192,7 @@ def test_inline_qr_keeps_the_code_pattern_untouched():
     """
     from app.services import qr
 
-    raw = qr.svg_bytes("namuna", 6).decode("utf-8")
+    raw = qr.svg_bytes(qr.menu_url("namuna"), 6).decode("utf-8")
     cleaned = qr.svg_markup("namuna", 6)
 
     start = raw.index('<path')

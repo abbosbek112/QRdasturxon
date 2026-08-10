@@ -10,6 +10,10 @@ python-multipart==0.0.32
 pydantic-settings==2.14.2
 itsdangerous==2.2.0
 argon2-cffi==25.1.0
+# Afitsant bildirishnomasi (Web Push) uchun VAPID imzosi. `pywebpush` emas:
+# u beshta bog'liqlik olib keladi va ular orasida `requests` bor — u
+# loyihadagi httpx bilan takrorlanardi. Bizga faqat ES256 imzo kerak.
+cryptography==50.0.0
 pillow==12.3.0
 qrcode[pil]==8.2
 python-slugify==8.0.4

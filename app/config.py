@@ -21,6 +21,38 @@ class Settings(BaseSettings):
     # Sessiya cookie'si shuncha vaqtdan keyin kuchini yo'qotadi
     session_max_age: int = 60 * 60 * 24 * 14
 
+    # Afitsant ilovasi. Ikkalasi ham do'kon ro'yxatisiz tarqatiladi:
+    # Android — saytdan APK, iPhone — TestFlight havolasi.
+    #
+    # TestFlight havolasi bo'sh bo'lsa /ilova sahifasi iPhone egasiga PWA
+    # yo'riqnomasini ko'rsatadi — ya'ni sahifa hech qachon bo'sh qolmaydi.
+    app_version: str = "1.0.0"
+    testflight_url: str = ""
+
+    # Afitsant bildirishnomasi (Web Push) uchun VAPID kalitlari.
+    #
+    # Maxfiy kalit SERVERDA yasaladi va faqat o'sha yerda yashaydi —
+    # SECRET_KEY bilan bir xil tartib:
+    #   python -m scripts.vapid_keys
+    #
+    # Bo'sh qolsa bildirishnoma jimgina o'chiq bo'ladi va qolgan hamma narsa
+    # avvalgidek ishlayveradi. Bu ataylab: kalit unutilgani sababli buyurtma
+    # qabul qilinmay qolishi mumkin emas.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    # Push serveri muammo chiqsa shu manzilga yozadi. mailto: yoki https:
+    vapid_subject: str = "mailto:azizovabbos61@gmail.com"
+
+    @property
+    def push_enabled(self) -> bool:
+        return bool(self.vapid_public_key and self.vapid_private_key)
+
+    # Vaqt bazada UTC saqlanadi, ekranda esa mahalliy vaqt ko'rinishi kerak.
+    # O'zbekiston UTC+5 va yozgi vaqtga o'tmaydi, shuning uchun oddiy siljish
+    # yetarli. Buyurtmalar uchun bu muhim: afitsant "06:14" ni ko'rib, soatiga
+    # qarasa 11:14 turgan bo'lardi.
+    utc_offset_hours: int = 5
+
     # Reklama sahifasida ko'rsatiladigan aloqa — kodga tegmasdan o'zgartirish uchun
     contact_phone: str = "+998 94 227 34 07"
     contact_telegram: str = "odam_dev"

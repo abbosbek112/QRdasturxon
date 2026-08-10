@@ -107,11 +107,15 @@ def test_free_plan_stops_at_the_category_limit(client, db, free_tenant):
         )
     assert db.query(Category).count() == limit
 
+    # Cheklov xato sahifasiga otvormaydi — o'sha sahifaga sabab bilan qaytaradi
     blocked = client.post(
         "/admin/categories",
         data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ortiqcha"},
     )
-    assert blocked.status_code == 400
+    assert blocked.status_code == 200
+    assert blocked.url.path == "/admin/categories"
+    shown = html.unescape(blocked.text)
+    assert str(limit) in shown and "tarifni ko'taring" in shown
     assert db.query(Category).count() == limit
 
 
@@ -142,7 +146,9 @@ def test_free_plan_stops_at_the_item_limit(client, db, free_tenant):
             "price": 5000,
         },
     )
-    assert blocked.status_code == 400
+    assert blocked.status_code == 200
+    shown = html.unescape(blocked.text)
+    assert str(limit) in shown and "tarifni ko'taring" in shown
     assert db.query(MenuItem).count() == limit
 
 
@@ -425,3 +431,98 @@ def test_interface_language_is_separate_from_menu_language(client, db, free_tena
     body = client.get(f"/r/{free_tenant.slug}?lang=ru").text
     assert "Плов" not in body   # mazmun cheklangan
     assert "Osh" in body
+
+
+# --- forma xatosi qaysi maydonga tegishli ----------------------------------
+#
+# Xato faqat forma tepasida turganda odam qaysi maydon haqida ekanini
+# tushunmaydi. Bu ayniqsa login maydonida og'riqli: brauzer uni saqlangan
+# hisob bilan o'zi to'ldirib qo'yadi va foydalanuvchi unga qaramaydi.
+
+
+def test_a_taken_login_is_flagged_on_the_username_field(client, db, tenant_a):
+    """Xato aynan login maydonining ostida chiqsin."""
+    token = csrf(client, "/signup")
+    response = client.post(
+        "/signup",
+        data={
+            "csrf_token": token,
+            "name": "Palonchi",
+            "slug": "palonchi",
+            "username": "osh",          # tenant_a da allaqachon bor
+            "password": "juda-uzun-parol",
+        },
+    )
+    assert response.status_code == 400
+
+    body = html.unescape(response.text)
+    # Xabar login maydonining ostida, forma tepasidagi tasmada emas
+    assert 'aria-invalid="true"' in response.text
+    assert "'osh' logini band" in body
+
+    field = body[body.index('id="username"') : body.index('id="password"')]
+    assert "logini band" in field, "xato login maydonidan uzoqda qolgan"
+
+
+def test_a_taken_address_is_flagged_on_the_slug_field(client, db, tenant_a):
+    restaurant, _ = tenant_a
+    token = csrf(client, "/signup")
+    response = client.post(
+        "/signup",
+        data={
+            "csrf_token": token,
+            "name": "Palonchi",
+            "slug": restaurant.slug,     # band manzil
+            "username": "yangi-login",
+            "password": "juda-uzun-parol",
+        },
+    )
+    body = html.unescape(response.text)
+    field = body[body.index('id="slug"') : body.index('id="username"')]
+    assert "allaqachon band" in field
+
+
+def test_the_faulty_field_gets_the_cursor(client, db, tenant_a):
+    """Sahifa ochilganda kursor aybdor maydonga tushsin."""
+    token = csrf(client, "/signup")
+    response = client.post(
+        "/signup",
+        data={
+            "csrf_token": token,
+            "name": "Palonchi",
+            "slug": "palonchi",
+            "username": "osh",
+            "password": "juda-uzun-parol",
+        },
+    )
+    body = response.text
+    field = body[body.index('id="username"') : body.index('id="password"')]
+    assert "autofocus" in field
+    # Restoran nomida xato yo'q — u kursorni tortib olmasin
+    head = body[body.index('id="name"') : body.index('id="slug"')]
+    assert "autofocus" not in head
+
+
+def test_the_signup_warns_about_browser_autofill(client):
+    """Brauzer login maydonini o'zi to'ldiradi — odam bundan xabardor bo'lsin."""
+    body = html.unescape(client.get("/signup?lang=uz").text)
+    assert "Brauzer bu maydonni o'zi" in body
+
+
+def test_a_generic_error_still_shows_at_the_top(client, db, monkeypatch):
+    """Maydonga bog'lanmagan xato (cheklov) avvalgidek tepada chiqadi."""
+    from app import security
+
+    monkeypatch.setattr(security, "MAX_SIGNUPS", 0)
+    token = csrf(client, "/signup")
+    response = client.post(
+        "/signup",
+        data={
+            "csrf_token": token,
+            "name": "Palonchi",
+            "username": "yangi",
+            "password": "juda-uzun-parol",
+        },
+    )
+    assert response.status_code == 429
+    assert 'class="alert"' in response.text

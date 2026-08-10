@@ -15,6 +15,7 @@ os.environ["DEBUG"] = "true"
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
+from argon2 import PasswordHasher  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.config import BASE_DIR  # noqa: E402
@@ -22,7 +23,17 @@ from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import LoginAttempt, Restaurant, Role, User  # noqa: E402
 from app.plans import start_trial  # noqa: E402
+from app import security  # noqa: E402
 from app.security import hash_password  # noqa: E402
+
+
+# Argon2 ATAYLAB sekin — parol sindirishni qimmat qilish uning butun vazifasi.
+# Lekin testlarda yuzlab marta login qilinadi va o'sha sekinlik to'plamning
+# uchdan ikki qismini yeb qo'yadi. Bu yerda kuchini eng pastga tushiramiz:
+# tekshirilayotgan narsa xesh kuchi emas, uning ATROFIDAGI mantiq.
+#
+# Prod parametrlariga tegilmaydi — `app/security.py` o'z holicha qoladi.
+security._hasher = PasswordHasher(time_cost=1, memory_cost=8, parallelism=1)
 
 
 @pytest.fixture(scope="session", autouse=True)

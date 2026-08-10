@@ -71,7 +71,7 @@
               <button class="btn btn-sm" type="submit">{{ 'Yashirish' if item.is_available else "Ko'rsatish" }}</button>
             </form>
             <form method="post" action="/admin/items/{{ item.id }}/delete"
-                  onsubmit="return confirm('Taom o\'chirilsinmi?')">
+                  data-confirm="Taom o'chirilsinmi?">
               {% include "partials/csrf.html" %}
               <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
             </form>

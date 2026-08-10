@@ -1,0 +1,117 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}Stollar{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('tables_title', ui_lang) }}</h1>
+  <p class="muted small">{{ t('tables_sub', ui_lang) }}</p>
+</div>
+
+{% if not restaurant.orders_enabled %}
+  <div class="notice notice-warn">
+    <strong>{{ t('orders_off', ui_lang) }}</strong>
+    {{ t('orders_off_text', ui_lang) }}
+    <a href="/admin/settings">{{ t('nav_settings', ui_lang) }}</a>
+  </div>
+{% endif %}
+
+<div class="grid-2">
+  <div class="card stack">
+    <h2>{{ t('tables_bulk', ui_lang) }}</h2>
+    <form method="post" action="/admin/tables/bulk" class="row" style="align-items:flex-end">
+      {% include "partials/csrf.html" %}
+      <div class="field" style="width:120px">
+        <label class="sr-only" for="count">{{ t('tables_bulk', ui_lang) }}</label>
+        <input id="count" name="count" type="number" min="1" max="200" value="{{ next_count }}" required>
+      </div>
+      {% include "admin/_seat_fields.html" %}
+      <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} {{ t('tables_bulk_action', ui_lang) }}</button>
+    </form>
+    <p class="hint">{{ t('tables_bulk_hint', ui_lang) }}</p>
+  </div>
+
+  <div class="card stack">
+    <h2>{{ t('tables_one', ui_lang) }}</h2>
+    <form method="post" action="/admin/tables" class="row" style="align-items:flex-end">
+      {% include "partials/csrf.html" %}
+      <div class="field grow">
+        <label for="label">{{ t('tables_label', ui_lang) }}</label>
+        <input id="label" name="label" maxlength="32" required>
+      </div>
+      {% include "admin/_seat_fields.html" %}
+      <button class="btn" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
+    </form>
+    <p class="hint">{{ t('tables_label_hint', ui_lang) }}</p>
+  </div>
+</div>
+
+{% if not tables %}
+  <div class="empty" style="margin-top:1rem">
+    <strong>{{ t('tables_empty', ui_lang) }}</strong>
+    {{ t('tables_bulk_hint', ui_lang) }}
+  </div>
+{% else %}
+  <div class="spread" style="margin-top:1.2rem; align-items:center">
+    <p class="section-label" style="margin:0">{{ tables | length }} ta stol</p>
+    <a class="btn btn-primary btn-sm" href="/admin/tables/print" target="_blank" rel="noopener">
+      {{ ui.icon('printer') }} {{ t('tables_print', ui_lang) }}
+    </a>
+  </div>
+
+  <div class="table-grid">
+    {% for table in tables %}
+      <div class="card table-card-item">
+        <div class="spread">
+          <strong class="table-name">{{ table.label }}</strong>
+          <a class="btn btn-sm" href="/admin/tables/{{ table.id }}/qr.png" download>
+            {{ ui.icon('download') }} PNG
+          </a>
+        </div>
+        <p class="muted small table-code">/t/{{ table.code }}</p>
+
+        <form method="post" action="/admin/tables/{{ table.id }}" class="stack-sm">
+          {% include "partials/csrf.html" %}
+          <input type="hidden" name="label" value="{{ table.label }}">
+          <div class="row">
+            <div class="field grow">
+              <label class="sr-only" for="k-{{ table.id }}">{{ t('field_kind', ui_lang) }}</label>
+              <select id="k-{{ table.id }}" name="kind">
+                {% for option in kinds %}
+                  <option value="{{ option.value }}" {{ 'selected' if table.kind == option }}>
+                    {{ t('kind_' ~ option.value ~ '_name', ui_lang) }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field grow">
+              <label class="sr-only" for="z-{{ table.id }}">{{ t('field_zone', ui_lang) }}</label>
+              <select id="z-{{ table.id }}" name="zone_id">
+                <option value="">{{ t('zone_none', ui_lang) }}</option>
+                {% for zone in zones %}
+                  <option value="{{ zone.id }}" {{ 'selected' if table.zone_id == zone.id }}>{{ zone.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button class="btn btn-sm btn-primary" type="submit">{{ t('action_save', ui_lang) }}</button>
+          </div>
+        </form>
+
+        <div class="row">
+          <a class="btn btn-sm" href="/admin/tables/{{ table.id }}/qr.svg" download>SVG</a>
+          <form method="post" action="/admin/tables/{{ table.id }}/code"
+                data-confirm="{{ t('tables_new_code_hint', ui_lang) }}">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-sm" type="submit">{{ t('tables_new_code', ui_lang) }}</button>
+          </form>
+          <form method="post" action="/admin/tables/{{ table.id }}/delete"
+                data-confirm="{{ table.label }} — stol o'chirilsinmi?">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "public/base.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ t('dl_title', lang) }} — QRdasturxon{% endblock %}
+
+{% block body %}
+<div class="closed-shell">
+  <div class="lp-panel dl-card">
+    <span class="dl-mark">{{ ui.icon('list') }}</span>
+    <h1>{{ t('dl_title', lang) }}</h1>
+    <p class="muted">{{ t('dl_lead', lang) }}</p>
+
+    {#
+      Qurilma qaysi ekanini sahifaning o'zi bilmaydi — buni `app.js` aniqlaydi
+      va keraksiz bo'limni yashiradi. JS o'chiq bo'lsa ikkalasi ham ko'rinadi,
+      ya'ni hech kim yo'lsiz qolmaydi.
+    #}
+    <div class="dl-block" data-for="android">
+      <h2>{{ ui.icon('download') }} Android</h2>
+      {% if apk_ready %}
+        <a class="btn btn-primary btn-xl" href="/ilova/yuklash" download>
+          {{ t('dl_android', lang) }}
+        </a>
+        <p class="muted small">
+          {{ t('dl_version', lang) }} {{ app_version }} · {{ t('dl_size', lang) }} {{ apk_size }} MB
+        </p>
+      {% else %}
+        <span class="badge badge-off">{{ t('dl_soon', lang) }}</span>
+      {% endif %}
+      <p class="hint">{{ t('dl_android_how', lang) }}</p>
+      {#
+        Play Protect saytdan o'rnatilgan HAR QANDAY yangi ilovani to'sadi —
+        virus topgani uchun emas, imzoni birinchi marta ko'rgani uchun.
+        Afitsant buni bilmasa qo'rqib to'xtaydi, shuning uchun oldindan aytamiz.
+      #}
+      <details class="dl-note">
+        <summary>{{ t('dl_protect_title', lang) }}</summary>
+        <p class="hint">{{ t('dl_protect_text', lang) }}</p>
+      </details>
+    </div>
+
+    <div class="dl-block" data-for="ios">
+      <h2>{{ ui.icon('phone') }} iPhone</h2>
+      {% if testflight_url %}
+        <a class="btn btn-xl" href="{{ testflight_url }}" target="_blank" rel="noopener">
+          {{ t('dl_ios', lang) }}
+        </a>
+        <p class="hint">{{ t('dl_ios_how', lang) }}</p>
+      {% else %}
+        <span class="badge badge-off">{{ t('dl_soon', lang) }}</span>
+        <p class="hint">{{ t('dl_ios_pwa', lang) }}</p>
+      {% endif %}
+    </div>
+
+    <p class="hint">{{ t('dl_login_note', lang) }}</p>
+
+    {# Kompyuterda ochilgan bo'lsa — telefonga o'tish uchun #}
+    <div class="dl-qr" data-for="desktop">
+      <div class="dl-qr-code">{{ page_qr | safe }}</div>
+      <p class="muted small">{{ t('dl_scan', lang) }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/app-page.js?v={{ asset_v }}" defer></script>
+{% endblock %}
