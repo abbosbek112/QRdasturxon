@@ -501,6 +501,19 @@ def test_the_app_learns_about_updates(client):
     assert data["apk_url"].startswith("http")
 
 
+def test_the_released_version_comes_from_the_settings(monkeypatch, client):
+    """Yangi APK qo'yilganda faqat `.env` o'zgarishi kerak, kod emas.
+
+    Ilgari versiya kodda qotib turardi va `.env` dagi APP_VERSION hech
+    qayerda ishlatilmasdi — server yangi APK'ni berib turib, ilovaga
+    "eng oxirgisi sizda" deb aytardi va hech kim yangilanmasdi.
+    """
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "app_version", "9.9.9")
+    assert client.get("/api/v1/app/latest").json()["version"] == "9.9.9"
+
+
 def test_the_update_link_is_not_the_cached_one(client):
     """Caddy `/static/*` ga 30 kunlik kesh qo'yadi.
 

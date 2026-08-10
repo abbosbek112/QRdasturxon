@@ -34,10 +34,14 @@ router = APIRouter(prefix="/api/v1", tags=["api"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-# Ilovaning eng past mos versiyasi. Server yangilanib API o'zgarsa shu son
-# ko'tariladi va eski ilova foydalanuvchiga "yangilang" deb aytadi.
+# Eng past mos versiya — bu KOD masalasi: API o'zgarib eski ilova ishlamay
+# qolsa shu son ko'tariladi. Shuning uchun u shu yerda turadi.
 APP_MIN_VERSION = "1.0.0"
-APP_LATEST_VERSION = "1.0.0"
+
+# Eng oxirgi chiqarilgan versiya esa SOZLAMA: yangi APK serverga qo'yilganda
+# `.env` dagi APP_VERSION ko'tariladi, kod o'zgarmaydi. Ilgari bu ham shu
+# yerda qotib turardi va `.env` dagi qiymat hech qayerda ishlatilmasdi —
+# ya'ni yangi APK qo'yilgani bilan ilova "yangilanish bor" demasdi.
 
 
 def require_api_user(
@@ -219,7 +223,7 @@ def app_version():
     """
     base = settings.base_url.rstrip("/")
     return {
-        "version": APP_LATEST_VERSION,
+        "version": settings.app_version,
         "min_version": APP_MIN_VERSION,
         "apk_url": f"{base}/ilova/yuklash",
         "page_url": f"{base}/ilova",
