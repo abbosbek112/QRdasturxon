@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "652330310885",
+    "project_id": "qrdasturxon",
+    "storage_bucket": "qrdasturxon.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652330310885:android:eb5860aa7a8da42887480c",
+        "android_client_info": {
+          "package_name": "tech.qrdasturxon.zal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7J4gKQiTh25Jkp7p29YnlI-2V07CD8KI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

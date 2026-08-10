@@ -499,4 +499,20 @@ def test_the_app_learns_about_updates(client):
     data = client.get("/api/v1/app/latest").json()
     assert data["version"]
     assert data["apk_url"].startswith("http")
-    assert data["apk_url"].endswith(".apk")
+
+
+def test_the_update_link_is_not_the_cached_one(client):
+    """Caddy `/static/*` ga 30 kunlik kesh qo'yadi.
+
+    Yangilanish havolasi o'sha yerga qarasa, yangi APK qo'yilgani bilan
+    telefon eskisini olib kelaverardi — ya'ni "yangilanish bor" deb turib,
+    eskisini bergan bo'lardik. Havola keshlanmaydigan marshrutga qaraydi.
+    """
+    data = client.get("/api/v1/app/latest").json()
+    assert "/static/" not in data["apk_url"]
+    assert data["apk_url"].endswith("/ilova/yuklash")
+
+    # ...va o'sha marshrut haqiqatan keshlanmaslikni aytadi
+    head = client.get("/ilova/yuklash")
+    if head.status_code == 200:
+        assert "no-cache" in head.headers.get("cache-control", "")

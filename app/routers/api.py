@@ -211,11 +211,16 @@ def app_version():
 
     APK do'kondan emas, saytdan tarqatiladi — ya'ni yangilanish haqida
     ilovaning o'ziga aytish kerak, buni hech kim boshqa qilmaydi.
+
+    Havola `/ilova/yuklash` ga qarab turadi, `/static/...` ga emas: Caddy
+    `/static/*` ga 30 kunlik kesh qo'yadi (`Caddyfile`), ya'ni yangi APK
+    o'sha manzilda turgani bilan telefon eskisini olib kelaverardi —
+    yangilanish borligini aytib, eskisini bergan bo'lardik.
     """
     base = settings.base_url.rstrip("/")
     return {
         "version": APP_LATEST_VERSION,
         "min_version": APP_MIN_VERSION,
-        "apk_url": f"{base}/static/app/qrdasturxon-zal.apk",
+        "apk_url": f"{base}/ilova/yuklash",
         "page_url": f"{base}/ilova",
     }
