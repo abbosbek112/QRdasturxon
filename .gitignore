@@ -18,3 +18,10 @@ mobile/android/
 mobile/ios/
 mobile/dist/
 !app/static/app/.gitkeep
+
+# Firebase service account kaliti — HECH QACHON repoga tushmasin.
+# `google-services.json` dan farqi bor: u mijoz tomonidagi sozlama va har
+# APK ichida ham bor, bu esa butun Firebase loyihasiga kirish huquqi.
+*firebase-adminsdk*.json
+service-account*.json
+*-adminsdk-*.json

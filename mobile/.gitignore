@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase service account kaliti (google-services.json dan farqli — bu
+# haqiqiy maxfiy kalit va butun loyihaga kirish beradi)
+*firebase-adminsdk*.json
+service-account*.json
+*-adminsdk-*.json
