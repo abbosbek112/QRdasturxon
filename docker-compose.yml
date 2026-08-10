@@ -27,8 +27,20 @@ services:
       BASE_URL: ${BASE_URL:?BASE_URL .env faylida ko'rsatilsin}
       DEBUG: "false"
       MEDIA_DIR: /app/media
+      # Bildirishnoma kalitlari serverdagi `.env` da yashaydi va repoga
+      # tushmaydi. Bo'sh qolsa push jimgina o'chadi — qolgan hamma narsa
+      # ishlayveradi, shuning uchun `:?` emas, `:-` ishlatilgan.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+      TESTFLIGHT_URL: ${TESTFLIGHT_URL:-}
     volumes:
       - media:/app/media
+      # Afitsant ilovasining APK'si. Image ichiga pishirilmaydi: u 72 MB va
+      # har build'da qaytadan nusxalanardi. Yangi versiya `scp` bilan shu
+      # papkaga qo'yiladi va konteyner uni darrov ko'radi.
+      - ./app/static/app:/app/app/static/app:ro
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')\""]
       interval: 15s
