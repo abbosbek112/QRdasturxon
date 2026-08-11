@@ -1723,9 +1723,30 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
   min-height: 100vh; display: grid; place-items: center;
   padding: 1.5rem; background: var(--page);
 }
-.astra .closed-card {
-  width: 100%; max-width: 400px; padding: 2.2rem 1.7rem;
+/*
+  Sahifaning o'rtasida yakka turadigan kartalar: yopiq menyu, buyurtma
+  holati, ilovani yuklab olish.
+
+  `width: 100%` shart, chunki `.closed-shell` — `place-items: center` bo'lgan
+  grid: usiz karta mazmuniga qarab qisqarib qoladi. Padding ham shart edi —
+  usiz matn kartaning chetiga tegib turardi va telefonda narx qirqilgandek
+  ko'rinardi. Ilgari ikkalasi faqat `.closed-card` da bor edi.
+*/
+.astra .closed-card,
+.astra .order-card,
+.astra .dl-card {
+  width: 100%; padding: 2.2rem 1.7rem;
   text-align: center;
+}
+.astra .closed-card { max-width: 400px; }
+
+/* Tor ekranda yon bo'shliq kamaytiriladi: buyurtma qatorida nom, soni va
+   narx bir qatorga sig'ishi kerak. */
+@media (max-width: 420px) {
+  .astra .closed-card,
+  .astra .order-card,
+  .astra .dl-card { padding: 1.8rem 1.1rem; }
+  .astra .closed-shell { padding: 1rem; }
 }
 .astra .closed-card h1 { margin: 0 0 .5rem; font-size: var(--text-2xl); letter-spacing: -.03em; }
 .astra .closed-card .muted { margin-bottom: 1.5rem; }
