@@ -1,12 +1,14 @@
 # UzbekPDF — uzbekpdf.uz
 #
-# Alohida compose loyihasi (`~/uzbekpdf`), `127.0.0.1:8100` da turadi.
-# Ataylab shunday: QRdasturxon stekini qayta ishga tushirish to'lovchi
-# mijozlar saytiga tegmasin. Shu sababdan bu yerda konteyner nomi emas,
-# host manzili ishlatiladi — ikki loyiha bir tarmoqda emas.
+# Alohida compose loyihasi (`~/uzbekpdf`). Ataylab shunday: QRdasturxon
+# stekini qayta ishga tushirish to'lovchi mijozlar saytiga tegmasin.
+#
+# Ikkalasi umumiy `web` tarmog'ida, shuning uchun nom bilan topiladi.
+# Avval `host.docker.internal:8100` orqali borilgan edi va bu ishlamadi:
+# `127.0.0.1` ga bog'langan port konteyner ichidan ko'rinmaydi.
 
 uzbekpdf.uz {
-	reverse_proxy host.docker.internal:8100 {
+	reverse_proxy uzbekpdf:8000 {
 		# PDF konvertatsiyasi uzoq davom etadi: LibreOffice katta faylni
 		# yarim daqiqadan ko'proq ishlashi mumkin. Standart chegara bilan
 		# foydalanuvchi tugallanmagan so'rovda 502 ko'rardi.

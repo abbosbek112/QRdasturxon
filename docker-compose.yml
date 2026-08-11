@@ -59,11 +59,13 @@ services:
     environment:
       # Haqiqiy domen qo'yilsa Caddy HTTPS sertifikatini o'zi oladi va yangilaydi
       DOMAIN: ${DOMAIN:-localhost}
-    # Serverdagi boshqa saytlar alohida compose loyihalari bo'lib, faqat
-    # `127.0.0.1` da port ochadi. Caddy ularga konteyner nomi bilan yeta
-    # olmaydi (boshqa tarmoq), shuning uchun host orqali boradi.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    # Serverdagi boshqa saytlar alohida compose loyihalari. Ular bilan
+    # umumiy `web` tarmog'i orqali gaplashiladi va konteyner nomi bilan
+    # topiladi. Host orqali borish yo'li sinaldi va ishlamadi: `127.0.0.1`
+    # ga bog'langan port konteyner ichidan ko'rinmaydi.
+    networks:
+      default:
+      web:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy-sites:/etc/caddy/sites:ro
@@ -75,3 +77,11 @@ volumes:
   media:
   caddy_data:
   caddy_config:
+
+networks:
+  # Serverdagi boshqa saytlar shu tarmoqqa ulanadi va Caddy ularni nomi
+  # bilan topadi. Tashqarida yasaladi, ya'ni bu loyihani to'xtatish uni
+  # o'chirib yubormaydi:
+  #     docker network create web
+  web:
+    external: true
