@@ -1,0 +1,36 @@
+# UzbekPDF — uzbekpdf.uz
+#
+# Alohida compose loyihasi (`~/uzbekpdf`), `127.0.0.1:8100` da turadi.
+# Ataylab shunday: QRdasturxon stekini qayta ishga tushirish to'lovchi
+# mijozlar saytiga tegmasin. Shu sababdan bu yerda konteyner nomi emas,
+# host manzili ishlatiladi — ikki loyiha bir tarmoqda emas.
+
+uzbekpdf.uz {
+	reverse_proxy host.docker.internal:8100 {
+		# PDF konvertatsiyasi uzoq davom etadi: LibreOffice katta faylni
+		# yarim daqiqadan ko'proq ishlashi mumkin. Standart chegara bilan
+		# foydalanuvchi tugallanmagan so'rovda 502 ko'rardi.
+		transport http {
+			read_timeout 180s
+			write_timeout 180s
+		}
+	}
+
+	# Katta PDF yuklashga joy. Standart chegara past va foydalanuvchi
+	# sababini tushunmaydigan xatoga urilardi.
+	request_body {
+		max_size 100MB
+	}
+
+	encode gzip zstd
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# QR kod va havolalar ikki xil manzilga bo'linib ketmasin
+www.uzbekpdf.uz {
+	redir https://uzbekpdf.uz{uri} permanent
+}

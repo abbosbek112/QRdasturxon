@@ -59,8 +59,14 @@ services:
     environment:
       # Haqiqiy domen qo'yilsa Caddy HTTPS sertifikatini o'zi oladi va yangilaydi
       DOMAIN: ${DOMAIN:-localhost}
+    # Serverdagi boshqa saytlar alohida compose loyihalari bo'lib, faqat
+    # `127.0.0.1` da port ochadi. Caddy ularga konteyner nomi bilan yeta
+    # olmaydi (boshqa tarmoq), shuning uchun host orqali boradi.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-sites:/etc/caddy/sites:ro
       - caddy_data:/data
       - caddy_config:/config
 
