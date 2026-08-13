@@ -20,7 +20,6 @@ UI: dict[str, dict[str, str]] = {
     "wifi": {"uz": 'Wi-Fi', "ru": 'Wi-Fi', "en": 'Wi-Fi'},
     "spicy": {"uz": "O'tkir", "ru": 'Острое', "en": 'Spicy'},
     "vegetarian": {"uz": 'Vegetarian', "ru": 'Вегетарианское', "en": 'Vegetarian'},
-    "halal": {"uz": 'Halol', "ru": 'Халяль', "en": 'Halal'},
     "todays_special": {"uz": 'Bugungi taklif', "ru": 'Предложение дня', "en": "Today's special"},
     "min": {"uz": 'daq', "ru": 'мин', "en": 'min'},
     "comments": {"uz": 'Izohlar', "ru": 'Отзывы', "en": 'Comments'},
@@ -891,7 +890,6 @@ UI: dict[str, dict[str, str]] = {
     "mark_special": {"uz": "Bugungi taklif", "ru": "Блюдо дня", "en": "Today's special"},
     "mark_spicy": {"uz": "O'tkir", "ru": "Острое", "en": "Spicy"},
     "mark_vegetarian": {"uz": "Vegetarian", "ru": "Вегетарианское", "en": "Vegetarian"},
-    "mark_halal": {"uz": "Halol", "ru": "Халяль", "en": "Halal"},
     # --- formalar va jadvallar ---
     "need_category_first": {"uz": "Avval kategoriya kerak", "ru": "Сначала нужен раздел", "en": "You need a category first"},
     "add_category": {"uz": "Kategoriya qo'shing", "ru": "Добавьте раздел", "en": "Add a category"},

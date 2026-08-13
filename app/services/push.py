@@ -230,6 +230,52 @@ def notify_restaurant(restaurant_id: int, table_id: int | None = None) -> None:
             _notify_apps(db, people)
     except Exception:
         log.warning("Bildirishnoma bosqichida xato", exc_info=True)
+
+
+# Buyurtma javobsiz qolsa qachon qayta eslatiladi (soniyada).
+#
+# Bitta bildirishnoma yetarli emas: shovqinli zalda afitsant telefonni
+# eshitmasligi, qo'lida laganda bo'lishi yoki oshxonada turgan bo'lishi
+# mumkin. Ikkita eslatma — o'rtacha yo'l: buyurtma yo'qolib ketmaydi, lekin
+# telefon ham cheksiz jiringlamaydi.
+#
+# Eslatma faqat buyurtma HAMON "yangi" bo'lsa yuboriladi. Afitsant "Qabul
+# qildim" bosgan zahoti to'xtaydi.
+ESLATMA_VAQTLARI = (45, 120)
+
+
+def remind_until_answered(restaurant_id: int, order_id: int, table_id: int | None) -> None:
+    """Javobsiz buyurtma uchun keyinroq yana turtki yuboradi.
+
+    `threading.Timer` ataylab: ishchi oqimni ushlab turmaydi va yengil.
+    Server qayta ishga tushsa eslatma yo'qoladi — bu qabul qilingan narsa,
+    chunki buyurtmaning o'zi bazada qoladi va taxtada baribir ko'rinadi.
+    """
+    import threading
+
+    for kechikish in ESLATMA_VAQTLARI:
+        timer = threading.Timer(
+            kechikish, _remind_once, args=(restaurant_id, order_id, table_id)
+        )
+        timer.daemon = True
+        timer.start()
+
+
+def _remind_once(restaurant_id: int, order_id: int, table_id: int | None) -> None:
+    from app.database import SessionLocal
+    from app.models import Order, OrderStatus
+
+    try:
+        with SessionLocal() as db:
+            order = db.get(Order, order_id)
+            # Javob berilgan yoki o'chirilgan bo'lsa eslatma keraksiz
+            if order is None or order.status is not OrderStatus.new:
+                return
+        notify_restaurant(restaurant_id, table_id)
+    except Exception:
+        log.warning("Eslatma yuborilmadi", exc_info=True)
+
+
 def save(db: Session, user: User, endpoint: str, p256dh: str, auth: str) -> PushSubscription:
     """Obunani saqlaydi yoki mavjudini shu foydalanuvchiga bog'laydi.
 

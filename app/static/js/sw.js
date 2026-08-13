@@ -73,6 +73,10 @@ self.addEventListener("push", function (event) {
           tag: "zal-order",
           renotify: true,
           requireInteraction: true,
+          // Uzun va uzuq-uzuq: qisqa titrash cho'ntakda sezilmaydi.
+          // Ilovadagi naqsh bilan bir xil.
+          vibrate: [0, 700, 300, 700, 300, 700],
+          silent: false,
           data: { url: "/zal" },
         });
       })

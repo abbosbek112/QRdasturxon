@@ -1,15 +1,12 @@
-{# Taom belgilari: o'tkir / vegetarian / halol #}
+{# Taom belgilari: o'tkir / vegetarian #}
 {% import "partials/icons.html" as ui %}
-{% if item.is_spicy or item.is_vegetarian or item.is_halal %}
+{% if item.is_spicy or item.is_vegetarian %}
   <div class="marks">
     {% if item.is_spicy %}
       <span class="mark mark-spicy" title="{{ t('spicy', lang) }}">{{ ui.icon('flame') }}{{ t('spicy', lang) }}</span>
     {% endif %}
     {% if item.is_vegetarian %}
       <span class="mark mark-veg" title="{{ t('vegetarian', lang) }}">{{ ui.icon('leaf') }}{{ t('vegetarian', lang) }}</span>
-    {% endif %}
-    {% if item.is_halal %}
-      <span class="mark mark-halal" title="{{ t('halal', lang) }}">{{ ui.icon('check') }}{{ t('halal', lang) }}</span>
     {% endif %}
   </div>
 {% endif %}

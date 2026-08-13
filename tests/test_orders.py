@@ -859,3 +859,59 @@ def test_the_superadmin_is_warned_before_breaking_printed_codes(client, superadm
     assert "chop etilgan QR kodlar ishlamay qoladi" not in html.unescape(
         client.get("/superadmin/restaurants/new").text
     )
+
+
+# --- javobsiz buyurtma eslatmasi -------------------------------------------
+#
+# Shovqinli zalda bitta bildirishnoma yetarli emas: afitsant telefonni
+# eshitmasligi, qo'lida laganda bo'lishi mumkin. Buyurtma javobsiz qolsa
+# yana turtki yuboriladi — lekin faqat javobsiz bo'lsa.
+
+
+def test_an_unanswered_order_is_reminded(db, cafe, monkeypatch):
+    restaurant, table, item = cafe
+    order = orders.place(db, restaurant=restaurant, table=table, wanted=[(item.id, 1)])
+
+    from app.services import push
+
+    yuborilgan = []
+    monkeypatch.setattr(
+        push, "notify_restaurant", lambda rid, tid=None: yuborilgan.append(rid)
+    )
+
+    push._remind_once(restaurant.id, order.id, table.id)
+
+    assert yuborilgan == [restaurant.id]
+
+
+def test_an_answered_order_is_left_alone(db, cafe, monkeypatch):
+    """Afitsant "Qabul qildim" bosgan bo'lsa telefon qayta jiringlamasin."""
+    restaurant, table, item = cafe
+    order = orders.place(db, restaurant=restaurant, table=table, wanted=[(item.id, 1)])
+    orders.set_status(db, order, OrderStatus.accepted)
+
+    from app.services import push
+
+    yuborilgan = []
+    monkeypatch.setattr(
+        push, "notify_restaurant", lambda rid, tid=None: yuborilgan.append(rid)
+    )
+
+    push._remind_once(restaurant.id, order.id, table.id)
+
+    assert yuborilgan == []
+
+
+def test_a_deleted_order_does_not_crash_the_reminder(db, cafe, monkeypatch):
+    """Buyurtma o'chirilgan bo'lsa eslatma jimgina to'xtasin."""
+    restaurant, table, _ = cafe
+    from app.services import push
+
+    yuborilgan = []
+    monkeypatch.setattr(
+        push, "notify_restaurant", lambda rid, tid=None: yuborilgan.append(rid)
+    )
+
+    push._remind_once(restaurant.id, 999999, table.id)
+
+    assert yuborilgan == []

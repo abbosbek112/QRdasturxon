@@ -3,7 +3,7 @@
     "name": "QRdasturxon Zal",
     "slug": "qrdasturxon-zal",
     "scheme": "qrdasturxon",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "tech.qrdasturxon.zal",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#b45309",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -43,7 +43,10 @@
         "expo-notifications",
         {
           "icon": "./assets/android-icon-monochrome.png",
-          "color": "#b45309"
+          "color": "#b45309",
+          "sounds": [
+            "./assets/buyurtma.wav"
+          ]
         }
       ],
       "expo-localization",

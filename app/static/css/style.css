@@ -646,7 +646,6 @@ a.stat:hover { text-decoration: none; border-color: var(--line-2); }
 .mark svg { width: .9em; height: .9em; }
 .mark-spicy { color: #b42318; background: #fef3f2; border-color: #fecdca; }
 .mark-veg { color: #067647; background: #ecfdf3; border-color: #abefc6; }
-.mark-halal { color: #175cd3; background: #eff8ff; border-color: #b2ddff; }
 .detail-note + .marks, .sheet-scroll .marks { margin-top: 0; }
 
 /* --- yulduzli baho --- */

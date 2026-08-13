@@ -433,7 +433,6 @@ async def create_item(
     is_special: Annotated[bool, Form()] = False,
     is_spicy: Annotated[bool, Form()] = False,
     is_vegetarian: Annotated[bool, Form()] = False,
-    is_halal: Annotated[bool, Form()] = False,
     image: Annotated[UploadFile | None, File()] = None,
 ):
     category = owned_category(db, user, category_id)
@@ -458,7 +457,6 @@ async def create_item(
         is_special=is_special,
         is_spicy=is_spicy,
         is_vegetarian=is_vegetarian,
-        is_halal=is_halal,
     )
     if image is not None and image.filename:
         item.image = await save_image(image, user.restaurant_id, max_width=1000)
@@ -492,7 +490,6 @@ async def update_item(
     is_special: Annotated[bool, Form()] = False,
     is_spicy: Annotated[bool, Form()] = False,
     is_vegetarian: Annotated[bool, Form()] = False,
-    is_halal: Annotated[bool, Form()] = False,
     is_available: Annotated[bool, Form()] = False,
     remove_image: Annotated[bool, Form()] = False,
     image: Annotated[UploadFile | None, File()] = None,
@@ -512,7 +509,6 @@ async def update_item(
     item.is_special = is_special
     item.is_spicy = is_spicy
     item.is_vegetarian = is_vegetarian
-    item.is_halal = is_halal
     item.is_available = is_available
 
     if image is not None and image.filename:

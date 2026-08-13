@@ -360,6 +360,11 @@ def place_order(
     # mijozni kutdirib qo'ymasligi kerak va uning xatosi allaqachon qabul
     # qilingan buyurtmani bekor qila olmaydi.
     background.add_task(push.notify_restaurant, restaurant.id, order.table_id)
+    # Javobsiz qolsa yana eslatiladi. Shovqinli zalda bitta bildirishnoma
+    # yetarli emas — afitsant telefonni eshitmasligi mumkin.
+    background.add_task(
+        push.remind_until_answered, restaurant.id, order.id, order.table_id
+    )
 
     lang = resolve_lang(request)
     suffix = f"?lang={lang}" if lang != "uz" else ""

@@ -193,7 +193,6 @@ class MenuItem(Base):
     is_special: Mapped[bool] = mapped_column(Boolean, default=False)
     is_spicy: Mapped[bool] = mapped_column(Boolean, default=False)
     is_vegetarian: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_halal: Mapped[bool] = mapped_column(Boolean, default=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
     category: Mapped[Category] = relationship(back_populates="items")

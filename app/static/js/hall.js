@@ -63,20 +63,50 @@
     }
   }
 
+  // Ovoz va titrash. Ikkalasi ham ataylab uzun: zalda qisqa "biq" ham,
+  // qisqa titrash ham sezilmaydi.
+  //
+  // Ilgari bitta 0.45 soniyalik sof sinus edi — u fon shovqiniga singib
+  // ketardi. Endi ikki tonli, uch marta takrorlanadigan chaqiruv: quloq
+  // bir xil tovushdan ko'ra o'zgarishni yaxshiroq ilg'aydi.
+  var CHAQIRUV = [
+    { gerts: 880, boshi: 0.00, davomi: 0.18 },
+    { gerts: 1175, boshi: 0.20, davomi: 0.22 },
+    { gerts: 880, boshi: 0.50, davomi: 0.18 },
+    { gerts: 1175, boshi: 0.70, davomi: 0.22 },
+    { gerts: 880, boshi: 1.00, davomi: 0.18 },
+    { gerts: 1175, boshi: 1.20, davomi: 0.30 },
+  ];
+
   function beep() {
+    // Titrash ovozdan mustaqil: telefon jim rejimda bo'lsa ham sezilsin
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate([0, 700, 300, 700, 300, 700]);
+      } catch (err) {
+        /* brauzer ruxsat bermadi */
+      }
+    }
+
     if (!audio || audio.state !== "running") return;
     try {
-      var osc = audio.createOscillator();
-      var gain = audio.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, audio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.45);
-      osc.connect(gain);
-      gain.connect(audio.destination);
-      osc.start();
-      osc.stop(audio.currentTime + 0.5);
+      CHAQIRUV.forEach(function (nota) {
+        var osc = audio.createOscillator();
+        var gain = audio.createGain();
+        var t = audio.currentTime + nota.boshi;
+        // Uchburchak to'lqin sof sinusdan o'tkirroq eshitiladi va
+        // telefonning kichkina karnayida yo'qolib ketmaydi
+        osc.type = "triangle";
+        osc.frequency.value = nota.gerts;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.6, t + 0.01);
+        gain.gain.setValueAtTime(0.6, t + nota.davomi - 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + nota.davomi);
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start(t);
+        osc.stop(t + nota.davomi + 0.02);
+      });
     } catch (err) {
       /* muhim emas */
     }
