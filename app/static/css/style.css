@@ -2516,3 +2516,11 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   font-size: var(--text-sm); font-weight: 600; padding: .3rem 0;
 }
 .dl-note p { margin: .3rem 0 0; }
+
+/* Afitsant logini oldidagi o'zgarmas qism: egasi to'liq loginni ko'rib tursin */
+.login-prefix { display: flex; align-items: center; gap: .3rem; }
+.login-prefix > span {
+  color: var(--ink-2); font-size: var(--text-sm);
+  white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.login-prefix > input { flex: 1; min-width: 0; }

@@ -8,6 +8,7 @@ from app.models import (
     MenuItem,
     Plan,
     Restaurant,
+    Role,
     SubscriptionStatus,
     User,
     utcnow_naive,
@@ -475,6 +476,7 @@ def test_a_taken_address_is_flagged_on_the_slug_field(client, db, tenant_a):
             "slug": restaurant.slug,     # band manzil
             "username": "yangi-login",
             "password": "juda-uzun-parol",
+            "phone": "+998901234567",
         },
     )
     body = html.unescape(response.text)
@@ -526,3 +528,77 @@ def test_a_generic_error_still_shows_at_the_top(client, db, monkeypatch):
     )
     assert response.status_code == 429
     assert 'class="alert"' in response.text
+
+
+# --- login nomlari va telefon --------------------------------------------
+#
+# Foydalanuvchi topgan muammo: bir kafedagi "aas" degan afitsant boshqa
+# odamning "aas" nomli restoran ochishiga to'sqinlik qilardi. Bu ikki narsa
+# bir-biriga umuman bog'liq emas.
+
+
+def test_a_waiter_name_does_not_block_a_new_owner(client, db, tenant_a):
+    """Eng muhim tekshiruv: afitsant global nomlar ro'yxatini band qilmaydi."""
+    from app.services import onboarding
+
+    restaurant, _ = tenant_a
+    onboarding.create_waiter(db, restaurant, "aas", "juda-uzun-parol")
+
+    response = client.post(
+        "/signup",
+        data={
+            "csrf_token": csrf(client, "/signup"),
+            "name": "Yangi kafe",
+            "slug": "yangi-kafe",
+            "username": "aas",              # afitsantda ham shunday nom bor
+            "password": "juda-uzun-parol",
+            "phone": "+998901234567",
+        },
+    )
+
+    assert response.status_code == 200
+    assert db.query(User).filter_by(username="aas", role=Role.restaurant_admin).one()
+
+
+def test_two_restaurants_may_have_the_same_waiter_name(db, tenant_a, tenant_b):
+    from app.services import onboarding
+
+    birinchi, _ = tenant_a
+    ikkinchi, _ = tenant_b
+
+    a = onboarding.create_waiter(db, birinchi, "aas", "juda-uzun-parol")
+    b = onboarding.create_waiter(db, ikkinchi, "aas", "juda-uzun-parol")
+
+    # Ikkalasi ham yashaydi, chunki loginlari restoran nomi bilan boshlanadi
+    assert a.username == "osh-markazi-aas"
+    assert b.username == "choyxona-aas"
+
+
+def test_the_prefix_is_not_doubled(db, tenant_a):
+    """Egasi to'liq nomni o'zi yozgan bo'lsa ikki marta qo'shilmasin."""
+    from app.services import onboarding
+
+    restaurant, _ = tenant_a
+    xodim = onboarding.create_waiter(db, restaurant, "osh-markazi-aas", "juda-uzun-parol")
+
+    assert xodim.username == "osh-markazi-aas"
+
+
+def test_signup_requires_a_phone(client, db):
+    """Parol unutilsa yoki to'lov masalasi chiqsa bog'lanishning yagona yo'li."""
+    response = client.post(
+        "/signup",
+        data={
+            "csrf_token": csrf(client, "/signup"),
+            "name": "Telefonsiz",
+            "slug": "telefonsiz",
+            "username": "telefonsiz",
+            "password": "juda-uzun-parol",
+            "phone": "",
+        },
+    )
+
+    assert db.query(Restaurant).filter_by(slug="telefonsiz").first() is None
+    body = html.unescape(response.text)
+    maydon = body[body.index('id="phone"') : body.index('id="email"')]
+    assert "to'liq kiriting" in maydon

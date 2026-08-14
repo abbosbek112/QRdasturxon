@@ -107,7 +107,7 @@ def _signup(client, n: int):
             "slug": f"kafe-{n}",
             "username": f"kafe{n}",
             "password": "parol12345",
-            "phone": "",
+            "phone": "+998901234567",
             "email": "",
         },
     )
@@ -136,7 +136,7 @@ def test_a_failed_signup_still_counts(client, db):
             data={
                 "csrf_token": csrf(client, "/signup"),
                 "name": "X", "slug": "admin", "username": "x",
-                "password": "parol12345", "phone": "", "email": "",
+                "password": "parol12345", "phone": "+998901234567", "email": "",
             },
         )
 

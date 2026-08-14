@@ -44,7 +44,14 @@
     {% include "partials/csrf.html" %}
     <div class="field grow">
       <label for="username">{{ t('staff_login', ui_lang) }}</label>
-      <input id="username" name="username" value="{{ suggested }}" minlength="3" maxlength="64" required>
+      {#
+        Prefiks ko'rinib turadi, lekin yozilmaydi — uni server qo'shadi.
+        Shunda egasi afitsantga aytadigan to'liq login ko'z oldida bo'ladi.
+      #}
+      <div class="login-prefix">
+        <span>{{ restaurant.slug }}-</span>
+        <input id="username" name="username" value="{{ suggested }}" minlength="3" maxlength="64" required>
+      </div>
     </div>
     <div class="field grow">
       <label for="password">{{ t('staff_password', ui_lang) }}</label>
@@ -53,6 +60,7 @@
     <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
   </form>
   <p class="hint">
+    {{ t('staff_login_hint', ui_lang) }}
     {{ t('staff_link_hint', ui_lang).replace('{url}', BASE_URL ~ '/login') }}
     {{ t('pw_cannot_show', ui_lang) }}
   </p>

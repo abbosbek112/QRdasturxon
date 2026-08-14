@@ -76,7 +76,11 @@
         <div class="field">
           <label for="phone">{{ t('field_phone', lang) }}</label>
           <input id="phone" name="phone" value="{{ form.get('phone', '') }}"
+                 required
+                 {{ 'autofocus' if error_field == 'phone' }}
+                 aria-invalid="{{ 'true' if error_field == 'phone' else 'false' }}"
                  placeholder="+998 90 123 45 67">
+          {{ field_error('phone') }}
         </div>
         <div class="field">
           <label for="email">{{ t('field_email_optional', lang) }}</label>

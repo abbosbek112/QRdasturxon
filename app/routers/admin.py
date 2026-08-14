@@ -927,7 +927,7 @@ def staff_page(request: Request, db: DbSession, user: AdminUser):
             "assignment": {person.id: areas.assignment_of(db, person) for person in staff},
             # Login butun tizimda yagona — slug bilan boshlangani band bo'lish
             # ehtimoli kam va kimga tegishliligi ham ko'rinib turadi
-            "suggested": f"{restaurant.slug}-afitsant{len(staff) + 1}",
+            "suggested": f"afitsant{len(staff) + 1}",
         },
     )
 

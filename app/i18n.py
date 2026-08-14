@@ -745,6 +745,14 @@ UI: dict[str, dict[str, str]] = {
     "hall_floor_empty": {"uz": "Bu qavatda bo'lim yo'q", "ru": "На этом этаже нет зон", "en": "No areas on this floor"},
     "hall_zone_count": {"uz": "{z} bo'lim · {t} stol", "ru": "зон: {z} · столов: {t}", "en": "{z} areas · {t} tables"},
     "hall_open_table": {"uz": "Stolni ochish", "ru": "Открыть стол", "en": "Open table"},
+    "staff_login_hint": {
+        "uz": "Login restoraningiz nomi bilan boshlanadi — uni tizim o'zi qo'shadi. "
+              "Afitsantga to'liq loginni ayting.",
+        "ru": "Логин начинается с названия вашего ресторана — система добавляет его сама. "
+              "Сообщите официанту полный логин.",
+        "en": "The login starts with your restaurant name — the system adds it. "
+              "Give the waiter the full login.",
+    },
     "zone_name_example": {"uz": "Asosiy zal", "ru": "Основной зал", "en": "Main room"},
     "zones_delete_keeps_tables": {
         "uz": "Stollar qoladi, faqat bo'limsiz bo'ladi.",

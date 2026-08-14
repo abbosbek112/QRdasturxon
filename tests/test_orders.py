@@ -551,12 +551,13 @@ def test_the_owner_creates_a_waiter_account(client, db, cafe):
         "/admin/staff",
         data={
             "csrf_token": csrf(client, "/admin/staff"),
-            "username": "osh-afitsant1",
+            "username": "afitsant1",
             "password": "juda-uzun-parol",
         },
     )
     assert response.status_code == 200
-    created = db.query(User).filter(User.username == "osh-afitsant1").one()
+    # Login restoran nomi bilan boshlanadi — buni tizim o'zi qo'shadi
+    created = db.query(User).filter(User.username == "osh-markazi-afitsant1").one()
     assert created.role is Role.waiter
     assert created.restaurant_id == cafe[0].id
 
@@ -713,16 +714,18 @@ def test_a_bad_table_count_keeps_you_on_the_page(client, cafe):
     assert "bo'sh bo'lmasin" in html.unescape(response.text)
 
 
-def test_a_taken_waiter_login_keeps_you_on_the_page(client, cafe, waiter):
+def test_a_taken_waiter_login_keeps_you_on_the_page(client, cafe):
     login(client, "osh", "adminpass123")
-    response = client.post(
-        "/admin/staff",
-        data={
-            "csrf_token": csrf(client, "/admin/staff"),
-            "username": "afitsant",          # allaqachon band
-            "password": "juda-uzun-parol",
-        },
-    )
+    # Bir xil nom bilan ikki marta — ikkinchisi band bo'lishi kerak
+    for _ in range(2):
+        response = client.post(
+            "/admin/staff",
+            data={
+                "csrf_token": csrf(client, "/admin/staff"),
+                "username": "afitsant",
+                "password": "juda-uzun-parol",
+            },
+        )
     assert response.status_code == 200
     assert response.url.path == "/admin/staff"
     assert "band" in html.unescape(response.text)

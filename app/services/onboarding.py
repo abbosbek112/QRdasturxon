@@ -33,6 +33,27 @@ RESERVED_SLUGS = {
 
 MIN_USERNAME_LENGTH = 3
 MIN_PASSWORD_LENGTH = 8
+# "+998 90 123 45 67" — 12 raqam. Chegara pastroq: qo'shni davlat raqami
+# yoki shahar telefoni ham yozilishi mumkin.
+MIN_PHONE_DIGITS = 7
+
+
+def _faqat_raqam(matn: str) -> str:
+    return "".join(belgi for belgi in matn if belgi.isdigit())
+
+
+def waiter_login(slug: str, name: str) -> str:
+    """Afitsantning to'liq logini: "bodom-aas".
+
+    Restoran nomi prefiks sifatida qo'shiladi va shu bilan afitsantlar o'z
+    restorani doirasida yashaydi. Egasi qisqa nom yozadi, to'liq loginni
+    tizim yasaydi va uni xodimlar sahifasida ko'rsatadi.
+
+    Egasi prefiksni o'zi yozgan bo'lsa ikki marta qo'shilmaydi.
+    """
+    name = name.strip().lower()
+    prefiks = f"{slug}-"
+    return name if name.startswith(prefiks) else f"{prefiks}{name}"
 
 
 class FieldError(HTTPException):
@@ -90,10 +111,17 @@ def create_restaurant_with_admin(
     if db.scalar(select(User.id).where(User.username == username)):
         raise _bad(f"'{username}' logini band", "username")
 
+    # Telefon majburiy: parol unutilsa yoki to'lov masalasi chiqsa restoran
+    # bilan bog'lanishning yagona ishonchli yo'li shu. Pochta ixtiyoriy
+    # qoladi — kafelarning ko'pchiligida u umuman ishlatilmaydi.
+    phone = phone.strip()
+    if len(_faqat_raqam(phone)) < MIN_PHONE_DIGITS:
+        raise _bad("Telefon raqamini to'liq kiriting", "phone")
+
     restaurant = Restaurant(
         name=name,
         slug=clean_slug(slug or name, db),
-        phone=phone.strip() or None,
+        phone=phone,
     )
     if with_trial:
         start_trial(restaurant)
@@ -120,19 +148,27 @@ def create_waiter(db: Session, restaurant: Restaurant, username: str, password: 
     ko'radi. Menyu, narx va sozlamalarga yo'li yo'q — shuning uchun egasi o'z
     parolini afitsantga berishi shart emas.
 
-    Login butun tizimda yagona bo'lishi kerak, shuning uchun forma odatda
-    restoran slug'i bilan boshlanadigan nom taklif qiladi.
+    Login restoran nomi bilan boshlanadi va buni tizim O'ZI qo'shadi.
+    Egasi qisqa nom yozadi ("aas"), saqlanadigan login esa "bodom-aas"
+    bo'ladi.
+
+    Sabab: ilgari afitsant logini butun tizimdagi nomlarni band qilardi.
+    Bir kafedagi "aas" degan afitsant boshqa odamning "aas" nomli restoran
+    ochishiga to'sqinlik qilardi — bu esa mutlaqo bog'liq bo'lmagan ikki
+    narsa. Endi afitsantlar o'z restorani doirasida yashaydi.
     """
-    username = username.strip().lower()
-    if len(username) < MIN_USERNAME_LENGTH:
+    login = waiter_login(restaurant.slug, username)
+    # Uzunlik EGASI YOZGAN qismga qarab tekshiriladi: prefiks uni
+    # sun'iy ravishda uzaytirib, qisqa nomni ham o'tkazib yuborardi
+    if len(username.strip()) < MIN_USERNAME_LENGTH:
         raise _bad(f"Login kamida {MIN_USERNAME_LENGTH} belgidan iborat bo'lsin", "username")
     if len(password) < MIN_PASSWORD_LENGTH:
         raise _bad(f"Parol kamida {MIN_PASSWORD_LENGTH} belgidan iborat bo'lsin", "password")
-    if db.scalar(select(User.id).where(User.username == username)):
-        raise _bad(f"'{username}' logini band", "username")
+    if db.scalar(select(User.id).where(User.username == login)):
+        raise _bad(f"'{login}' logini band", "username")
 
     user = User(
-        username=username,
+        username=login,
         password_hash=hash_password(password),
         role=Role.waiter,
         restaurant_id=restaurant.id,
