@@ -125,3 +125,22 @@ def test_the_check_catches_a_missing_key(client, toliq_restoran):
     assert sizib_chiqqan('<script>var raw_key = 1;</script>') == set()
     # Oddiy matn tinch qolsin
     assert sizib_chiqqan("<p>Buyurtmangiz yuborildi</p>") == set()
+
+
+def test_no_key_is_defined_twice():
+    """Bir xil kalit ikki marta yozilsa Python jimgina keyingisini oladi.
+
+    Aynan shunday sodir bo'lgan: bino sahifasi qo'shilganda `hall_title`
+    ikkinchi marta ta'riflanib, afitsant taxtasining "Buyurtmalar"
+    sarlavhasini bosib qo'ygan. Hech qanday xato chiqmagan — sahifa
+    shunchaki noto'g'ri so'z ko'rsatgan.
+    """
+    import pathlib
+    import re
+
+    manba = pathlib.Path("app/i18n.py").read_text(encoding="utf-8")
+    # Faqat lug'at darajasidagi kalitlar (to'rt bo'sh joy bilan)
+    kalitlar = re.findall(r'^    "([a-z0-9_]+)":', manba, re.M)
+
+    takror = {k for k in kalitlar if kalitlar.count(k) > 1}
+    assert not takror, f"ikki marta ta'riflangan kalit: {sorted(takror)}"
