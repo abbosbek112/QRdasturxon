@@ -1,0 +1,29 @@
+{#
+  Yangi kategoriya formasi. Ikki joyda ishlatiladi: menyu bo'sh bo'lganda
+  sahifaning o'zida, aks holda pastdagi ochiluvchi blokda — shuning uchun
+  alohida bo'lakka chiqarilgan.
+#}
+<form method="post" action="/admin/categories" class="stack">
+  {% include "partials/csrf.html" %}
+  <div class="grid-3">
+    <div class="field">
+      <label for="cat-uz">{{ t('name_in', ui_lang) }} (uz)</label>
+      <input id="cat-uz" name="name_uz" required placeholder="{{ t('cat_example', ui_lang) }}">
+    </div>
+    <div class="field">
+      <label for="cat-ru">{{ t('name_in', ui_lang) }} (ru)</label>
+      <input id="cat-ru" name="name_ru">
+    </div>
+    <div class="field">
+      <label for="cat-en">{{ t('name_in', ui_lang) }} (en)</label>
+      <input id="cat-en" name="name_en">
+    </div>
+  </div>
+  <div class="row" style="align-items:flex-end">
+    <div class="field" style="width:110px">
+      <label for="cat-order">{{ t('field_order', ui_lang) }}</label>
+      <input id="cat-order" name="sort_order" type="number" value="0">
+    </div>
+    <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
+  </div>
+</form>

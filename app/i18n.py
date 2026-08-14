@@ -697,6 +697,43 @@ UI: dict[str, dict[str, str]] = {
     # Ilgari shu nom ikki marta ta'riflangan edi va Python lug'atida
     # keyingisi oldingisining ustiga yozib, taxta sarlavhasini buzgan.
     "building_title": {"uz": "Bino", "ru": "Здание", "en": "Building"},
+    "menu_title": {"uz": "Menyu", "ru": "Меню", "en": "Menu"},
+    "menu_sub": {
+        "uz": "Kategoriyalar va ularning taomlari. Taomni tartiblash uchun "
+              "kategoriyadan chiqish shart emas.",
+        "ru": "Категории и их блюда. Чтобы упорядочить блюда, из категории "
+              "выходить не нужно.",
+        "en": "Categories and their dishes. You do not leave the category to "
+              "reorder its dishes.",
+    },
+    "menu_add_dish": {"uz": "Taom qo'shish", "ru": "Добавить блюдо", "en": "Add a dish"},
+    "menu_dish_count": {"uz": "taom", "ru": "блюд", "en": "dishes"},
+    "menu_cat_empty": {
+        "uz": "Bu kategoriyada hali taom yo'q",
+        "ru": "В этой категории пока нет блюд",
+        "en": "No dishes in this category yet",
+    },
+    "menu_first_category": {
+        "uz": "Birinchi kategoriyani qo'shing",
+        "ru": "Добавьте первую категорию",
+        "en": "Add your first category",
+    },
+    "menu_first_category_hint": {
+        "uz": "Taomlar kategoriya ichida yashaydi: \"Salatlar\", \"Ichimliklar\", "
+              "\"Milliy taomlar\". Mijoz menyuni aynan shu tartibda ko'radi.",
+        "ru": "Блюда живут внутри категорий: «Салаты», «Напитки», «Национальные "
+              "блюда». Гость видит меню именно в этом порядке.",
+        "en": "Dishes live inside categories: \"Salads\", \"Drinks\", \"Local "
+              "dishes\". The guest sees the menu in that order.",
+    },
+    "menu_print": {"uz": "Chop etish", "ru": "Печать", "en": "Print"},
+    "cat_example": {"uz": "Salatlar", "ru": "Салаты", "en": "Salads"},
+    "cat_delete_warn": {
+        "uz": "Kategoriya va uning barcha taomlari o'chiriladi. Davom etasizmi?",
+        "ru": "Категория и все её блюда будут удалены. Продолжить?",
+        "en": "The category and all its dishes will be deleted. Continue?",
+    },
+    "action_hide": {"uz": "Yashirish", "ru": "Скрыть", "en": "Hide"},
     "hall_sub": {
         "uz": "Binongizni shu yerda yig'asiz: qavat, bo'lim, stol. Har stolning "
               "o'z QR kodi bor — afitsant buyurtma qaysi stoldan kelganini biladi.",

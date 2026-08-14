@@ -2524,3 +2524,59 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .login-prefix > input { flex: 1; min-width: 0; }
+
+/* ==========================================================================
+   Menyu: kategoriya va taomlar birga
+
+   Taom o'z kategoriyasi ichida turadi — tartiblashda undan chiqib
+   ketilmaydi va qaysi kategoriyaga tegishli ekani doim ko'rinadi.
+   ========================================================================== */
+
+.menu-tree { display: grid; gap: .9rem; margin-top: 1rem; }
+
+.menu-cat {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: .9rem; box-shadow: var(--shadow-xs);
+}
+.menu-cat-head { display: flex; align-items: flex-start; gap: .6rem; flex-wrap: wrap; }
+.menu-cat-edit { flex: 1 1 auto; min-width: 0; }
+.menu-cat-edit > summary {
+  cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+}
+.menu-cat-edit > summary::-webkit-details-marker { display: none; }
+.menu-cat-body {
+  margin-top: .7rem; padding-top: .7rem; border-top: 1px solid var(--line);
+}
+
+.menu-dishes { margin-top: .7rem; display: grid; gap: .35rem; }
+.menu-dish {
+  display: grid; align-items: center; gap: .6rem;
+  grid-template-columns: 48px 1fr auto auto auto;
+  padding: .45rem; border-radius: var(--r-md); background: var(--surface-2);
+}
+/* Yashirilgan taom ko'zga tashlanib tursin: egasi uni menyuga qaytarishni
+   unutib qo'ymasin */
+.menu-dish.is-hidden { opacity: .6; }
+.menu-dish-main { min-width: 0; }
+.menu-dish-price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.menu-dish-order { display: flex; align-items: center; gap: .3rem; }
+.menu-dish-order input { width: 62px; }
+.menu-dish-tools { display: flex; gap: .3rem; flex-wrap: wrap; justify-content: flex-end; }
+.menu-empty { margin: .6rem 0 0; }
+.menu-new-cat { margin-top: 1rem; }
+.menu-new-cat > summary { cursor: pointer; font-weight: 600; }
+
+@media (max-width: 720px) {
+  /* Tor ekranda ustunlar sig'maydi — har taom ikki qatorga yoyiladi */
+  .menu-dish {
+    grid-template-columns: 48px 1fr;
+    grid-template-areas: "thumb main" "price price" "order tools";
+    row-gap: .4rem;
+  }
+  .menu-dish > .thumb, .menu-dish > .thumb-empty { grid-area: thumb; }
+  .menu-dish-main { grid-area: main; }
+  .menu-dish-price { grid-area: price; }
+  .menu-dish-order { grid-area: order; }
+  .menu-dish-tools { grid-area: tools; justify-content: flex-start; }
+}

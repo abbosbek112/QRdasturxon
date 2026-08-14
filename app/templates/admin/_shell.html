@@ -34,8 +34,9 @@
   {% import "partials/icons.html" as ui %}
   {% set path = request.url.path %}
   <a href="/admin" class="{{ 'active' if path == '/admin' }}">{{ ui.icon('home') }} {{ t('nav_home', ui_lang) }}</a>
-  <a href="/admin/categories" class="{{ 'active' if path.startswith('/admin/categories') }}">{{ ui.icon('grid') }} {{ t('nav_categories', ui_lang) }}</a>
-  <a href="/admin/items" class="{{ 'active' if path.startswith('/admin/items') }}">{{ ui.icon('list') }} {{ t('nav_items', ui_lang) }}</a>
+  {# Kategoriya va taomlar bitta bo'limda: taom o'z kategoriyasi ichida
+     turadi, ya'ni tartiblashda undan chiqib ketilmaydi. #}
+  <a href="/admin/menu" class="{{ 'active' if path.startswith('/admin/menu') or path.startswith('/admin/items') or path.startswith('/admin/categories') }}">{{ ui.icon('list') }} {{ t('menu_title', ui_lang) }}</a>
   {#
     Buyurtma bo'limlari faqat u yoqilganda ko'rinadi — menyu uchungina kelgan
     kafe panelida ishlatmaydigan uchta bo'lim turishi shart emas.

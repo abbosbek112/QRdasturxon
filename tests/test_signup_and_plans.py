@@ -114,7 +114,7 @@ def test_free_plan_stops_at_the_category_limit(client, db, free_tenant):
         data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ortiqcha"},
     )
     assert blocked.status_code == 200
-    assert blocked.url.path == "/admin/categories"
+    assert blocked.url.path == "/admin/menu"
     shown = html.unescape(blocked.text)
     assert str(limit) in shown and "tarifni ko'taring" in shown
     assert db.query(Category).count() == limit

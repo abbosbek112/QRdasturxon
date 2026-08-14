@@ -267,8 +267,14 @@ async def update_settings(
     return RedirectResponse("/admin/settings", status.HTTP_303_SEE_OTHER)
 
 
-@router.get("/categories")
-def categories_page(request: Request, db: DbSession, user: AdminUser):
+@router.get("/menu")
+def menu_page(request: Request, db: DbSession, user: AdminUser):
+    """Kategoriya va taomlar BITTA sahifada.
+
+    Ilgari ular ikki bo'lim edi. Taomni tartiblash uchun odam kategoriyadan
+    chiqib ketishga majbur bo'lardi va qaysi taom qayerga tegishli ekani
+    ko'rinmasdi. Endi taom o'z kategoriyasi ichida turadi.
+    """
     categories = db.scalars(
         select(Category)
         .where(Category.restaurant_id == user.restaurant_id)
@@ -277,9 +283,15 @@ def categories_page(request: Request, db: DbSession, user: AdminUser):
     ).all()
     return templates.TemplateResponse(
         request,
-        "admin/categories.html",
+        "admin/menu.html",
         {"user": user, "restaurant": get_restaurant(db, user), "categories": categories},
     )
+
+
+@router.get("/categories")
+def categories_page(user: AdminUser):
+    """Eski manzil — endi menyuning bir qismi. Xatcho'plar buzilmasin."""
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/categories", dependencies=[Depends(verify_csrf)])
@@ -339,31 +351,9 @@ def delete_category(db: DbSession, user: AdminUser, category_id: int):
 
 
 @router.get("/items")
-def items_page(request: Request, db: DbSession, user: AdminUser, category_id: int | None = None):
-    query = select(MenuItem).where(MenuItem.restaurant_id == user.restaurant_id)
-    if category_id is not None:
-        query = query.where(MenuItem.category_id == category_id)
-    items = db.scalars(
-        query.options(selectinload(MenuItem.category)).order_by(
-            MenuItem.category_id, MenuItem.sort_order, MenuItem.id
-        )
-    ).all()
-    categories = db.scalars(
-        select(Category)
-        .where(Category.restaurant_id == user.restaurant_id)
-        .order_by(Category.sort_order, Category.id)
-    ).all()
-    return templates.TemplateResponse(
-        request,
-        "admin/items.html",
-        {
-            "user": user,
-            "restaurant": get_restaurant(db, user),
-            "items": items,
-            "categories": categories,
-            "active_category_id": category_id,
-        },
-    )
+def items_page(user: AdminUser):
+    """Taomlar endi menyuning ichida — kategoriyasi bilan birga ko'rinadi."""
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/items/new")
@@ -521,6 +511,25 @@ async def update_item(
 
     db.commit()
     return RedirectResponse("/admin/items", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/items/{item_id}/order", dependencies=[Depends(verify_csrf)])
+def reorder_item(
+    db: DbSession,
+    user: AdminUser,
+    item_id: int,
+    sort_order: Annotated[int, Form()] = 0,
+):
+    """Taomning kategoriya ichidagi tartibi.
+
+    Alohida marshrut: to'liq tahrir formasi rasm va tarjimalarni ham
+    talab qiladi, tartibni o'zgartirish uchun esa ularni qaytadan
+    yuborishning ma'nosi yo'q.
+    """
+    item = owned_item(db, user, item_id)
+    item.sort_order = sort_order
+    db.commit()
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/items/{item_id}/toggle", dependencies=[Depends(verify_csrf)])

@@ -216,3 +216,80 @@ def test_deleting_a_category_removes_its_items(admin_client, db, tenant_a):
     )
     assert db.query(MenuItem).count() == 0
     assert db.query(Category).count() == 0
+
+
+# --- kategoriya va taomlar bitta sahifada ---------------------------------
+#
+# Foydalanuvchi talabi: ikkalasini birlashtirish, va taomni tartiblashda
+# kategoriyadan chiqib ketilmasin. Ilgari tartib boshqa sahifada edi va
+# qaysi taom qayerga tegishli ekani ko'rinmasdi.
+
+
+def test_the_menu_shows_dishes_inside_their_category(admin_client, db, tenant_a):
+    restaurant, _ = tenant_a
+    ichimlik = Category(restaurant_id=restaurant.id, name={"uz": "Ichimliklar"})
+    taomlar = Category(restaurant_id=restaurant.id, name={"uz": "Taomlar"})
+    db.add_all([ichimlik, taomlar])
+    db.flush()
+    db.add_all([
+        MenuItem(restaurant_id=restaurant.id, category_id=ichimlik.id,
+                 name={"uz": "Choy"}, price=8000),
+        MenuItem(restaurant_id=restaurant.id, category_id=taomlar.id,
+                 name={"uz": "Osh"}, price=38000),
+    ])
+    db.commit()
+
+    body = admin_client.get("/admin/menu").text
+
+    ichimlik_bloki = body.split('data-category="%d"' % ichimlik.id)[1].split("</section>")[0]
+    assert "Choy" in ichimlik_bloki
+    assert "Osh" not in ichimlik_bloki      # boshqa kategoriyaning taomi
+
+
+def test_a_dish_is_reordered_without_leaving_its_category(admin_client, db, tenant_a):
+    restaurant, _ = tenant_a
+    category = Category(restaurant_id=restaurant.id, name={"uz": "Taomlar"})
+    db.add(category)
+    db.flush()
+    item = MenuItem(restaurant_id=restaurant.id, category_id=category.id,
+                    name={"uz": "Osh"}, price=38000, sort_order=0)
+    db.add(item)
+    db.commit()
+
+    response = admin_client.post(
+        f"/admin/items/{item.id}/order",
+        data={"csrf_token": csrf(admin_client, "/admin/menu"), "sort_order": "5"},
+    )
+
+    db.refresh(item)
+    assert item.sort_order == 5
+    assert item.category_id == category.id      # kategoriyasi o'zgarmadi
+    assert response.url.path == "/admin/menu"
+
+
+def test_another_restaurants_dish_cannot_be_reordered(admin_client, db, tenant_a, tenant_b):
+    other, _ = tenant_b
+    category = Category(restaurant_id=other.id, name={"uz": "Begona"})
+    db.add(category)
+    db.flush()
+    item = MenuItem(restaurant_id=other.id, category_id=category.id,
+                    name={"uz": "Begona osh"}, price=1, sort_order=0)
+    db.add(item)
+    db.commit()
+
+    response = admin_client.post(
+        f"/admin/items/{item.id}/order",
+        data={"csrf_token": csrf(admin_client, "/admin/menu"), "sort_order": "9"},
+    )
+
+    assert response.status_code == 404
+    db.refresh(item)
+    assert item.sort_order == 0
+
+
+def test_the_old_pages_still_lead_somewhere(admin_client, tenant_a):
+    """Eski xatcho'plar 404 bo'lib qolmasin."""
+    for eski in ("/admin/categories", "/admin/items"):
+        response = admin_client.get(eski, follow_redirects=False)
+        assert response.status_code == 303
+        assert response.headers["location"] == "/admin/menu"
