@@ -415,7 +415,7 @@ def test_an_order_reaches_app_devices(client, db, cafe, monkeypatch):
     client.cookies.clear()
 
     sent = []
-    monkeypatch.setattr(push, "_expo_send", lambda tokens_: sent.extend(tokens_) or [{}])
+    monkeypatch.setattr(push, "_expo_send", lambda tokens_, seat_='', order_='': sent.extend(tokens_) or [{}])
     place_order(client, cafe, db)
 
     assert sent == ["ExponentPushToken[live]"]
@@ -432,7 +432,7 @@ def test_an_uninstalled_app_is_cleaned_up(db, cafe, monkeypatch):
     monkeypatch.setattr(
         push,
         "_expo_send",
-        lambda tokens_: [{"status": "error", "details": {"error": "DeviceNotRegistered"}}],
+        lambda tokens_, seat_="", order_="": [{"status": "error", "details": {"error": "DeviceNotRegistered"}}],
     )
     push.notify_restaurant(cafe.id)
 
@@ -447,7 +447,7 @@ def test_a_working_device_survives(db, cafe, monkeypatch):
     db.add(AppDevice(user_id=staff.id, expo_token="ExponentPushToken[ok]"))
     db.commit()
 
-    monkeypatch.setattr(push, "_expo_send", lambda tokens_: [{"status": "ok"}])
+    monkeypatch.setattr(push, "_expo_send", lambda tokens_, seat_="", order_="": [{"status": "ok"}])
     push.notify_restaurant(cafe.id)
 
     db.expire_all()
@@ -484,7 +484,7 @@ def test_the_app_works_without_vapid_keys(client, db, cafe, monkeypatch):
     db.commit()
 
     sent = []
-    monkeypatch.setattr(push, "_expo_send", lambda tokens_: sent.extend(tokens_) or [{}])
+    monkeypatch.setattr(push, "_expo_send", lambda tokens_, seat_='', order_='': sent.extend(tokens_) or [{}])
     push.notify_restaurant(cafe.id)
 
     assert sent == ["ExponentPushToken[novapid]"]

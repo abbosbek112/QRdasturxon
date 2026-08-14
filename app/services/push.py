@@ -48,6 +48,13 @@ EXPO_ENDPOINT = "https://exp.host/--/api/v2/push/send"
 EXPO_TITLE = "Yangi buyurtma"
 EXPO_BODY = "Stoldan buyurtma keldi"
 
+# Bildirishnomada QAYSI stol ekani yoziladi: "3-stol" yoki "VIP 2".
+#
+# Taom nomlari ataylab yuborilmaydi. Stol raqami afitsantga darrov kerak —
+# u telefonni ochmasdan qayerga borishini biladi. Buyurtma mazmuni esa
+# Expo va FCM serverlari orqali o'tadi, ya'ni uni yubormaslik yaxshiroq.
+# To'liq ro'yxatni afitsant taxtani ochib ko'radi.
+
 
 def public_key() -> str:
     """Brauzerga beriladigan ochiq kalit (`applicationServerKey`)."""
@@ -146,21 +153,29 @@ def _notify_browsers(db: Session, people: list[int]) -> None:
         db.commit()
 
 
-def _expo_send(expo_tokens: list[str]) -> list:
+def _expo_send(
+    expo_tokens: list[str], seat: str = "", order_id: int | None = None
+) -> list:
     """Expo push xizmatiga yuboradi va har token uchun javobni qaytaradi.
 
     Mazmun bu yerda BOR — Web Push'dan farqi shu. Expo tanani o'zi shifrlab
     uzatadi, service worker esa kerak emas: ilova yopiq bo'lganda u
     qo'shimcha so'rov qila olmasdi ham.
+
+    `order_id` ilovaga beriladi: afitsant buyurtmani qabul qilganda aynan
+    o'sha bildirishnomani topib o'chirish uchun kerak. Busiz ekranda
+    javob berilgan buyurtmalar yig'ilib qolardi.
     """
     messages = [
         {
             "to": token,
-            "title": EXPO_TITLE,
+            "title": seat or EXPO_TITLE,
             "body": EXPO_BODY,
             "sound": "default",
             "priority": "high",
             "channelId": "orders",
+            # Bir stolning buyurtmasi ikkinchisining ustiga yozilmasin
+            "data": {"orderId": order_id, "seat": seat},
         }
         for token in expo_tokens
     ]
@@ -176,7 +191,9 @@ def _expo_send(expo_tokens: list[str]) -> list:
     return data if isinstance(data, list) else []
 
 
-def _notify_apps(db: Session, people: list[int]) -> None:
+def _notify_apps(
+    db: Session, people: list[int], seat: str = "", order_id: int | None = None
+) -> None:
     """Native ilova qurilmalari — Expo Push.
 
     Web Push'dan farqli, bu yerda VAPID kaliti kerak emas: Expo o'z xizmati
@@ -188,7 +205,7 @@ def _notify_apps(db: Session, people: list[int]) -> None:
         return
 
     try:
-        replies = _expo_send([row.expo_token for row in rows])
+        replies = _expo_send([row.expo_token for row in rows], seat, order_id)
     except Exception:
         log.warning("Expo bildirishnomasi yuborilmadi", exc_info=True)
         return
@@ -206,7 +223,9 @@ def _notify_apps(db: Session, people: list[int]) -> None:
         db.commit()
 
 
-def notify_restaurant(restaurant_id: int, table_id: int | None = None) -> None:
+def notify_restaurant(
+    restaurant_id: int, table_id: int | None = None, order_id: int | None = None
+) -> None:
     """Restoranning barcha zal qurilmalariga turtki yuboradi.
 
     Ikki yo'l: brauzer obunalari (PWA) va native ilova qurilmalari. Bir
@@ -227,9 +246,28 @@ def notify_restaurant(restaurant_id: int, table_id: int | None = None) -> None:
             if not people:
                 return
             _notify_browsers(db, people)
-            _notify_apps(db, people)
+            _notify_apps(db, people, _seat_label(db, table_id), order_id)
     except Exception:
         log.warning("Bildirishnoma bosqichida xato", exc_info=True)
+
+
+def _seat_label(db: Session, table_id: int | None) -> str:
+    """Bildirishnoma sarlavhasi: "3-stol", "VIP 2", "5-xona".
+
+    Stol o'chirilgan yoki noma'lum bo'lsa bo'sh qaytadi va sarlavha
+    umumiy holicha qoladi — bildirishnoma baribir yuboriladi.
+    """
+    if table_id is None:
+        return ""
+    from app.models import Table
+    from app.templating import seat_label
+
+    table = db.get(Table, table_id)
+    if table is None:
+        return ""
+    # Afitsant panelining tili — o'zbekcha; bildirishnoma qisqa bo'lishi
+    # kerak, shuning uchun til tanlash bilan murakkablashtirilmaydi
+    return seat_label(table.kind, table.label, "uz")
 
 
 # Buyurtma javobsiz qolsa qachon qayta eslatiladi (soniyada).
@@ -271,7 +309,7 @@ def _remind_once(restaurant_id: int, order_id: int, table_id: int | None) -> Non
             # Javob berilgan yoki o'chirilgan bo'lsa eslatma keraksiz
             if order is None or order.status is not OrderStatus.new:
                 return
-        notify_restaurant(restaurant_id, table_id)
+        notify_restaurant(restaurant_id, table_id, order_id)
     except Exception:
         log.warning("Eslatma yuborilmadi", exc_info=True)
 

@@ -11,6 +11,7 @@ import {
 
 import OrderCard from "./OrderCard";
 import { ApiError, api } from "./api";
+import { dismissClosed, dismissOrder } from "./push";
 import { theme } from "./theme";
 import { Empty, Notice } from "./ui";
 
@@ -39,7 +40,11 @@ export default function BoardScreen({ t, restaurant, onSignedOut, onOpenSettings
     try {
       const data = await api.orders(showAll);
       if (!alive.current) return;
-      setOrders(data.orders || []);
+      const kelgan = data.orders || [];
+      setOrders(kelgan);
+      // Boshqa afitsant qabul qilgan bo'lsa uning bildirishnomasi bu
+      // telefonda osilib qolmasin
+      dismissClosed(kelgan.filter((o) => o.status === "new").map((o) => o.id));
       // Biriktirilmagan afitsantga tugma keraksiz — u baribir hammasini ko'radi
       setHasArea(!!data.has_area);
       setOffline(false);
@@ -81,6 +86,8 @@ export default function BoardScreen({ t, restaurant, onSignedOut, onOpenSettings
     // javobni kutib turmasin va ikkinchi marta bosmasin
     const before = orders;
     setOrders((current) => current.filter((o) => o.id !== orderId));
+    // Javob berildi — bildirishnoma ekranda turishining ma'nosi yo'q
+    dismissOrder(orderId);
 
     try {
       const updated = await api.setStatus(orderId, status);

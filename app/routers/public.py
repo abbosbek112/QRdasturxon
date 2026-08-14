@@ -359,7 +359,7 @@ def place_order(
     # Afitsantga turtki — javob yuborilgandan KEYIN. Tashqi HTTP so'rov
     # mijozni kutdirib qo'ymasligi kerak va uning xatosi allaqachon qabul
     # qilingan buyurtmani bekor qila olmaydi.
-    background.add_task(push.notify_restaurant, restaurant.id, order.table_id)
+    background.add_task(push.notify_restaurant, restaurant.id, order.table_id, order.id)
     # Javobsiz qolsa yana eslatiladi. Shovqinli zalda bitta bildirishnoma
     # yetarli emas — afitsant telefonni eshitmasligi mumkin.
     background.add_task(

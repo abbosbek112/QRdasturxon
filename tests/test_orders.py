@@ -876,7 +876,7 @@ def test_an_unanswered_order_is_reminded(db, cafe, monkeypatch):
 
     yuborilgan = []
     monkeypatch.setattr(
-        push, "notify_restaurant", lambda rid, tid=None: yuborilgan.append(rid)
+        push, "notify_restaurant", lambda rid, tid=None, oid=None: yuborilgan.append(rid)
     )
 
     push._remind_once(restaurant.id, order.id, table.id)
@@ -894,7 +894,7 @@ def test_an_answered_order_is_left_alone(db, cafe, monkeypatch):
 
     yuborilgan = []
     monkeypatch.setattr(
-        push, "notify_restaurant", lambda rid, tid=None: yuborilgan.append(rid)
+        push, "notify_restaurant", lambda rid, tid=None, oid=None: yuborilgan.append(rid)
     )
 
     push._remind_once(restaurant.id, order.id, table.id)
@@ -909,7 +909,7 @@ def test_a_deleted_order_does_not_crash_the_reminder(db, cafe, monkeypatch):
 
     yuborilgan = []
     monkeypatch.setattr(
-        push, "notify_restaurant", lambda rid, tid=None: yuborilgan.append(rid)
+        push, "notify_restaurant", lambda rid, tid=None, oid=None: yuborilgan.append(rid)
     )
 
     push._remind_once(restaurant.id, 999999, table.id)

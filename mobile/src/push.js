@@ -17,7 +17,11 @@ import { api } from "./api";
 
 // Uzun va uzuq-uzuq: qisqa "diq-diq" cho'ntakda sezilmaydi.
 // [kutish, tebranish, tanaffus, tebranish, ...]
-export const TEBRANISH = [0, 700, 300, 700, 300, 700];
+//
+// To'rt marta bir soniyadan — jami ~5,5 soniya. Bu ataylab uzun: afitsant
+// zalda yurgan, telefon cho'ntakda va ustidan fartuk bo'lishi mumkin.
+// Qisqa naqsh (700 ms) sinovda yetarli bo'lmadi.
+export const TEBRANISH = [0, 1000, 400, 1000, 400, 1000, 400, 1000];
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -104,6 +108,54 @@ export async function forgetThisDevice() {
   } catch (err) {
     // Chiqishni bu to'xtatmasligi kerak. Server tomonda o'lik qurilma
     // baribir "DeviceNotRegistered" bo'yicha o'zi tozalanadi.
+  }
+}
+
+/**
+ * Buyurtma bo'yicha kelgan bildirishnomani ekrandan o'chiradi.
+ *
+ * Afitsant buyurtmani qabul qilgach uning bildirishnomasi turishining
+ * ma'nosi yo'q — u faqat chalg'itadi va bir necha buyurtmadan keyin
+ * ekran to'lib ketadi. Serverdan kelgan `data.orderId` bo'yicha topiladi.
+ */
+export async function dismissOrder(orderId) {
+  if (!orderId) return;
+  try {
+    const shown = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      shown
+        .filter((n) => {
+          const data = n?.request?.content?.data;
+          return data && String(data.orderId) === String(orderId);
+        })
+        .map((n) => Notifications.dismissNotificationAsync(n.request.identifier))
+    );
+  } catch (err) {
+    // O'chirilmagani ish jarayonini to'xtatmaydi
+  }
+}
+
+/**
+ * Ochiq buyurtmalar ro'yxatida yo'q bildirishnomalarni tozalaydi.
+ *
+ * Buyurtmani boshqa afitsant qabul qilgan bo'lishi mumkin — o'shanda bu
+ * telefonda bildirishnoma osilib qolardi. Taxta har yangilanganda
+ * chaqiriladi.
+ */
+export async function dismissClosed(openIds) {
+  try {
+    const ochiq = new Set((openIds || []).map(String));
+    const shown = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      shown
+        .filter((n) => {
+          const id = n?.request?.content?.data?.orderId;
+          return id != null && !ochiq.has(String(id));
+        })
+        .map((n) => Notifications.dismissNotificationAsync(n.request.identifier))
+    );
+  } catch (err) {
+    /* muhim emas */
   }
 }
 

@@ -82,7 +82,7 @@
     // Titrash ovozdan mustaqil: telefon jim rejimda bo'lsa ham sezilsin
     if (navigator.vibrate) {
       try {
-        navigator.vibrate([0, 700, 300, 700, 300, 700]);
+        navigator.vibrate([0, 1000, 400, 1000, 400, 1000, 400, 1000]);
       } catch (err) {
         /* brauzer ruxsat bermadi */
       }
