@@ -39,11 +39,30 @@ SECURITY_HEADERS = {
 }
 
 
+# Kirish talab qiladigan bo'limlar. Ular brauzer keshiga tushmasligi kerak.
+#
+# Sabab: chiqishdan keyin "orqaga" bosilsa brauzer saqlangan sahifani
+# ekranga qaytaradi va oldingi odamning paneli ko'rinib qoladi. Kafedagi
+# umumiy planshetda yoki afitsantning telefonida bu haqiqiy muammo.
+#
+# Yangi so'rov baribir kirish sahifasiga yuboriladi — lekin ekranda turgan
+# ma'lumot allaqachon ko'ringan bo'lardi.
+XAVFSIZ_YOLLAR = ("/admin", "/superadmin", "/zal", "/api/")
+
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     for header, value in SECURITY_HEADERS.items():
         response.headers.setdefault(header, value)
+
+    if request.url.path.startswith(XAVFSIZ_YOLLAR):
+        # `no-store` — saqlama; `must-revalidate` eski brauzerlar uchun.
+        # bfcache ("orqaga" tugmasi) aynan shu sarlavhaga qaraydi.
+        response.headers.setdefault(
+            "Cache-Control", "no-store, no-cache, must-revalidate, private"
+        )
+        response.headers.setdefault("Pragma", "no-cache")
     return response
 
 

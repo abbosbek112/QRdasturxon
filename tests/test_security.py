@@ -173,3 +173,38 @@ def test_signup_attempts_do_not_lock_out_login(client, db, tenant_a):
 
     login(client, "osh", "adminpass123")
     assert client.get("/admin").status_code == 200
+
+
+# --- chiqishdan keyin "orqaga" -------------------------------------------
+#
+# Foydalanuvchi topgan xato: chiqib, brauzerning "orqaga" tugmasini bosganda
+# oldingi odamning paneli qaytib ko'rinardi. Yangi so'rov baribir kirish
+# sahifasiga yuboriladi, lekin ekrandagi ma'lumot allaqachon ko'rilgan
+# bo'lardi. Umumiy planshetda bu haqiqiy muammo.
+
+
+def test_the_panel_is_never_cached(client, tenant_a):
+    login(client, "osh", "adminpass123")
+
+    kesh = client.get("/admin").headers.get("cache-control", "")
+
+    assert "no-store" in kesh, "panel keshlansa 'orqaga' bilan qaytib ko'rinadi"
+
+
+def test_the_waiter_board_is_never_cached(client, tenant_a):
+    login(client, "osh", "adminpass123")
+
+    assert "no-store" in client.get("/zal").headers.get("cache-control", "")
+
+
+def test_the_public_menu_may_still_be_cached(client, tenant_a):
+    """Mijoz menyusi keshlansa bo'ladi — u yerda shaxsiy narsa yo'q.
+
+    Hammasini `no-store` qilish menyuni har safar qaytadan yuklashga majbur
+    qilardi va sekinlashtirardi.
+    """
+    restaurant, _ = tenant_a
+
+    kesh = client.get(f"/r/{restaurant.slug}").headers.get("cache-control", "")
+
+    assert "no-store" not in kesh
