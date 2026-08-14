@@ -1,10 +1,10 @@
 {% extends "admin/_shell.html" %}
 {% import "partials/icons.html" as ui %}
-{% block title %}{{ t('hall_title', ui_lang) }}{% endblock %}
+{% block title %}{{ t('building_title', ui_lang) }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>{{ t('hall_title', ui_lang) }}</h1>
+  <h1>{{ t('building_title', ui_lang) }}</h1>
   <p class="muted small">{{ t('hall_sub', ui_lang) }}</p>
 </div>
 
@@ -33,7 +33,7 @@
 </form>
 
 {% if not building and not loose %}
-  {# Nol holat: bitta forma bilan butun zal yig'iladi #}
+  {# Nol holat: qavatlar yasaladi, stollarni egasi o'zi qo'shadi #}
   <div class="card stack hall-start">
     <h2>{{ t('hall_start_title', ui_lang) }}</h2>
     <form method="post" action="/admin/tables/build" class="row" style="align-items:flex-end">
@@ -41,10 +41,6 @@
       <div class="field" style="width:130px">
         <label for="floors">{{ t('hall_start_floors', ui_lang) }}</label>
         <input id="floors" name="floors" type="number" min="1" max="5" value="1" required>
-      </div>
-      <div class="field" style="width:170px">
-        <label for="per_floor">{{ t('hall_start_tables', ui_lang) }}</label>
-        <input id="per_floor" name="per_floor" type="number" min="1" max="50" value="10" required>
       </div>
       <button class="btn btn-primary" type="submit">
         {{ ui.icon('plus') }} {{ t('hall_start_action', ui_lang) }}

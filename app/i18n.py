@@ -690,8 +690,13 @@ UI: dict[str, dict[str, str]] = {
     },
     "tables_scan_me": {"uz": "Skanerlang va buyurtma bering", "ru": "Отсканируйте и закажите", "en": "Scan to see the menu and order"},
 
-    # --- Zal: binoni yig'ish ---
-    "hall_title": {"uz": "Zal", "ru": "Зал", "en": "The room"},
+    # --- Bino: qavat, bo'lim, stol ---
+    #
+    # Kalit ataylab `building_` bilan boshlanadi: `hall_` afitsant taxtasiga
+    # tegishli va `hall_title` allaqachon "Buyurtmalar" degan ma'noda band.
+    # Ilgari shu nom ikki marta ta'riflangan edi va Python lug'atida
+    # keyingisi oldingisining ustiga yozib, taxta sarlavhasini buzgan.
+    "building_title": {"uz": "Bino", "ru": "Здание", "en": "Building"},
     "hall_sub": {
         "uz": "Binongizni shu yerda yig'asiz: qavat, bo'lim, stol. Har stolning "
               "o'z QR kodi bor — afitsant buyurtma qaysi stoldan kelganini biladi.",
@@ -700,17 +705,18 @@ UI: dict[str, dict[str, str]] = {
         "en": "Build your building here: floor, area, table. Every table gets its "
               "own QR code, so the waiter knows which table ordered.",
     },
-    "hall_start_title": {"uz": "Zalni yig'amiz", "ru": "Соберём зал", "en": "Let's build the room"},
+    "hall_start_title": {"uz": "Binoni yig'amiz", "ru": "Соберём здание", "en": "Let's build the building"},
     "hall_start_floors": {"uz": "Nechta qavat?", "ru": "Сколько этажей?", "en": "How many floors?"},
     "hall_start_tables": {"uz": "Har qavatda nechta stol?", "ru": "Сколько столов на этаже?", "en": "Tables per floor?"},
-    "hall_start_action": {"uz": "Zalni yig'ish", "ru": "Собрать зал", "en": "Build the room"},
+    "hall_start_action": {"uz": "Qavatlarni yasash", "ru": "Создать этажи", "en": "Create the floors"},
     "hall_start_hint": {
-        "uz": "Har qavatga bitta bo'lim va stollar yasaladi. Keyin nomlarini "
-              "o'zgartirasiz, bo'lim qo'shasiz, stollarni ko'chirasiz.",
-        "ru": "На каждом этаже появится одна зона со столами. Потом переименуете, "
-              "добавите зоны и перенесёте столы.",
-        "en": "Each floor gets one area with tables. You can rename, add more areas "
-              "and move tables afterwards.",
+        "uz": "Har qavatga bitta bo'lim yasaladi. Stollarni keyin o'zingiz "
+              "qo'shasiz — qavatlar bir xil emas va har birida stol, divan, "
+              "xona soni boshqacha bo'ladi.",
+        "ru": "На каждом этаже появится одна зона. Столы добавите сами — этажи "
+              "разные, и на каждом своё количество столов, диванов и комнат.",
+        "en": "Each floor gets one area. You add the seats yourself — floors "
+              "differ, and each has its own mix of tables, sofas and rooms.",
     },
     "hall_add_floor": {"uz": "Qavat qo'shish", "ru": "Добавить этаж", "en": "Add a floor"},
     "hall_add_zone": {"uz": "Bo'lim qo'shish", "ru": "Добавить зону", "en": "Add an area"},
@@ -745,6 +751,15 @@ UI: dict[str, dict[str, str]] = {
     "hall_floor_empty": {"uz": "Bu qavatda bo'lim yo'q", "ru": "На этом этаже нет зон", "en": "No areas on this floor"},
     "hall_zone_count": {"uz": "{z} bo'lim · {t} stol", "ru": "зон: {z} · столов: {t}", "en": "{z} areas · {t} tables"},
     "hall_open_table": {"uz": "Stolni ochish", "ru": "Открыть стол", "en": "Open table"},
+    "hall_start_from": {"uz": "Raqamlash", "ru": "Нумерация с", "en": "Numbering from"},
+    "hall_start_from_hint": {
+        "uz": "Qaysi raqamdan boshlansin. 1-qavatda 10 stol bo'lsa, 2-qavatnikini "
+              "11 dan boshlashingiz mumkin — afitsant chalkashmaydi.",
+        "ru": "С какого номера начать. Если на 1-м этаже 10 столов, на 2-м можно "
+              "начать с 11 — официант не запутается.",
+        "en": "Which number to start from. With 10 tables on floor 1, floor 2 can "
+              "start at 11 — the waiter will not mix them up.",
+    },
     "staff_login_hint": {
         "uz": "Login restoraningiz nomi bilan boshlanadi — uni tizim o'zi qo'shadi. "
               "Afitsantga to'liq loginni ayting.",

@@ -745,13 +745,14 @@ def build_hall(
     db: DbSession,
     user: AdminUser,
     floors: Annotated[int, Form()] = 1,
-    per_floor: Annotated[int, Form()] = 10,
 ):
-    """Bo'sh restoranni bitta bosishda ishlaydigan zalga aylantiradi.
+    """Bo'sh restoranda qavatlarni yasaydi. Stol yasamaydi.
 
-    Har qavatga bitta bo'lim va unga stollar. Egasi keyin nomlarini
-    o'zgartiradi — lekin nol holatdan chiqish uchun undan hech narsa
-    o'ylab topish talab qilinmaydi.
+    Ilgari "har qavatda nechta stol" ham so'ralardi va hamma qavatga bir
+    xil son qo'yilardi. Amalda qavatlar bir xil emas: birida o'nta stol,
+    boshqasida uchta divan, beshta xona va bitta VIP bo'lishi mumkin.
+    Shuning uchun stollarni egasi har qavatga o'zi qo'shadi — o'sha yerda
+    turini ham, raqamlashni ham o'zi tanlaydi.
     """
     restaurant = get_restaurant(db, user)
     lang = resolve_lang(request)
@@ -764,7 +765,6 @@ def build_hall(
                 sort_order=floor,
                 floor=floor,
             )
-            tables.add_next(db, restaurant, per_floor, "stol", zone.id)
     except HTTPException as error:
         return form_failed(request, error, "/admin/tables")
     return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
@@ -795,11 +795,16 @@ def add_tables_to_zone(
     zone_id: int,
     count: Annotated[int, Form()] = 1,
     kind: Annotated[str, Form()] = "stol",
+    start: Annotated[int | None, Form()] = None,
 ):
-    """Bo'lim ichiga tez stol qo'shish — raqamlash keyingi bo'shdan davom etadi."""
+    """Bo'lim ichiga tez stol qo'shish.
+
+    `start` — egasi tanlagan boshlanish raqami. Bo'sh qoldirilsa eng katta
+    mavjud raqamdan davom etadi.
+    """
     zone = areas.owned_zone(db, user.restaurant_id, zone_id)
     try:
-        tables.add_next(db, get_restaurant(db, user), count, kind, zone.id)
+        tables.add_next(db, get_restaurant(db, user), count, kind, zone.id, start)
     except HTTPException as error:
         return form_failed(request, error, "/admin/tables")
     return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)

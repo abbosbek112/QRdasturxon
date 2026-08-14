@@ -172,6 +172,7 @@ def add_next(
     count: int,
     kind: str = "stol",
     zone_id: int | None = None,
+    start: int | None = None,
 ) -> list[Table]:
     """Bo'limga "yana N ta stol" — mavjud raqamlardan keyin davom etadi.
 
@@ -191,8 +192,13 @@ def add_next(
 
     # Eng katta raqamdan davom etamiz. Raqam bo'lmagan nomlar ("Terasa A")
     # hisobga olinmaydi — ular alohida qatorda yashaydi.
-    numbers = [int(label) for label in have if label.isdigit()]
-    start = max(numbers, default=0) + 1
+    # Raqamlashni EGASI belgilashi mumkin. Restoranlar buni har xil qiladi:
+    # birida har qavat 1 dan boshlanadi, boshqasida 1-qavatda 10 stol bo'lsa
+    # 2-qavatniki 11 dan ketadi — afitsant chalkashmasin degan.
+    # Ko'rsatilmasa eng katta raqamdan davom etadi.
+    if start is None or start < 1:
+        numbers = [int(label) for label in have if label.isdigit()]
+        start = max(numbers, default=0) + 1
 
     chosen_kind = _clean_kind(kind)
     chosen_zone = _clean_zone(db, restaurant.id, zone_id)

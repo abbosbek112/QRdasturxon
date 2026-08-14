@@ -65,6 +65,12 @@
         <label class="sr-only" for="zc-{{ zone.id }}">{{ t('hall_add_tables', ui_lang) }}</label>
         <input id="zc-{{ zone.id }}" name="count" type="number" min="1" max="50" value="4">
       </div>
+      <div class="field" style="width:110px">
+        <label class="sr-only" for="zs-{{ zone.id }}">{{ t('hall_start_from', ui_lang) }}</label>
+        <input id="zs-{{ zone.id }}" name="start" type="number" min="1" max="500"
+               placeholder="{{ t('hall_start_from', ui_lang) }}"
+               title="{{ t('hall_start_from_hint', ui_lang) }}">
+      </div>
       <div class="field" style="width:130px">
         <label class="sr-only" for="zk-{{ zone.id }}">{{ t('field_kind', ui_lang) }}</label>
         <select id="zk-{{ zone.id }}" name="kind">

@@ -347,7 +347,12 @@ def test_unassigned_tables_wait_on_the_shelf(client, db, hall):
 
 
 def test_an_empty_restaurant_gets_a_one_click_start(client, db, tenant_a):
-    """Nol holatdan chiqish uchun egadan hech narsa o'ylab topish talab qilinmasin."""
+    """Nol holatdan chiqish uchun egadan hech narsa o'ylab topish talab qilinmasin.
+
+    Faqat QAVATLAR yasaladi. Ilgari "har qavatda nechta stol" ham
+    so'ralardi va hamma qavatga bir xil son qo'yilardi — amalda qavatlar
+    bir xil emas, shuning uchun stollarni egasi o'zi qo'shadi.
+    """
     restaurant, _ = tenant_a
     restaurant.orders_enabled = True
     db.commit()
@@ -357,15 +362,12 @@ def test_an_empty_restaurant_gets_a_one_click_start(client, db, tenant_a):
 
     client.post(
         "/admin/tables/build",
-        data={"csrf_token": csrf(client, "/admin/tables"), "floors": "2", "per_floor": "3"},
+        data={"csrf_token": csrf(client, "/admin/tables"), "floors": "2"},
     )
 
     zones = db.query(Zone).filter_by(restaurant_id=restaurant.id).all()
     assert sorted(zone.floor for zone in zones) == [1, 2]
-    assert db.query(Table).filter_by(restaurant_id=restaurant.id).count() == 6
-    # Har qavatning stollari o'z bo'limida
-    for zone in zones:
-        assert db.query(Table).filter_by(zone_id=zone.id).count() == 3
+    assert db.query(Table).filter_by(restaurant_id=restaurant.id).count() == 0
 
 
 def test_the_starter_refuses_a_silly_building(client, db, tenant_a):
@@ -381,3 +383,42 @@ def test_the_starter_refuses_a_silly_building(client, db, tenant_a):
     )
 
     assert db.query(Zone).filter_by(restaurant_id=restaurant.id).count() == 5
+
+
+
+# --- raqamlashni egasi belgilaydi ----------------------------------------
+#
+# Restoranlar buni har xil qiladi: birida har qavat 1 dan boshlanadi,
+# boshqasida 1-qavatda 10 stol bo'lsa 2-qavatniki 11 dan ketadi. Avtomatik
+# raqamlash ikkinchisiga to'g'ri kelmasdi.
+
+
+def test_the_owner_chooses_the_starting_number(db, hall):
+    restaurant, _, vip = hall
+
+    created = tables.add_next(db, restaurant, 3, "stol", vip.id, start=11)
+
+    assert [table.label for table in created] == ["11", "12", "13"]
+
+
+def test_a_chosen_start_still_skips_taken_numbers(db, hall):
+    """Egasi 3 dan boshlasa ham mavjud raqam ustiga yozilmasin."""
+    restaurant, _, vip = hall   # 1-4 allaqachon bor
+
+    created = tables.add_next(db, restaurant, 2, "stol", vip.id, start=3)
+
+    assert [table.label for table in created] == ["5", "6"]
+
+
+def test_without_a_start_it_continues_as_before(db, hall):
+    restaurant, _, vip = hall
+
+    created = tables.add_next(db, restaurant, 2, "stol", vip.id)
+
+    assert [table.label for table in created] == ["5", "6"]
+
+
+def test_the_page_offers_the_starting_number(client, db, hall):
+    login(client, "osh", "adminpass123")
+
+    assert 'name="start"' in client.get("/admin/tables").text
