@@ -477,6 +477,36 @@ UI: dict[str, dict[str, str]] = {
     # --- afitsant javobgarligi ---
     "staff_area": {"uz": "Javobgarlik", "ru": "Зона ответственности", "en": "Responsibility"},
     "staff_area_all": {"uz": "Butun zal", "ru": "Весь зал", "en": "The whole room"},
+    # --- Xodim: faoliyat va baho ---
+    "staff_since": {"uz": "Ro'yxatdan:", "ru": "В системе с:", "en": "Joined:"},
+    "staff_activity": {"uz": "Faoliyat", "ru": "Активность", "en": "Activity"},
+    "staff_window": {
+        "uz": "oxirgi {n} kun",
+        "ru": "последние {n} дней",
+        "en": "last {n} days",
+    },
+    "staff_accepted": {"uz": "buyurtma qabul qilgan", "ru": "заказов принял", "en": "orders accepted"},
+    "staff_served": {"uz": "oxirigacha yetkazgan", "ru": "доведено до конца", "en": "seen through"},
+    "staff_avg_reply": {"uz": "O'rtacha javob", "ru": "Средний отклик", "en": "Average reply"},
+    "staff_sum": {"uz": "Buyurtmalar summasi", "ru": "Сумма заказов", "en": "Order value"},
+    "staff_last_seen": {"uz": "Oxirgi javob", "ru": "Последний отклик", "en": "Last reply"},
+    "staff_history": {"uz": "Ish tarixi", "ru": "История работы", "en": "Activity history"},
+    "staff_history_empty": {
+        "uz": "Bu xodim hali birorta buyurtmani qabul qilmagan.",
+        "ru": "Этот сотрудник ещё не принял ни одного заказа.",
+        "en": "This person has not accepted an order yet.",
+    },
+    "staff_reviews": {"uz": "Baholar", "ru": "Оценки", "en": "Reviews"},
+    "staff_review_count": {"uz": "ta baho", "ru": "оценок", "en": "reviews"},
+    "staff_review_note": {"uz": "Izoh (ixtiyoriy)", "ru": "Комментарий (необязательно)", "en": "Note (optional)"},
+    "staff_review_example": {
+        "uz": "Masalan: band kunlarda ham tez javob beradi",
+        "ru": "Например: быстро отвечает даже в загруженные дни",
+        "en": "For example: replies fast even on busy days",
+    },
+    "staff_review_add": {"uz": "Baho qo'yish", "ru": "Поставить оценку", "en": "Add a review"},
+    "sec": {"uz": "soniya", "ru": "сек", "en": "sec"},
+
     "staff_area_hint": {
         "uz": "Hech narsa tanlanmasa afitsant butun zalni ko'radi. Bir nechta "
               "afitsant bo'lsa har biriga o'z bo'limini bering — shunda "

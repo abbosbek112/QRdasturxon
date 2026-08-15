@@ -286,12 +286,22 @@ def new_count(db: Session, restaurant_id: int, table_ids: set[int] | None = None
     return db.scalar(select(func.count(Order.id)).where(*match)) or 0
 
 
-def set_status(db: Session, order: Order, target: OrderStatus) -> None:
+def set_status(db: Session, order: Order, target: OrderStatus, by=None) -> None:
+    """Buyurtma holatini o'zgartiradi va kim javob berganini yozib qo'yadi.
+
+    `by` ixtiyoriy: eski chaqiruvlar buzilmasin. Javobgar faqat buyurtma
+    QABUL QILINGANDA belgilanadi — yopish yoki bekor qilish javobgarlikni
+    ko'chirmaydi (`staff.remember_handler` ning o'zi ham buni qo'riqlaydi).
+    """
+    from app.services import staff
+
     now = utcnow_naive()
     order.status = target
     if target is OrderStatus.accepted:
         order.accepted_at = order.accepted_at or now
         order.closed_at = None
+        if by is not None:
+            staff.remember_handler(order, by)
     elif target in (OrderStatus.served, OrderStatus.cancelled):
         order.closed_at = now
     else:  # yangiga qaytarish — xato bosilganini orqaga qaytarish uchun

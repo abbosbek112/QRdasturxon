@@ -83,9 +83,32 @@
           {% else %}
             <span class="badge badge-off">{{ t('staff_block', ui_lang) }}</span>
           {% endif %}
+          {% set score = ratings.get(person.id) %}
+          {% if score %}
+            <span class="badge">{{ ui.icon('star') }} {{ score[0] }}</span>
+          {% endif %}
           <div class="muted small">{{ person.created_at.strftime('%d.%m.%Y') }}</div>
+
+          {#
+            Faoliyat — o'lchangan haqiqat, kiritilgan fikr emas. Shuning
+            uchun ro'yxatda ham ko'rinadi: egasi kimning qancha ishlaganini
+            bilish uchun har xodimni ochib chiqmasin.
+          #}
+          {% set act = activity.get(person.id, blank_activity) %}
+          <div class="staff-facts muted small">
+            <span>{{ act.accepted }} {{ t('staff_accepted', ui_lang) }}</span>
+            {% if act.avg_seconds is not none %}
+              <span>{{ t('staff_avg_reply', ui_lang) }}: {{ act.avg_seconds }} {{ t('sec', ui_lang) }}</span>
+            {% endif %}
+            {% if act.last_seen %}
+              <span>{{ t('staff_last_seen', ui_lang) }}: {{ act.last_seen.strftime('%d.%m %H:%M') }}</span>
+            {% endif %}
+          </div>
         </div>
         <div class="row">
+          <a class="btn btn-sm" href="/admin/staff/{{ person.id }}">
+            {{ ui.icon('chart') }} {{ t('staff_history', ui_lang) }}
+          </a>
           <form method="post" action="/admin/staff/{{ person.id }}/toggle">
             {% include "partials/csrf.html" %}
             <button class="btn btn-sm" type="submit">

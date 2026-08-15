@@ -18,7 +18,8 @@ import re
 
 import pytest
 
-from app.models import Category, Combo, ComboLine, MenuItem, Table
+from app.models import Category, Combo, ComboLine, MenuItem, Role, Table, User
+from app.security import hash_password
 
 from tests.conftest import login
 
@@ -77,8 +78,18 @@ def toliq_restoran(db, tenant_a):
     combo = Combo(restaurant_id=restaurant.id, name={"uz": "To'plam"}, price=50000)
     combo.lines.append(ComboLine(item_id=osh.id, quantity=2))
     db.add(combo)
+
+    # Afitsant ham kerak: usiz xodim sahifasi 404 qaytarardi va tekshiruv
+    # xato sahifasini ko'rib "hammasi joyida" deb o'tib ketardi
+    waiter = User(
+        username="osh-afitsant",
+        password_hash=hash_password("afitsant123"),
+        role=Role.waiter,
+        restaurant_id=restaurant.id,
+    )
+    db.add(waiter)
     db.commit()
-    return restaurant
+    return restaurant, waiter
 
 
 @pytest.mark.parametrize("lang", ["uz", "ru", "en"])
@@ -107,12 +118,37 @@ def test_admin_pages_have_no_raw_keys(client, toliq_restoran, path, lang):
 
 
 @pytest.mark.parametrize("lang", ["uz", "ru", "en"])
-@pytest.mark.parametrize("path", ["/", "/ilova", "/r/osh", "/login", "/signup"])
+@pytest.mark.parametrize("path", ["/", "/ilova", "/r/{slug}", "/login", "/signup"])
 def test_public_pages_have_no_raw_keys(client, toliq_restoran, path, lang):
-    body = client.get(f"{path}?lang={lang}").text
+    """Manzil jamlanmadagi HAQIQIY slug bilan quriladi.
 
-    qolgan = sizib_chiqqan(body)
-    assert not qolgan, f"{path} [{lang}] — tarjimasiz kalit: {sorted(qolgan)}"
+    Ilgari bu yerda `/r/osh` yozilgan edi, restoranning slug'i esa
+    `osh-markazi`. Ya'ni tekshiruv 404 sahifasini ko'rib "hammasi joyida"
+    deb o'tib ketardi va mijoz menyusi umuman tekshirilmagan edi.
+    """
+    restaurant, _ = toliq_restoran
+    manzil = path.replace("{slug}", restaurant.slug)
+    javob = client.get(f"{manzil}?lang={lang}")
+    assert javob.status_code == 200, f"{manzil} -> {javob.status_code}"
+
+    qolgan = sizib_chiqqan(javob.text)
+    assert not qolgan, f"{manzil} [{lang}] — tarjimasiz kalit: {sorted(qolgan)}"
+
+
+@pytest.mark.parametrize("lang", ["uz", "ru", "en"])
+def test_the_staff_page_of_one_person_has_no_raw_keys(client, toliq_restoran, lang):
+    """Xodim sahifasi mavjud xodim bilan ochiladi.
+
+    Raqamni qo'lda yozib qo'yish (`/admin/staff/1`) ishlamasdi: jamlanmada
+    o'sha raqamli xodim yo'q edi va sahifa 404 qaytarardi.
+    """
+    _, waiter = toliq_restoran
+    login(client, "osh", "adminpass123")
+    javob = client.get(f"/admin/staff/{waiter.id}?lang={lang}")
+    assert javob.status_code == 200
+
+    qolgan = sizib_chiqqan(javob.text)
+    assert not qolgan, f"xodim sahifasi [{lang}] — tarjimasiz kalit: {sorted(qolgan)}"
 
 
 def test_the_check_catches_a_missing_key(client, toliq_restoran):

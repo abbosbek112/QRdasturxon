@@ -172,7 +172,7 @@ def change_status(db: DbSession, user: ApiUser, order_id: int, payload: dict):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Noma'lum holat")
 
     order = orders.owned(db, user.restaurant_id, order_id)
-    orders.set_status(db, order, wanted)
+    orders.set_status(db, order, wanted, by=user)
     return _order_json(order)
 
 

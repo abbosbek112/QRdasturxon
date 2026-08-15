@@ -16,6 +16,7 @@ from app.plans import limits_for, refresh_status, trial_days_left
 from app.security import hash_password, require_restaurant_admin, verify_csrf
 from app import themes
 from app.services import areas, combos, comments, onboarding, orders, qr, qr_pack, stats, tables
+from app.services import staff as staff_svc
 from app.services.images import MAX_BYTES as MAX_IMAGE_BYTES, delete_image, save_image
 from app.templating import floor_label, templates
 
@@ -1164,11 +1165,71 @@ def staff_page(request: Request, db: DbSession, user: AdminUser):
             "zones": areas.list_zones(db, restaurant.id),
             "tables": tables.list_for(db, restaurant.id),
             "assignment": {person.id: areas.assignment_of(db, person) for person in staff},
+            # Faoliyat va baho hamma xodim uchun bittadan so'rovda olinadi:
+            # har biriga alohida so'rov yuborish ro'yxatni sekinlashtirardi
+            "activity": staff_svc.activity_for(db, restaurant.id, [p.id for p in staff]),
+            "ratings": staff_svc.rating_summary(db, restaurant.id, [p.id for p in staff]),
+            "blank_activity": staff_svc.BOSH_FAOLIYAT,
+            "activity_days": staff_svc.ACTIVITY_DAYS,
             # Login butun tizimda yagona — slug bilan boshlangani band bo'lish
             # ehtimoli kam va kimga tegishliligi ham ko'rinib turadi
             "suggested": f"afitsant{len(staff) + 1}",
         },
     )
+
+
+@router.get("/staff/{staff_id}")
+def staff_detail(request: Request, db: DbSession, user: AdminUser, staff_id: int):
+    """Bitta xodim: faoliyat tarixi va baholar.
+
+    Ro'yxatda hammasini ko'rsatish sahifani o'qib bo'lmas holga solardi —
+    tarix va baho tarixi bitta xodimga tegishli va shu yerda turadi.
+    """
+    restaurant = get_restaurant(db, user)
+    person = staff_svc.owned_waiter(db, restaurant.id, staff_id)
+    activity = staff_svc.activity_for(db, restaurant.id, [person.id])
+    return templates.TemplateResponse(
+        request,
+        "admin/staff_detail.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "person": person,
+            "activity": activity.get(person.id, staff_svc.BOSH_FAOLIYAT),
+            "activity_days": staff_svc.ACTIVITY_DAYS,
+            "orders": staff_svc.recent_orders(db, restaurant.id, person.id),
+            "reviews": staff_svc.reviews_for(db, restaurant.id, person.id),
+            "rating": staff_svc.rating_summary(db, restaurant.id, [person.id]).get(person.id),
+        },
+    )
+
+
+@router.post("/staff/{staff_id}/review", dependencies=[Depends(verify_csrf)])
+def review_staff(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    staff_id: int,
+    rating: Annotated[int, Form()],
+    note: Annotated[str, Form()] = "",
+):
+    restaurant = get_restaurant(db, user)
+    person = staff_svc.owned_waiter(db, restaurant.id, staff_id)
+    try:
+        staff_svc.add_review(db, restaurant.id, person, rating=rating, note=note, author=user)
+    except HTTPException as error:
+        return form_failed(request, error, f"/admin/staff/{staff_id}")
+    return RedirectResponse(f"/admin/staff/{staff_id}", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/staff/{staff_id}/review/{review_id}/delete", dependencies=[Depends(verify_csrf)])
+def delete_staff_review(
+    db: DbSession, user: AdminUser, staff_id: int, review_id: int
+):
+    restaurant = get_restaurant(db, user)
+    staff_svc.owned_waiter(db, restaurant.id, staff_id)
+    staff_svc.delete_review(db, restaurant.id, review_id)
+    return RedirectResponse(f"/admin/staff/{staff_id}", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/staff", dependencies=[Depends(verify_csrf)])

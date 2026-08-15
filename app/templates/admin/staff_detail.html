@@ -1,0 +1,155 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ person.username }}{% endblock %}
+
+{#
+  Bitta xodim: faoliyat va baho.
+
+  Ikkalasi ATAYLAB ajratilgan va aralashtirib bitta "ball" qilinmagan.
+  Faoliyat — o'lchangan haqiqat, uni hech kim kiritmaydi. Baho — egasining
+  fikri. Ularni qo'shib bitta raqam chiqarish yolg'on aniqlik berardi:
+  tez javob bergan odam yaxshi xodim degani emas.
+#}
+
+{% block content %}
+<div class="page-head spread">
+  <div>
+    <h1>{{ person.username }}</h1>
+    <p class="muted small">
+      {% if person.is_active %}
+        <span class="badge badge-ok">{{ t('state_active', ui_lang) }}</span>
+      {% else %}
+        <span class="badge badge-off">{{ t('staff_block', ui_lang) }}</span>
+      {% endif %}
+      {{ t('staff_since', ui_lang) }} {{ person.created_at.strftime('%d.%m.%Y') }}
+    </p>
+  </div>
+  <a class="btn" href="/admin/staff">{{ ui.icon('back') }} {{ t('staff_title', ui_lang) }}</a>
+</div>
+
+{# --- Faoliyat: o'lchangan raqamlar --- #}
+<div class="card stack">
+  <div class="spread">
+    <h2>{{ t('staff_activity', ui_lang) }}</h2>
+    <span class="muted small">
+      {{ t('staff_window', ui_lang).replace('{n}', activity_days | string) }}
+    </span>
+  </div>
+
+  <div class="staff-stats">
+    <div class="stat">
+      <b>{{ activity.accepted }}</b>
+      <span>{{ t('staff_accepted', ui_lang) }}</span>
+    </div>
+    <div class="stat">
+      <b>{{ activity.served }}</b>
+      <span>{{ t('staff_served', ui_lang) }}</span>
+    </div>
+    <div class="stat">
+      {#
+        Javob vaqti — buyurtma kelgandan qabul qilingunicha. Bu xodimning
+        eng aniq ko'rsatkichi: mijoz aynan shu vaqtni kutib o'tiradi.
+      #}
+      <b>{{ (activity.avg_seconds ~ ' ' ~ t('sec', ui_lang)) if activity.avg_seconds is not none else '—' }}</b>
+      <span>{{ t('staff_avg_reply', ui_lang) }}</span>
+    </div>
+    <div class="stat">
+      <b>{{ activity.total | price }}</b>
+      <span>{{ t('staff_sum', ui_lang) }}</span>
+    </div>
+  </div>
+
+  {% if activity.last_seen %}
+    <p class="muted small">
+      {{ t('staff_last_seen', ui_lang) }}: {{ activity.last_seen.strftime('%d.%m.%Y %H:%M') }}
+    </p>
+  {% endif %}
+</div>
+
+{# --- Tarix: qaysi buyurtmalarga javob bergan --- #}
+<div class="card stack">
+  <h2>{{ t('staff_history', ui_lang) }}</h2>
+  {% if not orders %}
+    <p class="muted small">{{ t('staff_history_empty', ui_lang) }}</p>
+  {% else %}
+    <ul class="staff-orders">
+      {% for order in orders %}
+        <li>
+          <span class="staff-order-seat">
+            {{ seat_label(order.table_kind, order.table_label, ui_lang) }}
+          </span>
+          <span class="staff-order-when muted small">
+            {{ (order.accepted_at or order.created_at).strftime('%d.%m %H:%M') }}
+          </span>
+          <span class="staff-order-what muted small">
+            {{ order.lines | map(attribute='name') | join(', ') | truncate(60) }}
+          </span>
+          <span class="staff-order-sum">{{ order.total | price }}</span>
+          <span class="badge {{ 'badge-ok' if order.status.value == 'served' else 'badge-off' }}">
+            {{ t('order_status_' ~ order.status.value, ui_lang) }}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{# --- Baho: egasining fikri, vaqti bilan --- #}
+<div class="card stack">
+  <div class="spread">
+    <h2>{{ t('staff_reviews', ui_lang) }}</h2>
+    {% if rating %}
+      <span>
+        <strong>{{ rating[0] }}</strong>
+        <span class="muted small">/ 5 · {{ rating[1] }} {{ t('staff_review_count', ui_lang) }}</span>
+      </span>
+    {% endif %}
+  </div>
+
+  <form method="post" action="/admin/staff/{{ person.id }}/review" class="stack-sm">
+    {% include "partials/csrf.html" %}
+    <div class="pick-row">
+      {#
+        Baho yulduz emas, raqam bilan qo'yiladi: yulduzcha bosish
+        telefonda noqulay va bu forma tez to'ldirilishi kerak.
+      #}
+      {% for n in [1, 2, 3, 4, 5] %}
+        <label class="pick">
+          <input type="radio" name="rating" value="{{ n }}" {{ 'checked' if n == 5 }} required>
+          <span>{{ n }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    <div class="field">
+      <label for="note">{{ t('staff_review_note', ui_lang) }}</label>
+      <input id="note" name="note" maxlength="280"
+             placeholder="{{ t('staff_review_example', ui_lang) }}">
+    </div>
+    <div>
+      <button class="btn btn-primary btn-sm" type="submit">
+        {{ ui.icon('plus') }} {{ t('staff_review_add', ui_lang) }}
+      </button>
+    </div>
+  </form>
+
+  {% if reviews %}
+    <ul class="staff-reviews">
+      {% for review in reviews %}
+        <li>
+          <span class="staff-review-score">{{ review.rating }}</span>
+          <div class="staff-review-body">
+            {% if review.note %}<p>{{ review.note }}</p>{% endif %}
+            <p class="muted small">{{ review.created_at.strftime('%d.%m.%Y') }}</p>
+          </div>
+          <form method="post"
+                action="/admin/staff/{{ person.id }}/review/{{ review.id }}/delete"
+                data-confirm="{{ t('action_delete', ui_lang) }}?">
+            {% include "partials/csrf.html" %}
+            <button class="btn btn-danger btn-sm" type="submit">{{ t('action_delete', ui_lang) }}</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

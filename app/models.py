@@ -202,6 +202,36 @@ class MenuItem(Base):
     category: Mapped[Category] = relationship(back_populates="items")
 
 
+class StaffReview(Base):
+    """Egasining xodimga bergan bahosi.
+
+    Bitta maydonga yozib qo'yish osonroq bo'lardi, lekin baho VAQT bilan
+    ma'noli: uch oy oldin 3 bo'lib bugun 5 bo'lgani — o'sish, teskarisi
+    esa muammo belgisi. Ustiga yozib ketilsa bu ko'rinmasdi.
+
+    Muallif o'chirilsa yozuv qoladi (`SET NULL`) — baho restoranga
+    tegishli, uni qo'ygan odamga emas.
+    """
+
+    __tablename__ = "staff_reviews"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    restaurant_id: Mapped[int] = mapped_column(
+        ForeignKey("restaurants.id", ondelete="CASCADE"), index=True
+    )
+    staff_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    author_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    rating: Mapped[int] = mapped_column(Integer, default=0)
+    note: Mapped[str | None] = mapped_column(String(280))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=utcnow_naive, index=True
+    )
+
+
 class Combo(Base):
     """Bir necha taomdan iborat to'plam — birga arzonroq.
 
@@ -421,6 +451,15 @@ class Order(Base):
     )
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Buyurtmani birinchi bo'lib qabul qilgan xodim. Xodim ishdan ketib,
+    # hisobi o'chirilsa buyurtma tarixi qolishi kerak — shuning uchun
+    # SET NULL. Keyinchalik qo'lga olgan boshqa odam bu maydonni
+    # o'zgartirmaydi: javobgarlik birinchi javob berganda belgilanadi.
+    handled_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+
+    handled_by: Mapped[User | None] = relationship()
 
     lines: Mapped[list[OrderLine]] = relationship(
         back_populates="order", cascade="all, delete-orphan", order_by="OrderLine.id"

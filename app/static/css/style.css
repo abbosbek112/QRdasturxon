@@ -2787,3 +2787,50 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   border-radius: var(--r-full);
   border: 1.5px solid var(--ink-3);
 }
+
+/* ==========================================================================
+   Xodim: faoliyat va baho
+   ========================================================================== */
+
+/* Ro'yxatdagi qisqa ko'rsatkichlar */
+.staff-facts { display: flex; flex-wrap: wrap; gap: .3rem .9rem; margin-top: .3rem; }
+
+.staff-stats { display: grid; gap: .6rem; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .staff-stats { grid-template-columns: repeat(4, 1fr); } }
+.staff-stats .stat { background: var(--surface-2); box-shadow: none; padding: .8rem; }
+.staff-stats .stat b { display: block; font-size: var(--text-lg); }
+.staff-stats .stat span { font-size: var(--text-xs); color: var(--ink-2); }
+
+/* Ish tarixi */
+.staff-orders { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
+.staff-orders li {
+  display: grid; align-items: center; gap: .5rem .8rem;
+  grid-template-columns: 6rem 6.5rem 1fr auto auto;
+  padding: .55rem .2rem;
+}
+.staff-orders li + li { border-top: 1px solid var(--line); }
+.staff-order-seat { font-weight: 600; }
+.staff-order-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.staff-order-sum { font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  /* Telefonda beshta ustun sig'maydi: stol va vaqt tepada, qolgani ostida */
+  .staff-orders li { grid-template-columns: 1fr auto; }
+  .staff-order-what { grid-column: 1 / -1; white-space: normal; }
+}
+
+/* Baholar */
+.staff-reviews { list-style: none; margin: .3rem 0 0; padding: 0; display: grid; gap: .1rem; }
+.staff-reviews li {
+  display: grid; align-items: start; gap: .8rem;
+  grid-template-columns: auto 1fr auto;
+  padding: .7rem .2rem;
+}
+.staff-reviews li + li { border-top: 1px solid var(--line); }
+.staff-review-score {
+  display: grid; place-items: center;
+  width: 2.2rem; height: 2.2rem;
+  border-radius: var(--r-full);
+  background: var(--accent); color: var(--accent-fg);
+  font-weight: 700;
+}
+.staff-review-body p { margin: 0; }
