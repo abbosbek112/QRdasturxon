@@ -23,6 +23,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.database import seconds_between
 from app.models import Order, OrderStatus, Role, StaffReview, User, utcnow_naive
 
 MIN_RATING = 1
@@ -104,13 +105,7 @@ def activity_for(db: Session, restaurant_id: int, staff_ids: list[int]) -> dict[
             Order.handled_by_id,
             func.count(Order.id),
             func.sum(case((Order.status == OrderStatus.served, 1), else_=0)),
-            func.avg(
-                func.julianday(Order.accepted_at) - func.julianday(Order.created_at)
-            )
-            if db.bind.dialect.name == "sqlite"
-            else func.avg(
-                func.extract("epoch", Order.accepted_at - Order.created_at)
-            ),
+            func.avg(seconds_between(Order.created_at, Order.accepted_at)),
             func.max(Order.accepted_at),
             func.sum(Order.total),
         )
@@ -125,16 +120,13 @@ def activity_for(db: Session, restaurant_id: int, staff_ids: list[int]) -> dict[
 
     natija: dict[int, Activity] = {}
     for staff_id, accepted, served, avg_raw, last_seen, total in rows:
-        seconds = None
-        if avg_raw is not None:
-            # SQLite `julianday` KUN beradi, PostgreSQL `epoch` soniya.
-            #
-            # `int()` emas, `round()`: kunni soniyaga aylantirishda kasr
-            # yo'qoladi va kesib tashlash har safar bir soniya kam
-            # ko'rsatardi — 60 soniyalik javob 59 bo'lib chiqardi.
-            raw = float(avg_raw)
-            seconds = round(raw * 86400) if db.bind.dialect.name == "sqlite" else round(raw)
-            seconds = max(seconds, 0)
+        # `seconds_between` ikkala bazada ham SONIYA qaytaradi — bu yerda
+        # dialektni yana bir marta ajratish kerak emas.
+        #
+        # `int()` emas, `round()`: SQLite kunni soniyaga aylantirganda
+        # kasr chiqadi va kesib tashlash har safar bir soniya kam
+        # ko'rsatardi — 60 soniyalik javob 59 bo'lib qolardi.
+        seconds = max(round(float(avg_raw)), 0) if avg_raw is not None else None
         natija[staff_id] = Activity(
             accepted=accepted or 0,
             served=int(served or 0),

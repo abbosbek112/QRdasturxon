@@ -2936,3 +2936,31 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   width: 100%; max-width: 260px; aspect-ratio: 16 / 7; object-fit: cover;
   border-radius: var(--r-md); margin-bottom: .5rem;
 }
+
+/* ==========================================================================
+   Panel: bosiladigan raqamlar
+   ========================================================================== */
+
+/* Raqam endi shunchaki yozuv emas — o'z sahifasiga olib boradi. Ilgari
+   egasi "12 ta yashirilgan taom" ni ko'rardi-yu, qaysilari ekanini
+   topish uchun menyuni qo'lda titardi. */
+.stat-link {
+  display: block; text-decoration: none; color: inherit;
+  transition: border-color .15s, transform .2s;
+}
+.stat-link:hover {
+  text-decoration: none;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* Javob kutayotgan buyurtma — yagona KO'RSATMA beruvchi raqam.
+   Nol bo'lsa oddiy ko'rinadi: har doim qizarib tursa e'tibor so'nadi. */
+.stat.is-alert { border-color: var(--accent); background: var(--surface-2); }
+.stat.is-alert b { color: var(--accent); }
+
+/* Yashirilgan taom — ogohlantiradi, lekin xato emas */
+.stat.is-warn b { color: var(--ink-2); }
+
+.section-head { align-items: baseline; margin-top: 1.4rem; }
+.section-head .small { white-space: nowrap; }

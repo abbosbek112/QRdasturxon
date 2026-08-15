@@ -45,3 +45,22 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+def seconds_between(earlier, later):
+    """Ikki vaqt ustuni orasidagi farq — SONIYADA, SQL ichida hisoblanadi.
+
+    Ikki baza ikki xil yo'l tutadi va bu farq bir joyda turishi kerak:
+    SQLite'da `julianday` KUN qaytaradi, PostgreSQL'da esa ayirma interval
+    bo'lib chiqadi va undan soniyani `extract(epoch)` ajratadi.
+
+    Bu ikkilanish ilgari `staff.py` ichida yozilgan edi. Ikkinchi joyda
+    kerak bo'lganda uni ko'chirib yozish tuzoq bo'lardi: birini
+    tuzatib, ikkinchisini unutish oson va xato faqat PRODDA ko'rinardi —
+    mahalliy SQLite'da hammasi ishlab turaverardi.
+    """
+    from sqlalchemy import func
+
+    if is_sqlite:
+        return (func.julianday(later) - func.julianday(earlier)) * 86400.0
+    return func.extract("epoch", later - earlier)

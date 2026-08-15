@@ -11,7 +11,16 @@ from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from app.flash import set_flash
 from app.i18n import resolve_lang, t
-from app.models import Category, ItemComment, MenuItem, Restaurant, Role, TableKind, User
+from app.models import (
+    Category,
+    Combo,
+    ItemComment,
+    MenuItem,
+    Restaurant,
+    Role,
+    TableKind,
+    User,
+)
 from app.plans import limits_for, refresh_status, trial_days_left
 from app.security import hash_password, require_restaurant_admin, verify_csrf
 from app import themes
@@ -139,6 +148,14 @@ def dashboard(request: Request, db: DbSession, user: AdminUser):
     chart_start = chart_end - timedelta(days=chart_days - 1)
     window_start = chart_end - timedelta(days=limits.stats_days - 1)
     daily = stats.daily_series(db, restaurant.id, chart_start, chart_end)
+
+    # Buyurtma yoqilgan restoran uchun BUGUNGI kun eng muhim raqam —
+    # ochilishlar emas. Yoqilmagan restoranda esa bu blok umuman
+    # chizilmaydi, aks holda panel doim nol ko'rsatib turardi.
+    today = orders.day_summary(db, restaurant.id, chart_end) if restaurant.orders_enabled else None
+    combo_count = db.scalar(
+        select(func.count(Combo.id)).where(Combo.restaurant_id == restaurant.id)
+    )
     return templates.TemplateResponse(
         request,
         "admin/dashboard.html",
@@ -148,6 +165,8 @@ def dashboard(request: Request, db: DbSession, user: AdminUser):
             "category_count": category_count,
             "item_count": item_count,
             "hidden_count": hidden_count,
+            "combo_count": combo_count,
+            "today": today,
             "menu_url": qr.menu_url(restaurant.slug),
             "daily_views": daily,
             "views_total": stats.total_views(db, restaurant.id, window_start, chart_end),

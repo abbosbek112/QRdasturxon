@@ -737,6 +737,38 @@ UI: dict[str, dict[str, str]] = {
     "dash_items": {"uz": "Taom", "ru": "Блюд", "en": "Dishes"},
     "dash_hidden": {"uz": "Yashirilgan taom", "ru": "Скрытых блюд", "en": "Hidden dishes"},
     "dash_quick": {"uz": "Tez havolalar", "ru": "Быстрые ссылки", "en": "Quick links"},
+
+    # --- Panel: bugungi kun va menyu holati ---
+    "dash_today": {"uz": "Bugun", "ru": "Сегодня", "en": "Today"},
+    "dash_all_orders": {
+        "uz": "Barcha buyurtmalar", "ru": "Все заказы", "en": "All orders",
+    },
+    "dash_waiting": {
+        "uz": "Javob kutyapti", "ru": "Ждут ответа", "en": "Waiting for a reply",
+    },
+    "dash_orders_today": {
+        "uz": "Bugungi buyurtma", "ru": "Заказов сегодня", "en": "Orders today",
+    },
+    "dash_revenue_today": {
+        "uz": "Bugungi summa", "ru": "Сумма за сегодня", "en": "Today's total",
+    },
+    "dash_today_hint": {
+        "uz": "Javob kutayotgan buyurtma bo'lsa raqam ustiga bosing — taxta ochiladi. "
+              "Summa bekor qilinganlarsiz hisoblanadi.",
+        "ru": "Если есть заказы, ждущие ответа, нажмите на число — откроется доска. "
+              "Сумма считается без отменённых.",
+        "en": "If orders are waiting, tap the number to open the board. "
+              "The total excludes cancelled orders.",
+    },
+    "dash_cancelled_today": {
+        "uz": "Bugun {n} ta bekor qilingan.",
+        "ru": "Сегодня отменено: {n}.",
+        "en": "{n} cancelled today.",
+    },
+    "dash_menu_state": {
+        "uz": "Menyu holati", "ru": "Состояние меню", "en": "Menu at a glance",
+    },
+    "nav_combos": {"uz": "Kombolar", "ru": "Комбо", "en": "Combos"},
     "dash_print_menu": {"uz": "Chop etish uchun menyu", "ru": "Меню для печати", "en": "Printable menu"},
 
     # --- kategoriyalar ---

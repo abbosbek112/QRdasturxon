@@ -2,6 +2,19 @@
 {% import "partials/icons.html" as ui %}
 {% block title %}{{ restaurant.name }}{% endblock %}
 
+{#
+  Boshqaruv paneli — "bugun ishlar qalay" degan savolga javob.
+
+  Tartib ATAYLAB shunday: avval bugungi buyurtmalar, keyin menyuning
+  holati, keyin ochilishlar. Ilgari teskari edi — panel ochilishlar bilan
+  boshlanardi, holbuki buyurtma qabul qiladigan restoran uchun eng muhim
+  raqam "nechta buyurtma javob kutyapti".
+
+  Har raqam BOSILADI va o'z sahifasiga olib boradi. Ilgari ular shunchaki
+  yozuv edi: egasi "12 ta yashirilgan taom" ni ko'rardi-yu, qaysilari
+  ekanini topish uchun menyuni qo'lda titardi.
+#}
+
 {% block content %}
 <div class="page-head spread">
   <div>
@@ -12,7 +25,6 @@
       <a href="{{ menu_url }}" target="_blank" rel="noopener">{{ menu_url }} {{ ui.icon('external') }}</a>
     </div>
   </div>
-  <a class="btn btn-primary" href="/admin/items/new">{{ ui.icon('plus') }} {{ t('dash_new_item', ui_lang) }}</a>
 </div>
 
 {% set pending = steps | rejectattr('done') | list %}
@@ -47,16 +59,13 @@
       {% endfor %}
     </ol>
 
-    <p class="hint" style="margin-top:.75rem">
-      {{ t('setup_hint', ui_lang) }}
-    </p>
+    <p class="hint" style="margin-top:.75rem">{{ t('setup_hint', ui_lang) }}</p>
   </div>
 {% endif %}
 
 {#
-  Muddat yaqin bo'lsa yoki tugagan bo'lsa qobiqdagi tasma gapiradi
-  (admin/_shell.html) — bu yerda takrorlamaymiz. Quyidagisi faqat
-  xotirjam holat uchun: vaqt hali ko'p, shunchaki xabar berib qo'yamiz.
+  Muddat yaqin bo'lsa qobiqdagi tasma gapiradi (admin/_shell.html) — bu
+  yerda takrorlamaymiz. Quyidagisi faqat xotirjam holat uchun.
 #}
 {% if restaurant.subscription_status.value == 'trial' and trial_days > 3 %}
   <div class="notice">
@@ -66,20 +75,89 @@
   </div>
 {% endif %}
 
-<div class="stat-grid">
-  <div class="stat"><b>{{ views_total }}</b><span>{{ t('dash_opens_in', ui_lang).replace('{n}', limits.stats_days | string) }}</span></div>
-  <div class="stat"><b>{{ category_count }}</b><span>{{ t('dash_categories', ui_lang) }}</span></div>
-  <div class="stat"><b>{{ item_count }}</b><span>{{ t('dash_items', ui_lang) }}</span></div>
-  <div class="stat"><b>{{ hidden_count }}</b><span>{{ t('dash_hidden', ui_lang) }}</span></div>
+{# ---------- 1. BUGUN: buyurtma qabul qiladigan restoran uchun ---------- #}
+{% if today %}
+  <div class="spread section-head">
+    <p class="section-label" style="margin:0">{{ t('dash_today', ui_lang) }}</p>
+    <a class="small" href="/admin/orders">{{ t('dash_all_orders', ui_lang) }} {{ ui.icon('external') }}</a>
+  </div>
+
+  <div class="stat-grid">
+    {#
+      "Javob kutyapti" birinchi va ajratilgan: bu yagona raqam KO'RSATMA —
+      qolganlari shunchaki hisobot. Noldan katta bo'lsa hozir kimdir
+      kutib o'tirgan degani.
+    #}
+    <a class="stat stat-link {{ 'is-alert' if today.waiting }}" href="/zal">
+      <b>{{ today.waiting }}</b>
+      <span>{{ t('dash_waiting', ui_lang) }}</span>
+    </a>
+    <a class="stat stat-link" href="/admin/orders">
+      <b>{{ today.total_orders }}</b>
+      <span>{{ t('dash_orders_today', ui_lang) }}</span>
+    </a>
+    <div class="stat">
+      <b>{{ today.revenue | price }}</b>
+      <span>{{ t('dash_revenue_today', ui_lang) }}</span>
+    </div>
+    <div class="stat">
+      <b>{{ (today.avg_reply ~ ' ' ~ t('sec', ui_lang)) if today.avg_reply is not none else '—' }}</b>
+      <span>{{ t('staff_avg_reply', ui_lang) }}</span>
+    </div>
+  </div>
+
+  <p class="hint">
+    {{ t('dash_today_hint', ui_lang) }}
+    {%- if today.cancelled %}
+      {{ ' ' }}{{ t('dash_cancelled_today', ui_lang).replace('{n}', today.cancelled | string) }}
+    {%- endif %}
+  </p>
+{% endif %}
+
+{# ---------- 2. MENYU HOLATI ---------- #}
+<div class="spread section-head">
+  <p class="section-label" style="margin:0">{{ t('dash_menu_state', ui_lang) }}</p>
+  <a class="small" href="/admin/menu">{{ t('menu_title', ui_lang) }} {{ ui.icon('external') }}</a>
 </div>
 
-<p class="section-label">{{ t('dash_opens_chart', ui_lang).replace('{n}', chart_days | string) }}</p>
+<div class="stat-grid">
+  <a class="stat stat-link" href="/admin/menu">
+    <b>{{ category_count }}</b><span>{{ t('dash_categories', ui_lang) }}</span>
+  </a>
+  <a class="stat stat-link" href="/admin/menu">
+    <b>{{ item_count }}</b><span>{{ t('dash_items', ui_lang) }}</span>
+  </a>
+  {#
+    Yashirilgan taom — mijoz KO'RMAYDIGAN narsa. Nol bo'lsa xotirjam,
+    noldan katta bo'lsa ogohlantiradi: ko'pincha bu vaqtincha yashirib
+    qo'yilib, keyin esdan chiqqan taom bo'ladi.
+  #}
+  <a class="stat stat-link {{ 'is-warn' if hidden_count }}" href="/admin/menu">
+    <b>{{ hidden_count }}</b><span>{{ t('dash_hidden', ui_lang) }}</span>
+  </a>
+  <a class="stat stat-link" href="/admin/combos">
+    <b>{{ combo_count }}</b><span>{{ t('nav_combos', ui_lang) }}</span>
+  </a>
+</div>
+
+{# ---------- 3. OCHILISHLAR ---------- #}
+<div class="spread section-head">
+  <p class="section-label" style="margin:0">
+    {{ t('dash_opens_chart', ui_lang).replace('{n}', chart_days | string) }}
+  </p>
+  <a class="small" href="/admin/stats">{{ t('nav_stats', ui_lang) }} {{ ui.icon('external') }}</a>
+</div>
+
 <div class="card">
+  <p class="muted small" style="margin:0 0 .6rem">
+    <strong>{{ views_total }}</strong>
+    {{ t('dash_opens_in', ui_lang).replace('{n}', limits.stats_days | string) }}
+  </p>
   {% if views_total %}
     <div class="chart" role="img"
-         aria-label="Oxirgi {{ chart_days }} kunlik ochilishlar grafigi">
+         aria-label="{{ t('dash_opens_chart', ui_lang).replace('{n}', chart_days | string) }}">
       {% for day, count in daily_views %}
-        <div class="chart-col" title="{{ day.strftime('%d.%m') }} — {{ count }} marta">
+        <div class="chart-col" title="{{ day.strftime('%d.%m') }} — {{ count }}">
           <div class="chart-bar" style="height:{{ (count / views_peak * 100) | round(1) }}%"></div>
         </div>
       {% endfor %}
@@ -90,39 +168,40 @@
       <span>{{ daily_views[-1][0].strftime('%d.%m') }}</span>
     </div>
   {% else %}
-    <p class="muted small" style="margin:0">
-      {{ t('dash_no_opens', ui_lang) }}
-    </p>
+    <p class="muted small" style="margin:0">{{ t('dash_no_opens', ui_lang) }}</p>
   {% endif %}
-  <p class="hint">
-    {{ t('dash_opens_hint', ui_lang) }}
-  </p>
+  <p class="hint">{{ t('dash_opens_hint', ui_lang) }}</p>
 </div>
 
 {% if top_items %}
-<p class="section-label">{{ t('dash_top_items', ui_lang) }}</p>
-<div class="table-card">
-  <table>
-    <tbody>
-      {% for item, count in top_items %}
-      <tr>
-        <td style="width:1%; padding-left:1rem; color:var(--ink-3)">{{ loop.index }}</td>
-        <td><strong>{{ tr(item.name, 'uz') }}</strong></td>
-        <td style="width:1%; padding-right:1rem; text-align:right; white-space:nowrap">
-          {{ count }} {{ t('times', ui_lang) }}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <p class="section-label">{{ t('dash_top_items', ui_lang) }}</p>
+  <div class="table-card">
+    <table>
+      <tbody>
+        {% for item, count in top_items %}
+        <tr>
+          <td style="width:1%; padding-left:1rem; color:var(--ink-3)">{{ loop.index }}</td>
+          <td><a href="/admin/items/{{ item.id }}/edit"><strong>{{ tr(item.name, 'uz') }}</strong></a></td>
+          <td style="width:1%; padding-right:1rem; text-align:right; white-space:nowrap">
+            {{ count }} {{ t('times', ui_lang) }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endif %}
 
+{# ---------- 4. TEZ HAVOLALAR ---------- #}
 <p class="section-label">{{ t('dash_quick', ui_lang) }}</p>
 <div class="row">
-  <a class="btn" href="/admin/categories">{{ ui.icon('grid') }} {{ t('nav_categories', ui_lang) }}</a>
-  <a class="btn" href="/admin/items">{{ ui.icon('list') }} {{ t('nav_items', ui_lang) }}</a>
+  <a class="btn" href="/admin/menu">{{ ui.icon('list') }} {{ t('menu_title', ui_lang) }}</a>
   <a class="btn" href="/admin/qr">{{ ui.icon('qr') }} {{ t('nav_qr', ui_lang) }}</a>
+  {% if restaurant.orders_enabled %}
+    <a class="btn" href="/admin/tables">{{ ui.icon('grid') }} {{ t('building_title', ui_lang) }}</a>
+    <a class="btn" href="/admin/staff">{{ ui.icon('users') }} {{ t('staff_title', ui_lang) }}</a>
+  {% endif %}
+  <a class="btn" href="/admin/design">{{ ui.icon('star') }} {{ t('design_title', ui_lang) }}</a>
   {% if limits.printable %}
     <a class="btn" href="/admin/menu/print">{{ ui.icon('printer') }} {{ t('dash_print_menu', ui_lang) }}</a>
   {% endif %}

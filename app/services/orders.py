@@ -11,11 +11,13 @@ tekshiriladi, miqdor qisiladi. Formadan kelgan `price` umuman o'qilmaydi ham.
 import secrets
 from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import NamedTuple
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.database import seconds_between
 from app.models import (
     MenuItem,
     Order,
@@ -329,3 +331,62 @@ def history(db: Session, restaurant_id: int, start, end) -> list[Order]:
 
 def _day_start(day) -> datetime:
     return datetime(day.year, day.month, day.day)
+
+
+class DaySummary(NamedTuple):
+    """Bir kunlik buyurtmalar — panel uchun."""
+
+    total_orders: int  # kelgan buyurtmalar
+    waiting: int  # hali javob berilmagani
+    served: int  # oxirigacha yetkazilgani
+    cancelled: int
+    revenue: Decimal  # bekor qilinmaganlarning summasi
+    avg_reply: int | None  # o'rtacha javob vaqti, soniyada
+
+
+BOSH_KUN = DaySummary(0, 0, 0, 0, Decimal("0"), None)
+
+
+def day_summary(db: Session, restaurant_id: int, day) -> DaySummary:
+    """Bir kunlik xulosa — BITTA so'rovda.
+
+    Panelda to'rt-besh raqam kerak va ularning har biri uchun alohida
+    so'rov yuborish bosh sahifani sekinlashtirardi.
+
+    Tushum BEKOR QILINGANLARSIZ hisoblanadi: bekor qilingan buyurtma pul
+    keltirmaydi va uni tushumga qo'shish egasini aldardi.
+    """
+    boshi = _day_start(day)
+    oxiri = boshi + timedelta(days=1)
+    tirik = Order.status != OrderStatus.cancelled
+
+    row = db.execute(
+        select(
+            func.count(Order.id),
+            func.sum(case((Order.status == OrderStatus.new, 1), else_=0)),
+            func.sum(case((Order.status == OrderStatus.served, 1), else_=0)),
+            func.sum(case((Order.status == OrderStatus.cancelled, 1), else_=0)),
+            func.sum(case((tirik, Order.total), else_=0)),
+            # Javob berilmagan buyurtma o'rtachaga KIRMAYDI: `accepted_at`
+            # bo'sh bo'lsa ayirma NULL chiqadi va `AVG` NULL qatorlarni
+            # o'zi tashlab ketadi. Buni `case` bilan alohida to'sish
+            # kerak emas edi — mutatsiya sinovi shuni ko'rsatdi.
+            func.avg(seconds_between(Order.created_at, Order.accepted_at)),
+        ).where(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= boshi,
+            Order.created_at < oxiri,
+        )
+    ).one()
+
+    total, waiting, served, cancelled, revenue, avg_raw = row
+    if not total:
+        return BOSH_KUN
+    return DaySummary(
+        total_orders=total,
+        waiting=int(waiting or 0),
+        served=int(served or 0),
+        cancelled=int(cancelled or 0),
+        revenue=revenue or Decimal("0"),
+        avg_reply=max(round(float(avg_raw)), 0) if avg_raw is not None else None,
+    )
