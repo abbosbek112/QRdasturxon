@@ -469,3 +469,21 @@ def test_safe_name_never_returns_something_dangerous():
         assert "\\" not in natija
         assert natija.strip(".") or natija == "nomsiz"
         assert natija != ".."
+
+
+def test_a_name_without_an_extension_keeps_its_shape():
+    """Takror nom raqamlanganda nom buzilmasin.
+
+    `rpartition` nuqta topmasa hamma narsani oxirgi bo'lakka soladi va
+    "menyu" ikkinchi marta kelganda "-2.menyu" bo'lib chiqardi — oldida
+    chiziqcha, orqasida soxta kengaytma.
+    """
+    taken: set[str] = set()
+    assert qr_pack._unique("menyu", taken) == "menyu"
+    assert qr_pack._unique("menyu", taken) == "menyu-2"
+    assert qr_pack._unique("menyu", taken) == "menyu-3"
+
+    # Kengaytmali nom o'z holicha qoladi
+    taken = set()
+    assert qr_pack._unique("a.png", taken) == "a.png"
+    assert qr_pack._unique("a.png", taken) == "a-2.png"

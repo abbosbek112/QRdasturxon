@@ -13,7 +13,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import Category, Combo, ComboLine, MenuItem, Table
+from app.models import Category, Combo, ComboLine, MenuItem, Order, Table
 from app.services import combos, orders
 
 from tests.conftest import csrf, login
@@ -383,3 +383,39 @@ def test_quantities_stay_with_their_own_dish(client, db, kafe):
 
     yangi = db.query(Combo).filter(Combo.name["uz"].as_string() == "Sinov").one()
     assert [(line.item_id, line.quantity) for line in yangi.lines] == [(kola.id, 3)]
+
+
+def test_a_combo_hides_when_its_category_is_hidden(db, kafe, kombo):
+    """Kategoriya yashirilsa uning taomlari bilan kombo ham yo'qolsin.
+
+    Taomni yashirish allaqachon komboni to'xtatadi, lekin KATEGORIYAni
+    yashirish to'xtatmasdi. Natijasi bir xil, oqibati esa yomonroq:
+    oshpaz yo'q deb "Issiq taomlar" o'chiriladi, taomlar menyudan
+    ketadi — kombo esa qolib, oshxonaga bajarib bo'lmaydigan buyurtma
+    tushadi. Mijoz aynan shu taomni kutib o'tiradi.
+    """
+    restaurant, category, _, _ = kafe
+    assert kombo.id in [c.id for c in combos.visible(db, restaurant.id)]
+
+    category.is_active = False
+    db.commit()
+
+    assert combos.visible(db, restaurant.id) == []
+    assert not combos.is_orderable(kombo)
+
+
+def test_ordering_a_combo_from_a_hidden_category_is_refused(client, db, kafe, kombo):
+    """Sahifada ko'rinmasa ham, formadagi raqam bilan yuborib bo'lmasin."""
+    restaurant, category, _, _ = kafe
+    category.is_active = False
+    db.commit()
+
+    client.get(f"/r/{restaurant.slug}/t/sinovkod")
+    token = csrf(client, f"/r/{restaurant.slug}")
+    response = client.post(
+        f"/r/{restaurant.slug}/order",
+        data={"csrf_token": token, "combo_id": str(kombo.id), "combo_qty": "1"},
+        follow_redirects=False,
+    )
+    # Buyurtma yaratilmasin
+    assert db.query(Order).count() == 0

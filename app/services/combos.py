@@ -30,7 +30,11 @@ def list_for(db: Session, restaurant_id: int, only_active: bool = False) -> list
     query = (
         select(Combo)
         .where(Combo.restaurant_id == restaurant_id)
-        .options(selectinload(Combo.lines).selectinload(ComboLine.item))
+        .options(
+            selectinload(Combo.lines)
+            .selectinload(ComboLine.item)
+            .selectinload(MenuItem.category)
+        )
         .order_by(Combo.sort_order, Combo.id)
     )
     if only_active:
@@ -42,7 +46,11 @@ def owned(db: Session, restaurant_id: int, combo_id: int) -> Combo:
     combo = db.scalar(
         select(Combo)
         .where(Combo.id == combo_id, Combo.restaurant_id == restaurant_id)
-        .options(selectinload(Combo.lines).selectinload(ComboLine.item))
+        .options(
+            selectinload(Combo.lines)
+            .selectinload(ComboLine.item)
+            .selectinload(MenuItem.category)
+        )
     )
     if combo is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Kombo topilmadi")
@@ -73,9 +81,19 @@ def is_orderable(combo: Combo) -> bool:
     Tarkibidagi taomlardan bittasi yashirilgan bo'lsa kombo ham
     ishlamaydi: mijozga va'da qilingan narsani berib bo'lmaydi. Bo'sh
     kombo ham shunday — u hech nima emas.
+
+    Taomning KATEGORIYASI ham tekshiriladi. Ilgari faqat taomning o'zi
+    qaralardi va kategoriya yashirilganda kombo qolib ketardi: oshpaz
+    yo'q deb "Issiq taomlar" o'chiriladi, taomlar menyudan ketadi, kombo
+    esa buyurtma qilinaveradi va oshxonaga bajarib bo'lmaydigan vazifa
+    tushadi. Mijoz uchun natija bir xil — u va'da qilingan taomni
+    kutib o'tiradi.
     """
     return bool(combo.lines) and all(
-        line.item is not None and line.item.is_available for line in combo.lines
+        line.item is not None
+        and line.item.is_available
+        and (line.item.category is None or line.item.category.is_active)
+        for line in combo.lines
     )
 
 

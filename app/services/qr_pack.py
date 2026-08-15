@@ -144,11 +144,21 @@ def _unique(path: str, taken: set[str]) -> str:
         taken.add(path)
         return path
 
-    stem, _, suffix = path.rpartition(".")
+    # `rpartition` nuqta topmasa hamma narsani OXIRGI bo'lakka soladi:
+    # "menyu" uchun stem bo'sh, suffix "menyu" bo'lib, nom "-2.menyu"
+    # bo'lib chiqardi. Hozir har yo'l kengaytma bilan tugaydi, lekin bu
+    # shartga tayanib qolmaslik kerak.
+    stem, nuqta, suffix = path.rpartition(".")
+    if not nuqta:
+        stem, suffix = path, ""
+
+    def nomla(counter: int) -> str:
+        return f"{stem}-{counter}.{suffix}" if suffix else f"{stem}-{counter}"
+
     counter = 2
-    while f"{stem}-{counter}.{suffix}" in taken:
+    while nomla(counter) in taken:
         counter += 1
-    numbered = f"{stem}-{counter}.{suffix}"
+    numbered = nomla(counter)
     taken.add(numbered)
     return numbered
 
