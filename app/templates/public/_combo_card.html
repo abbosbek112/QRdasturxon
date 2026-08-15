@@ -1,0 +1,51 @@
+{#
+  Menyudagi kombo kartasi.
+
+  Taom kartasidan farqi: tarkibi ro'yxat bo'lib ko'rinadi va tejaladigan
+  pul aytiladi. Mijoz "nima uchun bu arzon" degan savolga javobni
+  kartaning o'zida ko'rishi kerak — aks holda kombo shunchaki nomi
+  tushunarsiz yana bitta taomga aylanadi.
+
+  Savatdagi kaliti "c" bilan boshlanadi: bitta savatda taom ham, kombo
+  ham yotadi va ular aralashib ketmasligi kerak.
+#}
+{% import "partials/icons.html" as ui %}
+
+<div class="dish-wrap">
+  <div class="dish combo-tile">
+    <div class="dish-media">
+      {% if combo.image %}
+        <img src="/media/{{ combo.image }}" alt="{{ tr(combo.name, lang) }}" loading="lazy" decoding="async">
+      {% else %}
+        <div class="dish-ph">{{ ui.icon('plate') }}</div>
+      {% endif %}
+      <span class="dish-meta">
+        <span class="price-pill">{{ combo.price | price }} <small>{{ restaurant.currency }}</small></span>
+      </span>
+      {% if saving %}
+        <span class="dish-tag combo-tag">
+          −{{ saving | price }} {{ restaurant.currency }}
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="dish-body">
+      <p class="dish-name clamp-2">{{ tr(combo.name, lang) }}</p>
+      {% set note = tr(combo.description, lang) %}
+      {% if note %}<p class="dish-desc clamp-2">{{ note }}</p>{% endif %}
+      <ul class="combo-parts">
+        {% for line in combo.lines %}
+          <li>{{ line.quantity }}× {{ tr(line.item.name, lang) }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  {% if can_order %}
+    <button class="dish-add" type="button"
+            data-id="c{{ combo.id }}"
+            data-name="{{ tr(combo.name, lang) }}"
+            data-price="{{ combo.price | int }}"
+            aria-label="{{ t('order_add', lang) }}: {{ tr(combo.name, lang) }}">+</button>
+  {% endif %}
+</div>

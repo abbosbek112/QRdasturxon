@@ -13,7 +13,7 @@ from app.i18n import LANGUAGES, LANG_COOKIE, resolve_lang, tr
 from app.models import Category, MenuItem, Plan, Restaurant, utcnow_naive
 from app.plans import LIMITS, TRIAL_DAYS, is_expired, limits_for, menu_is_live, visible_languages
 from app.security import verify_csrf
-from app.services import comments, orders, push, qr, tables
+from app.services import combos, comments, orders, push, qr, tables
 from app.services import stats
 from app.services.stats import record_view
 from app.templating import templates
@@ -286,6 +286,13 @@ def menu(request: Request, db: DbSession, slug: str, q: str = ""):
             "restaurant": restaurant,
             "sections": sections,
             "specials": specials,
+            # Kombolar menyuning eng tepasida: ular chegirmali taklif va
+            # mijoz ularni qidirib yurmasligi kerak. Qidiruv paytida
+            # ko'rsatilmaydi — u aniq taom izlayotgan odam uchun.
+            "combo_rows": [] if needle else [
+                {"combo": combo, "saving": combos.saving(combo)}
+                for combo in combos.visible(db, restaurant.id)
+            ],
             "q": q,
             "languages": languages,
             **_order_context(request, db, restaurant),
@@ -328,6 +335,8 @@ def place_order(
     slug: str,
     item_id: Annotated[list[int] | None, Form()] = None,
     qty: Annotated[list[int] | None, Form()] = None,
+    combo_id: Annotated[list[int] | None, Form()] = None,
+    combo_qty: Annotated[list[int] | None, Form()] = None,
     note: Annotated[str, Form()] = "",
 ):
     """Savatni buyurtmaga aylantiradi.
@@ -352,8 +361,14 @@ def place_order(
         )
 
     wanted = list(zip(item_id or [], qty or []))
+    chosen_combos = list(zip(combo_id or [], combo_qty or []))
     order = orders.place(
-        db, restaurant=restaurant, table=context["table"], wanted=wanted, note=note
+        db,
+        restaurant=restaurant,
+        table=context["table"],
+        wanted=wanted,
+        combos=chosen_combos,
+        note=note,
     )
 
     # Afitsantga turtki — javob yuborilgandan KEYIN. Tashqi HTTP so'rov

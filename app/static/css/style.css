@@ -731,19 +731,25 @@ a.stat:hover { text-decoration: none; border-color: var(--line-2); }
    ========================================================================== */
 
 .section-title {
-  position: relative; display: inline-block;
+  display: inline-flex; align-items: center; gap: .55rem;
   margin: 1.9rem 0 .9rem;
   font-family: var(--font-head);
   font-size: var(--text-xl); font-weight: 700; letter-spacing: var(--head-spacing);
   scroll-margin-top: 4rem;
 }
-.section-title::after {
+/* Chizgi SO'ZNING ostida turadi, sarlavhaning butun eni ostida emas —
+   bo'lim rasmi qo'shilganda u rasm ostidan ham o'tib ketardi */
+.section-title span { position: relative; }
+.section-title span::after {
   content: "";
   position: absolute; left: -3px; right: -7px; bottom: .1em;
   height: .42em; border-radius: 3px;
   background: var(--accent); opacity: .16;
 }
-.section-title span { position: relative; }
+.section-pic {
+  width: 2rem; height: 2rem; flex: none;
+  border-radius: var(--r-sm); object-fit: cover;
+}
 
 .dish-grid {
   display: grid; gap: .7rem;
@@ -2610,3 +2616,91 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
 .qr-pack-form:has(input[name="style"][value="karta"]:checked) .qr-pack-extra {
   display: none;
 }
+
+/* Bo'lim rasmi: menyu chipida va admin menyusidagi kategoriya sarlavhasida */
+.chip-pic { display: inline-flex; align-items: center; gap: .4rem; padding-left: .4rem; }
+.chip-pic img {
+  width: 1.5rem; height: 1.5rem; flex: none;
+  border-radius: var(--r-full); object-fit: cover;
+}
+
+.cat-badge {
+  width: 2rem; height: 2rem; flex: none;
+  border-radius: var(--r-sm); object-fit: cover;
+}
+.cat-badge-empty {
+  display: inline-block;
+  background: var(--surface-2); border: 1px dashed var(--line);
+}
+
+/* ==========================================================================
+   Kombo to'plamlar
+   ========================================================================== */
+
+.badge-warn {
+  background: var(--danger-wash); color: var(--danger);
+  border-color: var(--danger-edge);
+}
+
+.combo-card + .combo-card { margin-top: .9rem; }
+.combo-head { display: flex; align-items: center; gap: .7rem; }
+.combo-pic {
+  width: 3.2rem; height: 3.2rem; flex: none;
+  border-radius: var(--r-md); object-fit: cover;
+}
+.combo-money { text-align: right; white-space: nowrap; }
+.combo-save { color: var(--ok); font-weight: 600; }
+
+.combo-lines { margin: 0; padding-left: 1.1rem; font-size: var(--text-sm); }
+.combo-lines li { padding: .1rem 0; }
+
+.combo-edit > summary { cursor: pointer; color: var(--ink-2); font-size: var(--text-sm); }
+.combo-edit[open] > summary { margin-bottom: .7rem; }
+
+/* Tarkib tanlagich: har taom bitta qator */
+.combo-pick {
+  max-height: 17rem; overflow-y: auto;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.combo-pick-row {
+  display: grid; align-items: center; gap: .6rem;
+  grid-template-columns: auto 1fr auto 5rem;
+  padding: .45rem .65rem;
+  cursor: pointer;
+}
+.combo-pick-row + .combo-pick-row { border-top: 1px solid var(--line); }
+/* Tanlangan qator ajralib tursin — uzun ro'yxatda nima tanlanganini
+   qidirib o'tirmasin */
+.combo-pick-row:has(input[type="checkbox"]:checked) { background: var(--surface-2); }
+.combo-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.combo-pick-qty { width: 100%; }
+
+@media (max-width: 560px) {
+  .combo-pick-row { grid-template-columns: auto 1fr 4.5rem; }
+  .combo-pick-row .muted { grid-column: 2; font-size: var(--text-xs); }
+}
+
+/* Menyudagi kombo kartasi */
+.combo-tile { cursor: default; }
+.combo-tag { background: var(--ok); color: #fff; }
+.combo-parts {
+  margin: .35rem 0 0; padding-left: 1rem;
+  font-size: var(--text-xs); color: var(--ink-3);
+}
+.combo-parts li { padding: .05rem 0; }
+
+/* Uzun formadagi bo'lim sarlavhasi */
+.form-part {
+  margin: 1.4rem 0 .2rem;
+  font-size: var(--text-md); font-weight: 700;
+  scroll-margin-top: 4rem;
+}
+
+/* Menyudagi texkarta belgisi: to'ldirilganmi yoki yo'q */
+.tex-link {
+  display: inline-flex; align-items: center; gap: .3rem;
+  margin-top: .25rem;
+  font-size: var(--text-xs); color: var(--ink-3);
+}
+.tex-link:hover { color: var(--ink); text-decoration: none; }
+.tex-link.is-set { color: var(--ok); }

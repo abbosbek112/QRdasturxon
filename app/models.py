@@ -158,6 +158,10 @@ class Category(Base):
         ForeignKey("restaurants.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[dict] = mapped_column(I18nText, default=dict)
+    # Bo'lim rasmi. Menyuda kategoriya nomi yonida turadi va uzun ro'yxatni
+    # ko'z bilan ajratib beradi — odam "ichimliklar" so'zini o'qishdan ko'ra
+    # stakan rasmini tezroq topadi.
+    image: Mapped[str | None] = mapped_column(String(255))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -196,6 +200,61 @@ class MenuItem(Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
     category: Mapped[Category] = relationship(back_populates="items")
+
+
+class Combo(Base):
+    """Bir necha taomdan iborat to'plam — birga arzonroq.
+
+    Narx ALOHIDA saqlanadi va tarkibidagi taomlar yig'indisidan
+    hisoblanmaydi. Kombo'ning butun ma'nosi chegirmada: uni qancha qilishni
+    egasi o'zi biladi va tarkibidagi taom narxi o'zgarganda kombo narxi
+    o'z-o'zidan sakrab ketmasligi kerak.
+
+    Tejalgan pul har safar hisoblanadi — mijozga aynan shu raqam
+    ko'rsatiladi va u har doim bugungi narxlarga mos bo'lishi kerak.
+    """
+
+    __tablename__ = "combos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    restaurant_id: Mapped[int] = mapped_column(
+        ForeignKey("restaurants.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[dict] = mapped_column(I18nText, default=dict)
+    description: Mapped[dict] = mapped_column(I18nText, default=dict)
+    price: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"))
+    image: Mapped[str | None] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+    lines: Mapped[list[ComboLine]] = relationship(
+        back_populates="combo",
+        cascade="all, delete-orphan",
+        order_by="ComboLine.id",
+    )
+
+
+class ComboLine(Base):
+    """Kombo tarkibidagi bitta taom va uning soni.
+
+    Taom o'chirilsa qator ham o'chadi (`CASCADE`): tarkibida yo'q taom
+    turgan kombo mijozga yolg'on va'da bo'lardi. Kombo o'zi qoladi va
+    egasi uni to'ldirib qo'yishi mumkin.
+    """
+
+    __tablename__ = "combo_lines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    combo_id: Mapped[int] = mapped_column(
+        ForeignKey("combos.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[int] = mapped_column(
+        ForeignKey("menu_items.id", ondelete="CASCADE"), index=True
+    )
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+
+    combo: Mapped[Combo] = relationship(back_populates="lines")
+    item: Mapped[MenuItem] = relationship()
 
 
 class ItemComment(Base):

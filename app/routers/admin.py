@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
@@ -14,7 +15,7 @@ from app.models import Category, ItemComment, MenuItem, Restaurant, Role, TableK
 from app.plans import limits_for, refresh_status, trial_days_left
 from app.security import hash_password, require_restaurant_admin, verify_csrf
 from app import themes
-from app.services import areas, comments, onboarding, orders, qr, qr_pack, stats, tables
+from app.services import areas, combos, comments, onboarding, orders, qr, qr_pack, stats, tables
 from app.services.images import MAX_BYTES as MAX_IMAGE_BYTES, delete_image, save_image
 from app.templating import floor_label, templates
 
@@ -296,7 +297,7 @@ def categories_page(user: AdminUser):
 
 
 @router.post("/categories", dependencies=[Depends(verify_csrf)])
-def create_category(
+async def create_category(
     request: Request,
     db: DbSession,
     user: AdminUser,
@@ -304,26 +305,35 @@ def create_category(
     name_ru: Annotated[str, Form()] = "",
     name_en: Annotated[str, Form()] = "",
     sort_order: Annotated[int, Form()] = 0,
+    image: Annotated[UploadFile | None, File()] = None,
 ):
     try:
         if not name_uz.strip():
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kategoriya nomi bo'sh bo'lmasin")
         check_category_limit(db, get_restaurant(db, user))
     except HTTPException as error:
-        return form_failed(request, error, "/admin/categories")
+        return form_failed(request, error, "/admin/menu")
+
+    # Kategoriya rasmi taom rasmidan kichik: u menyuda kichkina belgi
+    # bo'lib turadi, kartaning butun enini egallamaydi
+    picture = None
+    if image is not None and image.filename:
+        picture = await save_image(image, user.restaurant_id, max_width=400)
+
     db.add(
         Category(
             restaurant_id=user.restaurant_id,
             name=i18n_field(name_uz, name_ru, name_en),
+            image=picture,
             sort_order=sort_order,
         )
     )
     db.commit()
-    return RedirectResponse("/admin/categories", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/categories/{category_id}", dependencies=[Depends(verify_csrf)])
-def update_category(
+async def update_category(
     db: DbSession,
     user: AdminUser,
     category_id: int,
@@ -332,13 +342,24 @@ def update_category(
     name_en: Annotated[str, Form()] = "",
     sort_order: Annotated[int, Form()] = 0,
     is_active: Annotated[bool, Form()] = False,
+    remove_image: Annotated[bool, Form()] = False,
+    image: Annotated[UploadFile | None, File()] = None,
 ):
     category = owned_category(db, user, category_id)
     category.name = i18n_field(name_uz, name_ru, name_en) or category.name
     category.sort_order = sort_order
     category.is_active = is_active
+
+    if image is not None and image.filename:
+        old = category.image
+        category.image = await save_image(image, user.restaurant_id, max_width=400)
+        delete_image(old)
+    elif remove_image:
+        delete_image(category.image)
+        category.image = None
+
     db.commit()
-    return RedirectResponse("/admin/categories", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/categories/{category_id}/delete", dependencies=[Depends(verify_csrf)])
@@ -346,9 +367,153 @@ def delete_category(db: DbSession, user: AdminUser, category_id: int):
     category = owned_category(db, user, category_id)
     for item in category.items:
         delete_image(item.image)
+    delete_image(category.image)
     db.delete(category)
     db.commit()
-    return RedirectResponse("/admin/categories", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/combos")
+def combos_page(request: Request, db: DbSession, user: AdminUser):
+    """Kombo to'plamlari — menyu bo'limining ichida alohida sahifa."""
+    restaurant = get_restaurant(db, user)
+    rows = combos.list_for(db, restaurant.id)
+    return templates.TemplateResponse(
+        request,
+        "admin/combos.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "combos": [
+                {
+                    "combo": combo,
+                    "full": combos.full_price(combo),
+                    "saving": combos.saving(combo),
+                    "orderable": combos.is_orderable(combo),
+                    # Tarkib formasi uchun: qaysi taom nechta
+                    "chosen": {line.item_id: line.quantity for line in combo.lines},
+                }
+                for combo in rows
+            ],
+            "items": db.scalars(
+                select(MenuItem)
+                .where(MenuItem.restaurant_id == restaurant.id)
+                .order_by(MenuItem.category_id, MenuItem.sort_order, MenuItem.id)
+            ).all(),
+        },
+    )
+
+
+async def _combo_lines(request: Request) -> list[tuple[int, int]]:
+    """Tanlangan taomlar va ularning soni.
+
+    Soni `qty_<taom raqami>` deb nomlangan maydonda keladi, oddiy `qty`
+    ro'yxatida emas. Sabab jiddiy: belgilanmagan katakcha brauzer
+    tomonidan YUBORILMAYDI, lekin uning yonidagi son maydoni yuboriladi.
+    Ikki parallel ro'yxatda bu siljishga olib kelardi — birinchi taomni
+    belgilamay ikkinchisini belgilasangiz, ikkinchisiga birinchisining
+    soni yopishardi va egasi buni faqat kombo narxi noto'g'ri chiqqanda
+    payqardi.
+
+    Nomga bog'lash bu xatoni butunlay yo'q qiladi: har son o'z taomiga
+    tegishli va tartib ahamiyatsiz.
+    """
+    form = await request.form()
+    lines: list[tuple[int, int]] = []
+    for raw_id in form.getlist("item_id"):
+        try:
+            item_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        try:
+            quantity = int(form.get(f"qty_{item_id}") or 1)
+        except (TypeError, ValueError):
+            quantity = 1
+        lines.append((item_id, quantity))
+    return lines
+
+
+@router.post("/combos", dependencies=[Depends(verify_csrf)])
+async def create_combo(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    name_uz: Annotated[str, Form()],
+    name_ru: Annotated[str, Form()] = "",
+    name_en: Annotated[str, Form()] = "",
+    description_uz: Annotated[str, Form()] = "",
+    description_ru: Annotated[str, Form()] = "",
+    description_en: Annotated[str, Form()] = "",
+    price: Annotated[Decimal, Form()] = Decimal("0"),
+    sort_order: Annotated[int, Form()] = 0,
+    image: Annotated[UploadFile | None, File()] = None,
+):
+    restaurant = get_restaurant(db, user)
+    picture = None
+    if image is not None and image.filename:
+        picture = await save_image(image, restaurant.id, max_width=800)
+    try:
+        combos.create(
+            db,
+            restaurant.id,
+            name=i18n_field(name_uz, name_ru, name_en),
+            description=i18n_field(description_uz, description_ru, description_en),
+            price=price,
+            sort_order=sort_order,
+            image=picture,
+            lines=await _combo_lines(request),
+        )
+    except HTTPException as error:
+        delete_image(picture)
+        return form_failed(request, error, "/admin/combos")
+    return RedirectResponse("/admin/combos", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/combos/{combo_id}", dependencies=[Depends(verify_csrf)])
+async def update_combo(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    combo_id: int,
+    name_uz: Annotated[str, Form()],
+    name_ru: Annotated[str, Form()] = "",
+    name_en: Annotated[str, Form()] = "",
+    description_uz: Annotated[str, Form()] = "",
+    description_ru: Annotated[str, Form()] = "",
+    description_en: Annotated[str, Form()] = "",
+    price: Annotated[Decimal, Form()] = Decimal("0"),
+    sort_order: Annotated[int, Form()] = 0,
+    is_active: Annotated[bool, Form()] = False,
+    remove_image: Annotated[bool, Form()] = False,
+    image: Annotated[UploadFile | None, File()] = None,
+):
+    combo = combos.owned(db, user.restaurant_id, combo_id)
+    combo.name = i18n_field(name_uz, name_ru, name_en) or combo.name
+    combo.description = i18n_field(description_uz, description_ru, description_en)
+    combo.price = max(price, Decimal("0"))
+    combo.sort_order = sort_order
+    combo.is_active = is_active
+    combos.set_lines(db, combo, await _combo_lines(request))
+
+    if image is not None and image.filename:
+        old = combo.image
+        combo.image = await save_image(image, user.restaurant_id, max_width=800)
+        delete_image(old)
+    elif remove_image:
+        delete_image(combo.image)
+        combo.image = None
+
+    db.commit()
+    return RedirectResponse("/admin/combos", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/combos/{combo_id}/delete", dependencies=[Depends(verify_csrf)])
+def delete_combo(db: DbSession, user: AdminUser, combo_id: int):
+    combo = combos.owned(db, user.restaurant_id, combo_id)
+    delete_image(combo.image)
+    db.delete(combo)
+    db.commit()
+    return RedirectResponse("/admin/combos", status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/items")
@@ -453,7 +618,7 @@ async def create_item(
         item.image = await save_image(image, user.restaurant_id, max_width=1000)
     db.add(item)
     db.commit()
-    return RedirectResponse("/admin/items", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/items/{item_id}", dependencies=[Depends(verify_csrf)])
@@ -511,7 +676,7 @@ async def update_item(
         item.image = None
 
     db.commit()
-    return RedirectResponse("/admin/items", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/items/{item_id}/order", dependencies=[Depends(verify_csrf)])
@@ -538,7 +703,7 @@ def toggle_item(db: DbSession, user: AdminUser, item_id: int):
     item = owned_item(db, user, item_id)
     item.is_available = not item.is_available
     db.commit()
-    return RedirectResponse("/admin/items", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/items/{item_id}/delete", dependencies=[Depends(verify_csrf)])
@@ -547,7 +712,7 @@ def delete_item(db: DbSession, user: AdminUser, item_id: int):
     delete_image(item.image)
     db.delete(item)
     db.commit()
-    return RedirectResponse("/admin/items", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/menu", status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/comments")

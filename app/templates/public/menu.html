@@ -115,8 +115,18 @@
   {% if sections %}
     <nav class="chips" aria-label="{{ t('menu', lang) }}">
       <div class="chips-inner" id="catnav">
+        {#
+          Bo'lim rasmi bo'lsa u chipda ham ko'rinadi: uzun menyuda odam
+          "Ichimliklar" so'zini o'qishdan ko'ra stakan rasmini tezroq
+          topadi. Rasmsiz bo'limlar ilgarigidek faqat nom bilan qoladi.
+        #}
         {% for category, items in sections %}
-          <a class="chip" href="#cat-{{ category.id }}">{{ tr(category.name, lang) }}</a>
+          <a class="chip {{ 'chip-pic' if category.image }}" href="#cat-{{ category.id }}">
+            {% if category.image %}
+              <img src="/media/{{ category.image }}" alt="" loading="lazy">
+            {% endif %}
+            {{ tr(category.name, lang) }}
+          </a>
         {% endfor %}
       </div>
     </nav>
@@ -145,8 +155,24 @@
       </div>
     {% endif %}
 
+    {% if combo_rows %}
+      <h2 class="section-title"><span>{{ t('combo_title', lang) }}</span></h2>
+      <div class="dish-grid">
+        {% for row in combo_rows %}
+          {% with combo = row.combo, saving = row.saving %}
+            {% include "public/_combo_card.html" %}
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% for category, items in sections %}
-      <h2 class="section-title" id="cat-{{ category.id }}"><span>{{ tr(category.name, lang) }}</span></h2>
+      <h2 class="section-title" id="cat-{{ category.id }}">
+        {% if category.image %}
+          <img class="section-pic" src="/media/{{ category.image }}" alt="" loading="lazy">
+        {% endif %}
+        <span>{{ tr(category.name, lang) }}</span>
+      </h2>
       <div class="dish-grid">
         {% for item in items %}{% include "public/_dish_card.html" %}{% endfor %}
       </div>

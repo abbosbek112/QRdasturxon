@@ -37,6 +37,7 @@
   {# Kategoriya va taomlar bitta bo'limda: taom o'z kategoriyasi ichida
      turadi, ya'ni tartiblashda undan chiqib ketilmaydi. #}
   <a href="/admin/menu" class="{{ 'active' if path.startswith('/admin/menu') or path.startswith('/admin/items') or path.startswith('/admin/categories') }}">{{ ui.icon('list') }} {{ t('menu_title', ui_lang) }}</a>
+  <a href="/admin/combos" class="{{ 'active' if path.startswith('/admin/combos') }}">{{ ui.icon('plus') }} {{ t('combo_title', ui_lang) }}</a>
   {#
     Buyurtma bo'limlari faqat u yoqilganda ko'rinadi — menyu uchungina kelgan
     kafe panelida ishlatmaydigan uchta bo'lim turishi shart emas.

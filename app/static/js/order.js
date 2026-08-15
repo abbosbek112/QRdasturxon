@@ -181,6 +181,11 @@ document.documentElement.classList.add("js");
 
   // Yuborishdan oldin savatni yashirin maydonlarga aylantiramiz.
   // `item_id` va `qty` juft bo'lib, bir xil tartibda ketadi.
+  //
+  // Kombo kaliti "c" bilan boshlanadi ("c12"). Bitta savatda ikki xil
+  // narsa yotgani uchun ular shu belgi bilan ajratiladi va serverga
+  // alohida maydonlarda ketadi — taom raqami bilan kombo raqami
+  // aralashib ketsa mijoz butunlay boshqa narsa buyurtma qilardi.
   form.addEventListener("submit", function (event) {
     var old = form.querySelectorAll("input[data-line]");
     for (var i = 0; i < old.length; i++) old[i].remove();
@@ -192,8 +197,13 @@ document.documentElement.classList.add("js");
     }
 
     chosen.forEach(function (id) {
-      form.appendChild(hidden("item_id", id));
-      form.appendChild(hidden("qty", cart[id].q));
+      if (id.charAt(0) === "c") {
+        form.appendChild(hidden("combo_id", id.slice(1)));
+        form.appendChild(hidden("combo_qty", cart[id].q));
+      } else {
+        form.appendChild(hidden("item_id", id));
+        form.appendChild(hidden("qty", cart[id].q));
+      }
     });
 
     // Buyurtma ketdi — orqaga qaytilsa eski savat qayta chiqmasin

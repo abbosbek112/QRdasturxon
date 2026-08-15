@@ -18,7 +18,7 @@ import re
 
 import pytest
 
-from app.models import Category, MenuItem, Table
+from app.models import Category, Combo, ComboLine, MenuItem, Table
 
 from tests.conftest import login
 
@@ -60,17 +60,23 @@ def toliq_restoran(db, tenant_a):
     category = Category(restaurant_id=restaurant.id, name={"uz": "Taomlar"})
     db.add(category)
     db.flush()
-    db.add(
-        MenuItem(
-            restaurant_id=restaurant.id,
-            category_id=category.id,
-            name={"uz": "Osh"},
-            price=38000,
-            is_spicy=True,
-            is_vegetarian=True,
-        )
+    osh = MenuItem(
+        restaurant_id=restaurant.id,
+        category_id=category.id,
+        name={"uz": "Osh"},
+        price=38000,
+        is_spicy=True,
+        is_vegetarian=True,
     )
+    db.add(osh)
     db.add(Table(restaurant_id=restaurant.id, label="1", code="sinovkod"))
+    db.flush()
+
+    # Kombo ham bo'lsin: bo'sh sahifada kombo kartasining belgilari
+    # umuman chizilmaydi va tekshiruv ularni ko'rmasdan o'tib ketardi
+    combo = Combo(restaurant_id=restaurant.id, name={"uz": "To'plam"}, price=50000)
+    combo.lines.append(ComboLine(item_id=osh.id, quantity=2))
+    db.add(combo)
     db.commit()
     return restaurant
 
@@ -80,8 +86,8 @@ def toliq_restoran(db, tenant_a):
     "path",
     [
         "/admin",
-        "/admin/categories",
-        "/admin/items",
+        "/admin/menu",
+        "/admin/combos",
         "/admin/items/new",
         "/admin/tables",
         "/admin/staff",

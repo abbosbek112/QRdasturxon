@@ -3,7 +3,7 @@
   sahifaning o'zida, aks holda pastdagi ochiluvchi blokda — shuning uchun
   alohida bo'lakka chiqarilgan.
 #}
-<form method="post" action="/admin/categories" class="stack">
+<form method="post" action="/admin/categories" class="stack" enctype="multipart/form-data">
   {% include "partials/csrf.html" %}
   <div class="grid-3">
     <div class="field">
@@ -24,6 +24,11 @@
       <label for="cat-order">{{ t('field_order', ui_lang) }}</label>
       <input id="cat-order" name="sort_order" type="number" value="0">
     </div>
+    <div class="field">
+      <label for="cat-image">{{ t('cat_image', ui_lang) }}</label>
+      <input id="cat-image" type="file" name="image" accept="image/*">
+    </div>
     <button class="btn btn-primary" type="submit">{{ ui.icon('plus') }} {{ t('action_add', ui_lang) }}</button>
   </div>
+  <p class="hint">{{ t('cat_image_hint', ui_lang) }}</p>
 </form>

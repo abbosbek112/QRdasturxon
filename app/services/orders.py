@@ -130,13 +130,15 @@ def place(
     restaurant: Restaurant,
     table: Table,
     wanted: list[tuple[int, int]],
+    combos: list[tuple[int, int]] | None = None,
     note: str = "",
 ) -> Order:
     _check_can_order(restaurant)
     _check_table_flood(db, table)
 
     resolved = _resolve(db, restaurant.id, wanted)
-    if not resolved:
+    resolved_combos = _resolve_combos(db, restaurant.id, combos or [])
+    if not resolved and not resolved_combos:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Savat bo'sh")
 
     order = Order(
@@ -163,10 +165,58 @@ def place(
         )
         total += item.price * quantity
 
+    for combo, quantity in resolved_combos:
+        # Kombo BITTA qator bo'lib tushadi. Tarkibiga yoyish afitsant
+        # taxtasini uzaytirib, "bular bitta to'plam" degan ma'noni
+        # yo'qotardi — oshxonaga esa aynan shu ma'no kerak.
+        order.lines.append(
+            OrderLine(
+                item_id=None,
+                name=_first_text(combo.name),
+                unit_price=combo.price,
+                quantity=quantity,
+            )
+        )
+        total += combo.price * quantity
+
     order.total = total
     db.add(order)
     db.commit()
     return order
+
+
+def _resolve_combos(db: Session, restaurant_id: int, wanted: list[tuple[int, int]]):
+    """(kombo, miqdor) juftliklari — faqat SHU restoranning tayyor kombolari.
+
+    Tarkibidagi taomlardan bittasi yashirilgan kombo tashlanadi: mijozga
+    va'da qilingan narsani berib bo'lmaydi va uni buyurtmaga qo'shish
+    oshxonaga bajarib bo'lmaydigan vazifa berardi.
+    """
+    from app.services import combos as combo_service
+
+    merged: dict[int, int] = {}
+    for combo_id, quantity in wanted[:MAX_LINES]:
+        quantity = max(1, min(quantity, MAX_QTY))
+        merged[combo_id] = min(merged.get(combo_id, 0) + quantity, MAX_QTY)
+
+    if not merged:
+        return []
+
+    found = {
+        combo.id: combo
+        for combo in combo_service.visible(db, restaurant_id)
+        if combo.id in merged
+    }
+    return [(found[cid], merged[cid]) for cid in merged if cid in found]
+
+
+def _first_text(value: dict | None) -> str:
+    """i18n maydondan restoran o'z tilidagi nomni oladi."""
+    value = value or {}
+    for lang in ("uz", "ru", "en"):
+        if value.get(lang):
+            return value[lang][:120]
+    return "—"
 
 
 def _first_name(item: MenuItem) -> str:
@@ -175,11 +225,7 @@ def _first_name(item: MenuItem) -> str:
     Mijoz menyuni ruscha ko'rgan bo'lsa ham afitsant taxtasida o'zbekcha nom
     turgani qulayroq: oshxonaga aytiladigan nom bitta bo'lishi kerak.
     """
-    value = item.name or {}
-    for lang in ("uz", "ru", "en"):
-        if value.get(lang):
-            return value[lang][:120]
-    return "—"
+    return _first_text(item.name)
 
 
 def by_code(db: Session, restaurant_id: int, code: str) -> Order | None:

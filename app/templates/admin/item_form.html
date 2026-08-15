@@ -56,6 +56,14 @@
       <div class="field"><label>{{ t('field_description', ui_lang) }} (en)</label><textarea name="description_en">{{ item.description.get('en', '') if item else '' }}</textarea></div>
     </div>
 
+    {#
+      Texkarta. Ingredientlar NARXLANMAYDI — faqat nomi yoziladi va ular
+      mijoz menyusida ro'yxat bo'lib ko'rinadi. Menyu sahifasidagi
+      "Texkarta" havolasi shu yerga olib keladi.
+    #}
+    <h2 id="tex" class="form-part">{{ t('tex_card', ui_lang) }}</h2>
+    <p class="hint">{{ t('tex_card_hint', ui_lang) }}</p>
+
     <div class="grid-3">
       <div class="field"><label>{{ t('field_ingredients', ui_lang) }} (uz)</label><textarea name="ingredients_uz">{{ item.ingredients.get('uz', '') if item else '' }}</textarea></div>
       <div class="field"><label>{{ t('field_ingredients', ui_lang) }} (ru)</label><textarea name="ingredients_ru">{{ item.ingredients.get('ru', '') if item else '' }}</textarea></div>

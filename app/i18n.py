@@ -602,6 +602,51 @@ UI: dict[str, dict[str, str]] = {
     "cat_new": {"uz": "Yangi kategoriya", "ru": "Новый раздел", "en": "New category"},
     "cat_existing": {"uz": "Mavjud kategoriyalar", "ru": "Существующие разделы", "en": "Existing categories"},
     "cat_show_in_menu": {"uz": "Menyuda ko'rsatilsin", "ru": "Показывать в меню", "en": "Show in the menu"},
+    "cat_image": {"uz": "Bo'lim rasmi", "ru": "Изображение раздела", "en": "Section image"},
+    "field_qty": {"uz": "Soni", "ru": "Количество", "en": "Quantity"},
+    "tex_card": {"uz": "Texkarta", "ru": "Техкарта", "en": "Recipe card"},
+    "tex_card_empty": {"uz": "Texkarta yo'q", "ru": "Нет техкарты", "en": "No recipe card"},
+    "tex_card_hint": {
+        "uz": "Tarkibni vergul bilan ajratib yozing. Narx yozish shart emas — "
+              "nomlar mijoz menyusida ro'yxat bo'lib ko'rinadi.",
+        "ru": "Перечислите состав через запятую. Цены не нужны — названия "
+              "показываются списком в меню для гостя.",
+        "en": "List the ingredients separated by commas. No prices needed — "
+              "the names appear as a list in the guest menu.",
+    },
+    "combo_title": {"uz": "Kombo to'plamlar", "ru": "Комбо-наборы", "en": "Combo sets"},
+    "combo_sub": {
+        "uz": "Bir necha taom birga — alohida olgandan arzonroq.",
+        "ru": "Несколько блюд вместе — дешевле, чем по отдельности.",
+        "en": "Several dishes together — cheaper than buying them separately.",
+    },
+    "combo_new": {"uz": "Yangi kombo", "ru": "Новое комбо", "en": "New combo"},
+    "combo_example": {"uz": "Masalan: Tushlik to'plami", "ru": "Например: Обеденный набор", "en": "For example: Lunch set"},
+    "combo_contents": {"uz": "Tarkibi", "ru": "Состав", "en": "Contents"},
+    "combo_empty": {"uz": "Tarkibi hali tanlanmagan", "ru": "Состав ещё не выбран", "en": "Nothing chosen yet"},
+    "combo_line_count": {"uz": "ta taom", "ru": "блюд", "en": "dishes"},
+    "combo_save": {"uz": "tejaysiz", "ru": "экономия", "en": "you save"},
+    "combo_price_hint": {
+        "uz": "Narxni o'zingiz belgilaysiz. Tejalgan pul tarkibiga qarab o'zi hisoblanadi.",
+        "ru": "Цену задаёте вы. Экономия считается автоматически по составу.",
+        "en": "You set the price. The saving is worked out from the contents.",
+    },
+    "combo_not_orderable": {
+        "uz": "Menyuda ko'rinmaydi — tarkibida yashirilgan taom bor",
+        "ru": "Не видно в меню — в составе есть скрытое блюдо",
+        "en": "Hidden from the menu — one of its dishes is hidden",
+    },
+    "combo_needs_dishes": {"uz": "Avval taom qo'shing", "ru": "Сначала добавьте блюда", "en": "Add some dishes first"},
+    "combo_needs_dishes_hint": {
+        "uz": "Kombo mavjud taomlardan yig'iladi — menyuda hali taom yo'q.",
+        "ru": "Комбо собирается из существующих блюд — в меню их пока нет.",
+        "en": "A combo is built from existing dishes, and there are none yet.",
+    },
+    "cat_image_hint": {
+        "uz": "Ixtiyoriy. Menyuda bo'lim nomi yonida kichik belgi bo'lib turadi.",
+        "ru": "Необязательно. В меню показывается маленьким значком рядом с названием раздела.",
+        "en": "Optional. Shown as a small badge next to the section name in the menu.",
+    },
     "cat_dish_count": {"uz": "{n} ta taom", "ru": "Блюд: {n}", "en": "{n} dishes"},
     "name_in": {"uz": "Nomi", "ru": "Название", "en": "Name"},
 

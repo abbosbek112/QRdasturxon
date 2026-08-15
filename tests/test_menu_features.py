@@ -287,3 +287,47 @@ def test_the_dish_page_shows_the_average(client, db, cafe):
     body = html.unescape(client.get(f"/r/{restaurant.slug}/item/{item.id}").text)
     assert "4.5" in body
     assert "2 ta baho" in body
+
+
+# --- Texkarta: taom tarkibi ---
+
+
+def test_the_menu_page_says_which_dish_has_no_recipe_card(client, cafe):
+    """Egasi qaysi taomda tarkib yozilmaganini bir qarashda ko'rsin.
+
+    Ilgari buni bilish uchun har taomni ochib chiqishga to'g'ri kelardi.
+    """
+    login(client, "osh", "adminpass123")
+    body = html.unescape(client.get("/admin/menu").text)
+
+    assert "Texkarta yo'q" in body
+    assert "tex-link is-set" not in body
+
+
+def test_a_filled_recipe_card_is_marked_as_done(client, db, cafe):
+    restaurant, item = cafe
+    item.ingredients = {"uz": "Espresso, sut"}
+    db.commit()
+
+    login(client, "osh", "adminpass123")
+    body = html.unescape(client.get("/admin/menu").text)
+
+    assert "tex-link is-set" in body
+    assert "Texkarta yo'q" not in body
+
+
+def test_the_recipe_card_reaches_the_guest_menu(client, db, cafe):
+    """Tarkib mijozga ko'rinishi kerak — talabning o'zagi shu.
+
+    Ingredientlar NARXLANMAYDI: faqat nomlari yoziladi va menyuda
+    ro'yxat bo'lib chiqadi.
+    """
+    restaurant, item = cafe
+    item.ingredients = {"uz": "Espresso, sut"}
+    db.commit()
+
+    body = html.unescape(client.get(f"/r/{restaurant.slug}/item/{item.id}").text)
+
+    assert "Tarkibi" in body
+    assert "Espresso" in body
+    assert "Sut" in body

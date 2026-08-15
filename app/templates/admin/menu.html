@@ -36,6 +36,11 @@
         <header class="menu-cat-head">
           <details class="menu-cat-edit">
             <summary>
+              {% if category.image %}
+                <img class="cat-badge" src="/media/{{ category.image }}" alt="" loading="lazy">
+              {% else %}
+                <span class="cat-badge cat-badge-empty" aria-hidden="true"></span>
+              {% endif %}
               <strong>{{ tr(category.name, 'uz') }}</strong>
               <span class="muted small">
                 {{ category.items | length }} {{ t('menu_dish_count', ui_lang) }}
@@ -45,7 +50,8 @@
               {% endif %}
             </summary>
             <div class="menu-cat-body">
-              <form method="post" action="/admin/categories/{{ category.id }}" class="stack">
+              <form method="post" action="/admin/categories/{{ category.id }}" class="stack"
+                    enctype="multipart/form-data">
                 {% include "partials/csrf.html" %}
                 <div class="grid-3">
                   <div class="field"><label>{{ t('name_in', ui_lang) }} (uz)</label>
@@ -66,6 +72,19 @@
                     <label for="active-{{ category.id }}">{{ t('cat_show_in_menu', ui_lang) }}</label>
                   </div>
                   <button class="btn btn-primary btn-sm" type="submit">{{ t('action_save', ui_lang) }}</button>
+                </div>
+
+                <div class="row" style="align-items:flex-end">
+                  <div class="field">
+                    <label for="cat-img-{{ category.id }}">{{ t('cat_image', ui_lang) }}</label>
+                    <input id="cat-img-{{ category.id }}" type="file" name="image" accept="image/*">
+                  </div>
+                  {% if category.image %}
+                    <div class="check" style="padding-bottom:.6rem">
+                      <input id="cat-rm-{{ category.id }}" name="remove_image" type="checkbox" value="true">
+                      <label for="cat-rm-{{ category.id }}">{{ t('item_remove_image', ui_lang) }}</label>
+                    </div>
+                  {% endif %}
                 </div>
               </form>
               <form method="post" action="/admin/categories/{{ category.id }}/delete"
@@ -100,6 +119,21 @@
                   {% endif %}
                   {% set note = tr(item.description, 'uz') %}
                   {% if note %}<div class="muted small">{{ note | truncate(70) }}</div>{% endif %}
+
+                  {#
+                    Texkarta — taomning tarkibi. Ingredientlar narxlanmaydi,
+                    faqat nomi yoziladi va ular mijoz menyusida ko'rinadi.
+
+                    Shu yerda holati aytiladi: to'ldirilganmi yoki yo'q.
+                    Ilgari buni bilish uchun har taomni ochib ko'rishga
+                    to'g'ri kelardi.
+                  #}
+                  {% set parts = tr(item.ingredients, 'uz') %}
+                  <a class="tex-link {{ 'is-set' if parts }}"
+                     href="/admin/items/{{ item.id }}/edit#tex">
+                    {{ ui.icon('leaf') }}
+                    {{ t('tex_card', ui_lang) if parts else t('tex_card_empty', ui_lang) }}
+                  </a>
                 </div>
 
                 <div class="menu-dish-price">
