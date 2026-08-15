@@ -51,11 +51,14 @@ UI: dict[str, dict[str, str]] = {
     "hero_title_1": {"uz": "Kafengiz menyusi \u2014", "ru": "Меню вашего кафе \u2014", "en": "Your cafe menu \u2014"},
     "hero_title_2": {"uz": "mijoz telefonida", "ru": "в телефоне гостя", "en": "on your guest's phone"},
     "hero_lead": {
-        "uz": "Stolga QR kod qo'yasiz, mijoz skanerlaydi \u2014 menyu telefonida ochiladi. "
-              "Narx o'zgarsa bitta joyda tahrirlaysiz, qayta chop etish yo'q.",
-        "ru": "Ставите QR-код на стол, гость сканирует \u2014 меню открывается в телефоне. "
+        "uz": "Stolga QR kod qo'yasiz, mijoz skanerlaydi \u2014 menyu telefonida ochiladi "
+              "va o'sha yerdan buyurtma beradi. Narx o'zgarsa bitta joyda tahrirlaysiz, "
+              "qayta chop etish yo'q.",
+        "ru": "Ставите QR-код на стол, гость сканирует \u2014 меню открывается в телефоне, "
+              "оттуда же он и заказывает. "
               "Цена изменилась \u2014 правите в одном месте, перепечатывать ничего не нужно.",
-        "en": "Put a QR code on the table, the guest scans it and the menu opens on their phone. "
+        "en": "Put a QR code on the table, the guest scans it, the menu opens on their phone "
+              "and they order right there. "
               "When a price changes you edit it in one place \u2014 nothing gets reprinted.",
     },
     "hero_cta": {"uz": "Bepul boshlash", "ru": "Начать бесплатно", "en": "Start for free"},
@@ -185,6 +188,120 @@ UI: dict[str, dict[str, str]] = {
     },
 
     "more_features": {"uz": "Yana nimalar bor", "ru": "Что ещё есть", "en": "What else there is"},
+
+    # --- Stoldan buyurtma ---
+    "show_order_kicker": {"uz": "Buyurtma", "ru": "Заказы", "en": "Orders"},
+    "show_order_title": {
+        "uz": "Mijoz stoldan buyurtma beradi",
+        "ru": "Гость заказывает прямо со стола",
+        "en": "Guests order from the table",
+    },
+    "show_order_text": {
+        "uz": "Har stolda o'z QR kodi. Mijoz skanerlaydi, tanlaydi va yuboradi — "
+              "afitsantning telefoni jiringlaydi va qaysi stol ekani darrov ko'rinadi.",
+        "ru": "У каждого стола свой QR. Гость сканирует, выбирает и отправляет — "
+              "телефон официанта звонит и сразу показывает номер стола.",
+        "en": "Every table has its own QR. The guest scans, picks and sends — "
+              "the waiter's phone rings and shows which table straight away.",
+    },
+    "show_order_note": {
+        "uz": "Javob berilmasa eslatma qaytariladi. Buyurtma qabul qilinsa "
+              "bildirishnoma o'zi o'chadi.",
+        "ru": "Если не ответить, напоминание повторится. После принятия заказа "
+              "уведомление гаснет само.",
+        "en": "Unanswered orders are repeated. Once accepted, the notification "
+              "clears itself.",
+    },
+    "show_order_new": {"uz": "Yangi buyurtma", "ru": "Новый заказ", "en": "New order"},
+    "show_order_ago": {"uz": "2 daqiqa oldin", "ru": "2 минуты назад", "en": "2 minutes ago"},
+    "show_order_accept": {"uz": "Qabul qilaman", "ru": "Принимаю", "en": "Accept"},
+    "show_order_total": {"uz": "Jami", "ru": "Итого", "en": "Total"},
+
+    # --- Kombo va texkarta ---
+    "show_combo_kicker": {"uz": "Kombo va texkarta", "ru": "Комбо и техкарта", "en": "Combos and recipe cards"},
+    "show_combo_title": {
+        "uz": "To'plam qiling, tarkibini ko'rsating",
+        "ru": "Соберите набор, покажите состав",
+        "en": "Build sets, show what's inside",
+    },
+    "show_combo_text": {
+        "uz": "Bir necha taomni bitta to'plamga yig'asiz va narxini o'zingiz belgilaysiz. "
+              "Qancha tejalishi mijozga o'zi hisoblanib ko'rsatiladi.",
+        "ru": "Соберите несколько блюд в набор и назначьте свою цену. "
+              "Экономия считается автоматически и показывается гостю.",
+        "en": "Group several dishes into one set and set your own price. "
+              "The saving is worked out and shown to the guest automatically.",
+    },
+    "show_combo_note": {
+        "uz": "Tarkibidagi taom yashirilsa to'plam menyudan o'zi yo'qoladi — "
+              "bajarib bo'lmaydigan buyurtma tushmaydi.",
+        "ru": "Если блюдо из набора скрыть, набор сам исчезнет из меню — "
+              "невыполнимый заказ не придёт.",
+        "en": "Hide a dish and its set leaves the menu by itself — no order "
+              "arrives that the kitchen cannot fill.",
+    },
+    "show_combo_save": {"uz": "tejaysiz", "ru": "экономия", "en": "you save"},
+
+    # --- Qolgan imkoniyatlar ---
+    "feat_tex_title": {"uz": "Texkarta", "ru": "Техкарта", "en": "Recipe card"},
+    "feat_tex_text": {
+        "uz": "Taom tarkibini yozasiz — mijoz menyuda ro'yxat bo'lib ko'radi. "
+              "Ingredientni bittalab narxlash shart emas.",
+        "ru": "Записываете состав блюда — гость видит его списком в меню. "
+              "Оценивать каждый ингредиент не нужно.",
+        "en": "Write what goes into a dish and the guest sees it as a list. "
+              "No need to price each ingredient.",
+    },
+    "feat_catpic_title": {"uz": "Bo'lim rasmlari", "ru": "Изображения разделов", "en": "Section images"},
+    "feat_catpic_text": {
+        "uz": "Har bo'limga rasm qo'yasiz. Uzun menyuda ko'z so'zni o'qigunicha "
+              "rasmni topib bo'ladi.",
+        "ru": "Ставите картинку на раздел. В длинном меню глаз находит её "
+              "быстрее, чем читает название.",
+        "en": "Give each section a picture. In a long menu the eye finds it "
+              "faster than it reads the name.",
+    },
+    "feat_bino_title": {"uz": "Bino va QR arxivi", "ru": "Здание и архив QR", "en": "Building and QR archive"},
+    "feat_bino_text": {
+        "uz": "Qavat va bo'limlarni o'zingiz yig'asiz, stollarni xohlagancha "
+              "raqamlaysiz. Barcha QR bitta arxivda — nomida qayerniki ekani yozilgan.",
+        "ru": "Сами собираете этажи и залы, нумеруете столы как хотите. "
+              "Все QR одним архивом — в имени файла написано, чей он.",
+        "en": "Lay out floors and rooms yourself and number tables your way. "
+              "Every QR in one archive, each filename saying where it belongs.",
+    },
+    "feat_app_title": {"uz": "Afitsant ilovasi", "ru": "Приложение официанта", "en": "Waiter app"},
+    "feat_app_text": {
+        "uz": "Android ilova: buyurtma kelganda ovoz va kuchli tebranish. "
+              "Shovqinli zalda ham seziladi.",
+        "ru": "Android-приложение: звук и сильная вибрация при заказе. "
+              "Заметно даже в шумном зале.",
+        "en": "An Android app: sound and a strong buzz on every order. "
+              "Noticeable even in a loud room.",
+    },
+
+    # --- Tez orada ---
+    "soon_title": {"uz": "Ustida ishlayapmiz", "ru": "В работе", "en": "In the works"},
+    "soon_sub": {
+        "uz": "Bular hali tayyor emas. Rejada bor va navbat bilan chiqadi.",
+        "ru": "Этого пока нет. Оно в плане и появится по очереди.",
+        "en": "These are not ready yet. They are planned and will arrive in turn.",
+    },
+    "soon_staff": {
+        "uz": "Xodimlar bo'limi: ish tarixi, baholash va PIN boshqaruvi",
+        "ru": "Раздел сотрудников: история работы, оценка и управление PIN",
+        "en": "Staff section: activity history, ratings and PIN management",
+    },
+    "soon_design": {
+        "uz": "Menyu dizayni uchun alohida bo'lim va tayyor shablonlar",
+        "ru": "Отдельный раздел дизайна меню и готовые шаблоны",
+        "en": "A dedicated menu-design section with ready-made templates",
+    },
+    "soon_dash": {
+        "uz": "Boshqaruv paneli: kerakli raqamlar bir qarashda",
+        "ru": "Панель управления: нужные цифры с одного взгляда",
+        "en": "A dashboard that shows the numbers that matter at a glance",
+    },
     "feat_wifi_title": {"uz": "Wi-Fi paroli menyuda", "ru": "Пароль от Wi-Fi в меню", "en": "Wi-Fi password in the menu"},
     "feat_wifi_text": {
         "uz": "Mijoz menyuni ochgan \u2014 paroli ham o'sha yerda. Kuniga o'nlab marta so'raladigan savol yopiladi.",

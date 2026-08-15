@@ -270,6 +270,68 @@
       </div>
     {% endif %}
 
+    {# --- 5. Stoldan buyurtma. Eng katta imkoniyat, shuning uchun to'liq
+           qatorda: mijoz QR skanerlaydi, afitsantning telefoni jiringlaydi. --- #}
+    <div class="show-row">
+      <div class="show-text" data-reveal="right">
+        <p class="lp-kicker">{{ t('show_order_kicker', lang) }}</p>
+        <h3>{{ t('show_order_title', lang) }}</h3>
+        <p class="muted">{{ t('show_order_text', lang) }}</p>
+        <p class="muted small">{{ t('show_order_note', lang) }}</p>
+      </div>
+      <div class="lp-panel show-panel" data-reveal="left" aria-hidden="true">
+        {#
+          Afitsant taxtasidagi kartaning o'zi. Raqamlar namuna menyusi
+          bilan bir xil — "Namunani ko'rish" tugmasini bosgan odam xuddi
+          shu narxlarni ko'radi.
+        #}
+        <div class="show-order">
+          <div class="show-order-head">
+            <span class="show-order-bell">{{ ui.icon('phone') }}</span>
+            <div>
+              <strong>{{ t('show_order_new', lang) }}</strong>
+              <span class="muted small">{{ t('show_order_ago', lang) }}</span>
+            </div>
+            <span class="show-order-seat">7-stol</span>
+          </div>
+          <ul class="show-order-lines">
+            <li><span>1× Osh</span><b>45 000</b></li>
+            <li><span>2× Ko'k choy</span><b>16 000</b></li>
+          </ul>
+          <div class="show-order-foot">
+            <span class="muted small">{{ t('show_order_total', lang) }}</span>
+            <b>61 000</b>
+          </div>
+          <span class="btn btn-primary btn-sm show-order-btn">{{ t('show_order_accept', lang) }}</span>
+        </div>
+      </div>
+    </div>
+
+    {# --- 6. Kombo va texkarta --- #}
+    <div class="show-row show-flip">
+      <div class="show-text" data-reveal="right">
+        <p class="lp-kicker">{{ t('show_combo_kicker', lang) }}</p>
+        <h3>{{ t('show_combo_title', lang) }}</h3>
+        <p class="muted">{{ t('show_combo_text', lang) }}</p>
+        <p class="muted small">{{ t('show_combo_note', lang) }}</p>
+      </div>
+      <div class="lp-panel show-panel" data-reveal="left" aria-hidden="true">
+        <div class="show-combo">
+          <div class="show-combo-top">
+            <span class="show-combo-save">−18 000 {{ t('show_combo_save', lang) }}</span>
+            <b>70 000 <small>so'm</small></b>
+          </div>
+          <p class="show-combo-name">Ikki kishilik</p>
+          <ul class="show-combo-parts">
+            <li>1× Osh</li>
+            <li>1× Lag'mon</li>
+            <li>2× Ko'k choy</li>
+          </ul>
+          <p class="show-combo-tex">{{ ui.icon('leaf') }} Guruch · Qo'y go'shti · Sabzi · Zira</p>
+        </div>
+      </div>
+    </div>
+
     {# Qolgan imkoniyatlar — ixcham, sahifa cho'zilib ketmasin #}
     <p class="section-label show-more-label">{{ t('more_features', lang) }}</p>
     <div class="lp-grid show-more" data-stagger>
@@ -284,10 +346,48 @@
         <p class="muted small">Bir marta kiritasiz — mijoz o'z tilida ko'radi. Tarjima bo'lmasa o'zbekchasi chiqadi.</p>
       </div>
       <div class="lp-panel lp-card" data-reveal>
-        <span class="lp-tile">{{ ui.icon('leaf') }}</span>
+        <span class="lp-tile">{{ ui.icon('flame') }}</span>
         <h3>{{ t('feat_marks_title', lang) }}</h3>
-        <p class="muted small">Halol, o'tkir, vegetarian va allergen ma'lumoti. Mijoz so'ramaydi, xodim vaqti tejaladi.</p>
+        <p class="muted small">O'tkir, vegetarian va allergen ma'lumoti. Mijoz so'ramaydi, xodim vaqti tejaladi.</p>
       </div>
+
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('leaf') }}</span>
+        <h3>{{ t('feat_tex_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_tex_text', lang) }}</p>
+      </div>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('store') }}</span>
+        <h3>{{ t('feat_catpic_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_catpic_text', lang) }}</p>
+      </div>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('qr') }}</span>
+        <h3>{{ t('feat_bino_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_bino_text', lang) }}</p>
+      </div>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('phone') }}</span>
+        <h3>{{ t('feat_app_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_app_text', lang) }}</p>
+      </div>
+    </div>
+
+    {#
+      Rejadagi ishlar ATAYLAB alohida va ochiq belgilangan. Ular tayyor
+      imkoniyatlar qatorida turgan bo'lsa, kelgan odam ularni bugun bor
+      deb o'ylardi va ro'yxatdan o'tgach aldangan his qilardi.
+    #}
+    <div class="lp-panel lp-soon" data-reveal>
+      <div>
+        <p class="lp-kicker">{{ ui.icon('clock') }} {{ t('soon_title', lang) }}</p>
+        <p class="muted small">{{ t('soon_sub', lang) }}</p>
+      </div>
+      <ul class="lp-soon-list">
+        <li>{{ t('soon_staff', lang) }}</li>
+        <li>{{ t('soon_design', lang) }}</li>
+        <li>{{ t('soon_dash', lang) }}</li>
+      </ul>
     </div>
   </div>
 </section>
