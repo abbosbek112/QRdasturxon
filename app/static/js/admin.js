@@ -105,18 +105,46 @@ document.addEventListener("click", function (event) {
   });
 })();
 
-// Uslub tanlanganda rang maydonini o'sha uslubning rangiga o'tkazadi.
-// Restoran keyin rangni o'zi o'zgartirsa, u saqlanib qoladi.
+// Dizayn bo'limidagi ikkita qulaylik. Ikkalasi ham FAQAT qulaylik:
+// JS o'chirilgan brauzerda forma baribir to'g'ri ishlaydi.
 (function () {
-  var picker = document.querySelector(".theme-picker");
-  var color = document.getElementById("theme_color");
-  if (!picker || !color) return;
+  var grid = document.querySelector(".tpl-grid");
+  var own = document.getElementById("own_color");
+  var ownRadio = document.querySelector('input[name="theme_color"][value="__own__"]');
 
-  picker.addEventListener("change", function (event) {
-    var input = event.target;
-    if (!input.matches('input[name="theme"]')) return;
+  // 1. Shablon tanlanganda rang ham o'sha shablonnikiga o'tadi. Odam
+  //    rangni o'zi o'zgartirgan bo'lsa, keyingi shablongacha shu qoladi.
+  if (grid) {
+    grid.addEventListener("change", function (event) {
+      var input = event.target;
+      if (!input.matches('input[name="theme"]')) return;
 
-    var accent = input.getAttribute("data-accent");
-    if (accent) color.value = accent;
-  });
+      var accent = input.getAttribute("data-accent");
+      if (!accent) return;
+
+      var swatch = document.querySelector(
+        'input[name="theme_color"][value="' + accent + '"]'
+      );
+      if (swatch) {
+        swatch.checked = true;
+      } else if (own && ownRadio) {
+        own.value = accent;
+        ownRadio.checked = true;
+      }
+      paintOwn();
+    });
+  }
+
+  // 2. Rang tanlagichga tegilsa "o'z rangim" o'zi belgilanadi — aks holda
+  //    odam rang tanlab, radioni belgilashni unutib saqlab yuborardi.
+  if (own && ownRadio) {
+    own.addEventListener("input", function () {
+      ownRadio.checked = true;
+      paintOwn();
+    });
+  }
+
+  function paintOwn() {
+    if (own && ownRadio) ownRadio.closest(".swatch").style.setProperty("--sw", own.value);
+  }
 })();

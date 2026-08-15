@@ -185,7 +185,6 @@ def test_settings_save_translated_fields(admin_client, db, tenant_a):
             "description_en": "Uzbek cuisine",
             "address_uz": "Toshkent",
             "phone": "+998901234567",
-            "theme_color": "#b45309",
             "currency": "so'm",
         },
     )
@@ -193,7 +192,8 @@ def test_settings_save_translated_fields(admin_client, db, tenant_a):
     restaurant = db.get(Restaurant, restaurant.id)
     assert restaurant.description == {"uz": "Milliy taomlar", "en": "Uzbek cuisine"}
     assert restaurant.address == {"uz": "Toshkent"}
-    assert restaurant.theme_color == "#b45309"
+    # Valyuta dizayn emas, ish sozlamasi — u shu yerda qoladi
+    assert restaurant.currency == "so'm"
 
 
 def test_deleting_a_category_removes_its_items(admin_client, db, tenant_a):

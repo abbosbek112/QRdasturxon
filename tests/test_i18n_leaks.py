@@ -106,6 +106,7 @@ def toliq_restoran(db, tenant_a):
         "/admin/stats",
         "/admin/comments",
         "/admin/qr",
+        "/admin/design",
         "/admin/settings",
     ],
 )

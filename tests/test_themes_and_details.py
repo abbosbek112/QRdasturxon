@@ -86,36 +86,34 @@ def test_unknown_theme_falls_back_to_default(db, cafe):
     assert themes.get(restaurant.theme).key == themes.DEFAULT_THEME
 
 
-def test_owner_can_switch_theme_from_settings(client, db, cafe):
+def test_owner_can_switch_theme_from_the_design_section(client, db, cafe):
+    """Uslub endi Sozlamalarda emas, alohida Dizayn bo'limida."""
     restaurant, _ = cafe
     login(client, "osh", "adminpass123")
 
     client.post(
-        "/admin/settings",
+        "/admin/design",
         data={
-            "csrf_token": csrf(client, "/admin/settings"),
-            "name": restaurant.name,
+            "csrf_token": csrf(client, "/admin/design"),
             "theme": "issiq",
             "theme_color": "#c2410c",
-            "currency": "so'm",
         },
     )
     db.refresh(restaurant)
     assert restaurant.theme == "issiq"
+    assert restaurant.theme_color == "#c2410c"
 
 
-def test_settings_ignores_an_invalid_theme(client, db, cafe):
+def test_design_ignores_an_invalid_theme(client, db, cafe):
     restaurant, _ = cafe
     before = restaurant.theme
     login(client, "osh", "adminpass123")
 
     client.post(
-        "/admin/settings",
+        "/admin/design",
         data={
-            "csrf_token": csrf(client, "/admin/settings"),
-            "name": restaurant.name,
+            "csrf_token": csrf(client, "/admin/design"),
             "theme": "../../etc/passwd",
-            "currency": "so'm",
         },
     )
     db.refresh(restaurant)
@@ -172,3 +170,129 @@ def test_prep_time_round_trips_through_the_form(client, db, cafe):
     )
     db.refresh(item)
     assert item.prep_minutes == 40
+
+
+# --- Dizayn bo'limi: shablon, rang, rasm ---
+
+
+def test_the_design_page_shows_every_template(client, cafe):
+    """Har shablon ko'rinishi bilan tanlanadi — nomi bilan emas.
+
+    Shuning uchun sahifada barcha shablonlar chizilgan bo'lishi kerak:
+    "Klassik" degan so'z egasiga hech nima demaydi.
+    """
+    login(client, "osh", "adminpass123")
+    body = client.get("/admin/design").text
+
+    for key in themes.THEMES:
+        assert f'value="{key}"' in body, key
+    # Har shablon o'z palitrasini oladi
+    for key in themes.THEMES:
+        assert f'.tpl[data-theme="{key}"]' in body
+
+
+def test_a_ready_made_colour_can_be_chosen(client, db, cafe):
+    restaurant, _ = cafe
+    login(client, "osh", "adminpass123")
+
+    client.post(
+        "/admin/design",
+        data={"csrf_token": csrf(client, "/admin/design"), "theme_color": "#0369a1"},
+    )
+    db.refresh(restaurant)
+    assert restaurant.theme_color == "#0369a1"
+
+
+def test_an_own_colour_comes_from_the_paired_field(client, db, cafe):
+    """`__own__` — "yonidagi maydondan ol" degan belgi.
+
+    Tayyor ranglar radio bo'lib keladi va ular bilan bir nomda
+    `<input type="color">` yuborib bo'lmaydi, shuning uchun juftlik.
+    """
+    restaurant, _ = cafe
+    login(client, "osh", "adminpass123")
+
+    client.post(
+        "/admin/design",
+        data={
+            "csrf_token": csrf(client, "/admin/design"),
+            "theme_color": "__own__",
+            "own_color": "#123456",
+        },
+    )
+    db.refresh(restaurant)
+    assert restaurant.theme_color == "#123456"
+
+
+def test_a_colour_that_is_not_a_colour_is_refused(client, db, cafe):
+    """Rang menyu sahifasining <style> ichiga tushadi.
+
+    Shakli tekshirilmasa u yerdan `</style>` yozib chiqib ketish mumkin
+    edi — shuning uchun faqat haqiqiy hex o'tadi.
+    """
+    restaurant, _ = cafe
+    oldin = restaurant.theme_color
+    login(client, "osh", "adminpass123")
+
+    client.post(
+        "/admin/design",
+        data={
+            "csrf_token": csrf(client, "/admin/design"),
+            "theme_color": "__own__",
+            "own_color": "</style><script>alert(1)</script>",
+        },
+    )
+    db.refresh(restaurant)
+    assert restaurant.theme_color != "</style><script>alert(1)</script>"
+    # Uslubning o'z rangiga qaytadi
+    assert restaurant.theme_color == themes.get(restaurant.theme).accent or oldin
+
+
+def test_the_settings_page_no_longer_holds_the_design(client, cafe):
+    """Sozlamalarda faqat ish sozlamalari qolsin.
+
+    Dizayn u yerda ish vaqti va Wi-Fi paroli orasida turardi — bir marta
+    qilinadigan ish har kuni ochiladigan sahifani uzaytirib turardi.
+    """
+    login(client, "osh", "adminpass123")
+    body = client.get("/admin/settings").text
+
+    assert 'name="theme"' not in body
+    assert 'name="logo"' not in body
+    # Valyuta esa dizayn emas — u shu yerda qoladi
+    assert 'name="currency"' in body
+    # Yo'l ko'rsatib qo'yiladi
+    assert "/admin/design" in body
+
+
+def test_the_menu_uses_the_chosen_colour(client, db, cafe):
+    """Tanlangan rang mijoz menyusiga chindan yetib borsin."""
+    restaurant, _ = cafe
+    login(client, "osh", "adminpass123")
+    client.post(
+        "/admin/design",
+        data={"csrf_token": csrf(client, "/admin/design"), "theme_color": "#15803d"},
+    )
+    db.refresh(restaurant)
+
+    body = client.get(f"/r/{restaurant.slug}").text
+    assert "--accent:#15803d" in body
+
+
+def test_another_owner_cannot_restyle_this_menu(client, db, cafe, tenant_b):
+    """Qo'shni egasi kirsa o'z restoranining dizaynini o'zgartiradi."""
+    restaurant, _ = cafe
+    boshqa, _ = tenant_b
+    oldin = restaurant.theme
+    db.commit()
+
+    login(client, "choy", "adminpass123")
+    client.post(
+        "/admin/design",
+        data={"csrf_token": csrf(client, "/admin/design"), "theme": "tungi"},
+    )
+    db.refresh(restaurant)
+    db.refresh(boshqa)
+
+    assert restaurant.theme == oldin
+    assert boshqa.theme == "tungi"

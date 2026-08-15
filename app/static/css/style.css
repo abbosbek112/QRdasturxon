@@ -2834,3 +2834,105 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   font-weight: 700;
 }
 .staff-review-body p { margin: 0; }
+
+/* --- Tungi: qorong'i fon. Oq deb qotirilgan joylar shu yerda to'g'rilanadi --- */
+
+/* Narx yorlig'i oq fonda edi, matni esa `--ink` — qorong'i uslubda u
+   och rang bo'lib qoladi va yozuv oq fonda yo'qolardi */
+[data-theme="tungi"] .price-pill {
+  background: rgb(20 23 28 / .88);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgb(0 0 0 / .5);
+}
+[data-theme="tungi"] .price-pill small { color: var(--ink-2); }
+
+/* Qorong'i fonda soya ko'rinmaydi — chegara uning o'rnini bosadi */
+[data-theme="tungi"] .dish,
+[data-theme="tungi"] .card,
+[data-theme="tungi"] .table-card,
+[data-theme="tungi"] .sheet-panel {
+  box-shadow: none;
+  border-color: var(--line-2);
+}
+[data-theme="tungi"] .dish:hover { border-color: var(--accent); }
+
+/* Rasm joyi bo'sh bo'lganda fon qorong'i qolsin */
+[data-theme="tungi"] .dish-ph { background: var(--surface-2); color: var(--ink-3); }
+
+/* Logotip ortidagi oq halqa qorong'i sahifada dog' bo'lib turardi */
+[data-theme="tungi"] .hero-logo {
+  background: var(--surface-2);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / .12);
+}
+
+/* ==========================================================================
+   Menyu dizayni bo'limi
+   ========================================================================== */
+
+/* Shablon katakchasi. Ichida haqiqiy taom kartasi turadi, shuning uchun
+   katakcha o'z palitrasini oladi — `<style>` bloki uni to'ldiradi. */
+.tpl-grid { display: grid; gap: .8rem; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .tpl-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.tpl {
+  position: relative;
+  display: block; cursor: pointer;
+  padding: .55rem;
+  border: 2px solid var(--line); border-radius: var(--r-lg);
+  background: var(--page);
+  transition: border-color .15s, transform .2s;
+}
+.tpl:has(input:checked) { border-color: var(--accent); }
+@media (hover: hover) { .tpl:hover { transform: translateY(-2px); } }
+/* Radio o'zi ko'rinmaydi: butun katakcha bosiladigan joy.
+
+   O'lchami ATAYLAB 1px ga qotirilgan. Loyihada `input` ga umumiy
+   `width:100%` berilgan va yashirin radio shu enni olib, sahifani
+   o'ng tomonga cho'zib yuborardi — gorizontal aylantirish paydo
+   bo'lardi va uning sababi ko'rinmasdi. */
+.tpl input,
+.swatch input {
+  position: absolute; left: 0; top: 0;
+  width: 1px; height: 1px;
+  opacity: 0; pointer-events: none;
+}
+
+.tpl-shot { display: block; pointer-events: none; }
+.tpl-shot .dish { display: block; }
+.tpl-shot .dish-media { aspect-ratio: 4 / 3; }
+.tpl-shot .dish-name {
+  display: block;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Sahifaning o'z palitrasiga qaytadi — shablon nomi katakcha ranglarida
+   emas, panel ranglarida o'qilishi kerak */
+.tpl-text {
+  display: block; margin-top: .5rem; padding: 0 .15rem;
+  color: var(--ink); font-family: var(--font-sans);
+}
+.tpl-text strong { display: block; font-size: var(--text-sm); }
+.tpl-text .muted { display: block; line-height: 1.35; }
+
+/* Tayyor ranglar */
+.swatches { display: flex; flex-wrap: wrap; gap: .5rem; }
+.swatch { position: relative; cursor: pointer; line-height: 0; }
+.swatch > span[aria-hidden] {
+  display: block; width: 2.2rem; height: 2.2rem;
+  border-radius: var(--r-full);
+  background: var(--sw);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12);
+}
+/* Tanlangani halqa bilan ajratiladi — belgi rangning ustiga tushsa
+   to'q ranglarda ko'rinmay qolardi */
+.swatch:has(input:checked) > span[aria-hidden] {
+  box-shadow: 0 0 0 2px var(--page), 0 0 0 4px var(--sw);
+}
+
+.design-logo {
+  width: 64px; height: 64px; object-fit: cover;
+  border-radius: var(--r-md); margin-bottom: .5rem;
+}
+.design-cover {
+  width: 100%; max-width: 260px; aspect-ratio: 16 / 7; object-fit: cover;
+  border-radius: var(--r-md); margin-bottom: .5rem;
+}

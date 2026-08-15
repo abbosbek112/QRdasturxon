@@ -139,9 +139,132 @@ THEMES: dict[str, Theme] = {
             "--r-full": "2px",
         },
     ),
+    # Qorong'i fon — yagona uslub bo'lib, kechqurun ishlaydigan joylar uchun.
+    # Matn ataylab sof oq emas: qora fonda sof oq ko'zni charchatadi.
+    "tungi": Theme(
+        key="tungi",
+        name="Tungi",
+        hint="Qorong'i fon, yorqin urg'u — bar, lounge va kechki restoranlar",
+        accent="#f59e0b",
+        variables={
+            "--page": "#0b0d10",
+            "--surface": "#14171c",
+            "--surface-2": "#1c2027",
+            "--surface-3": "#262b33",
+            "--ink": "#e8eaed",
+            "--ink-2": "#9aa1ab",
+            "--ink-3": "#6c737d",
+            "--line": "#242931",
+            "--line-2": "#333a44",
+            "--font-sans": SYSTEM_SANS,
+            "--font-head": SYSTEM_SANS,
+            "--head-spacing": "-.03em",
+            "--r-sm": "8px",
+            "--r-md": "12px",
+            "--r-lg": "16px",
+            "--r-xl": "22px",
+            "--r-full": "999px",
+        },
+    ),
+    # Sovuq yashil, tabiiy tuslar — sabzavot va sog'lom taomlar
+    "bogh": Theme(
+        key="bogh",
+        name="Bog'",
+        hint="Yashil va tabiiy tuslar — sog'lom taomlar va sabzavotli menyu",
+        accent="#15803d",
+        variables={
+            "--page": "#f4f8f3",
+            "--surface": "#ffffff",
+            "--surface-2": "#e9f1e7",
+            "--surface-3": "#d9e7d6",
+            "--ink": "#12210f",
+            "--ink-2": "#5b6b57",
+            "--ink-3": "#8b9a87",
+            "--line": "#e0eade",
+            "--line-2": "#cadcc5",
+            "--font-sans": SYSTEM_SANS,
+            "--font-head": SERIF,
+            "--head-spacing": "-.01em",
+            "--r-sm": "8px",
+            "--r-md": "14px",
+            "--r-lg": "18px",
+            "--r-xl": "26px",
+            "--r-full": "999px",
+        },
+    ),
+    # Sovuq ko'k — baliq, dengiz mahsulotlari va yozgi terassalar
+    "dengiz": Theme(
+        key="dengiz",
+        name="Dengiz",
+        hint="Sovuq ko'k tuslar — baliq, dengiz mahsulotlari va yozgi terassa",
+        accent="#0369a1",
+        variables={
+            "--page": "#f2f7fb",
+            "--surface": "#ffffff",
+            "--surface-2": "#e6eff7",
+            "--surface-3": "#d3e3ef",
+            "--ink": "#0c1a24",
+            "--ink-2": "#54687a",
+            "--ink-3": "#8497a6",
+            "--line": "#dde9f2",
+            "--line-2": "#c4d8e7",
+            "--font-sans": SYSTEM_SANS,
+            "--font-head": SYSTEM_SANS,
+            "--head-spacing": "-.02em",
+            "--r-sm": "10px",
+            "--r-md": "14px",
+            "--r-lg": "18px",
+            "--r-xl": "26px",
+            "--r-full": "999px",
+        },
+    ),
+    # To'q zarhal va serif — qimmat restoran hissi
+    "qirol": Theme(
+        key="qirol",
+        name="Qirol",
+        hint="To'q ranglar va serif — qimmat restoran va bayram ziyofatlari",
+        accent="#a16207",
+        variables={
+            "--page": "#faf7f2",
+            "--surface": "#ffffff",
+            "--surface-2": "#f3ede3",
+            "--surface-3": "#e7ddcd",
+            "--ink": "#1c1917",
+            "--ink-2": "#5f574e",
+            "--ink-3": "#928878",
+            "--line": "#ebe3d7",
+            "--line-2": "#dbcfbd",
+            "--font-sans": SERIF,
+            "--font-head": SERIF,
+            "--head-spacing": ".01em",
+            "--r-sm": "2px",
+            "--r-md": "6px",
+            "--r-lg": "8px",
+            "--r-xl": "10px",
+            "--r-full": "999px",
+        },
+    ),
 }
 
 DEFAULT_THEME = "zamonaviy"
+
+# Urg'u rangi uchun tayyor tanlov. Egasi rang tanlagichni ochib o'ylab
+# o'tirmasin: bu ranglar oq fonda ham, qorong'i fonda ham o'qiladigan
+# darajada to'q — och rang tanlangan tugmadagi oq yozuvni yo'q qilardi.
+ACCENTS: tuple[str, ...] = (
+    "#b45309",  # g'ishtrang
+    "#c2410c",  # to'q sariq
+    "#b91c1c",  # qizil
+    "#a16207",  # zarhal
+    "#15803d",  # yashil
+    "#0f766e",  # ko'kimtir yashil
+    "#0369a1",  # ko'k
+    "#4338ca",  # siyoh
+    "#7e22ce",  # binafsha
+    "#be185d",  # pushti
+    "#7c2d12",  # jigarrang
+    "#18181b",  # qora
+)
 
 HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 

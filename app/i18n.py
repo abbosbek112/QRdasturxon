@@ -1143,6 +1143,59 @@ UI: dict[str, dict[str, str]] = {
     "settings_main": {"uz": "Asosiy", "ru": "Основное", "en": "Basics"},
     "settings_contact": {"uz": "Aloqa", "ru": "Контакты", "en": "Contact"},
     "settings_style": {"uz": "Menyu uslubi", "ru": "Стиль меню", "en": "Menu style"},
+
+    # --- Menyu dizayni: alohida bo'lim ---
+    "design_title": {"uz": "Menyu dizayni", "ru": "Дизайн меню", "en": "Menu design"},
+    "design_sub": {
+        "uz": "Menyuning ko'rinishi: shablon, rang, logotip va muqova.",
+        "ru": "Внешний вид меню: шаблон, цвет, логотип и обложка.",
+        "en": "How the menu looks: template, colour, logo and cover.",
+    },
+    "design_moved": {
+        "uz": "Menyu ko'rinishi alohida bo'limga chiqarildi — u yerda "
+              "shablonni tanlagan holda darrov ko'rasiz.",
+        "ru": "Внешний вид меню вынесен в отдельный раздел — там шаблон "
+              "виден сразу при выборе.",
+        "en": "The menu's look now has its own section, where you see each "
+              "template as you pick it.",
+    },
+    "design_open": {"uz": "Dizaynni ochish", "ru": "Открыть дизайн", "en": "Open the design section"},
+    "design_open_menu": {"uz": "Menyuni ko'rish", "ru": "Посмотреть меню", "en": "View the menu"},
+    "design_templates": {"uz": "Shablonlar", "ru": "Шаблоны", "en": "Templates"},
+    "design_templates_hint": {
+        "uz": "Har shablon shrift, burchak yumaloqligi va butun palitrani birga "
+              "o'zgartiradi. Katakchalarda o'z taomingiz o'sha uslubda ko'rinadi.",
+        "ru": "Каждый шаблон меняет шрифт, скругления и всю палитру. В карточках "
+              "показано ваше блюдо в этом стиле.",
+        "en": "Each template changes the type, the corners and the whole palette. "
+              "The cards show your own dish in that style.",
+    },
+    "design_sample_dish": {"uz": "Namuna taom", "ru": "Пример блюда", "en": "Sample dish"},
+    "design_colour": {"uz": "Urg'u rangi", "ru": "Акцентный цвет", "en": "Accent colour"},
+    "design_colour_hint": {
+        "uz": "Tugmalar, narx va belgilar shu rangda bo'ladi. Shablon tanlaganda "
+              "rang ham o'ziga mos qilib almashadi.",
+        "ru": "Кнопки, цены и метки будут этого цвета. При выборе шаблона цвет "
+              "тоже меняется на подходящий.",
+        "en": "Buttons, prices and tags take this colour. Picking a template also "
+              "switches the colour to one that suits it.",
+    },
+    "design_own_colour": {"uz": "O'z rangim", "ru": "Свой цвет", "en": "My own colour"},
+    "design_own_colour_hint": {
+        "uz": "Juda och rang tanlamang — tugmadagi oq yozuv o'qilmay qoladi.",
+        "ru": "Не берите слишком светлый цвет — белый текст на кнопке пропадёт.",
+        "en": "Avoid a very light colour — white text on the buttons would vanish.",
+    },
+    "design_cover_hint": {
+        "uz": "Keng rasm tanlang — menyu tepasida to'liq enlikda chiqadi.",
+        "ru": "Выберите широкое изображение — оно будет во всю ширину меню.",
+        "en": "Pick a wide image — it runs the full width at the top of the menu.",
+    },
+    "design_save_hint": {
+        "uz": "Saqlaganingizdan keyin mijozlar darrov yangi ko'rinishda ko'radi.",
+        "ru": "После сохранения гости сразу увидят новый вид.",
+        "en": "Once saved, guests see the new look straight away.",
+    },
     "settings_images": {"uz": "Rasmlar", "ru": "Изображения", "en": "Images"},
     "field_description": {"uz": "Tavsif", "ru": "Описание", "en": "Description"},
     "field_hours": {"uz": "Ish vaqti", "ru": "Часы работы", "en": "Opening hours"},

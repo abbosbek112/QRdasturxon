@@ -7,7 +7,7 @@
   <p class="muted small">{{ t('settings_sub', ui_lang) }}</p>
 </div>
 
-<form method="post" action="/admin/settings" enctype="multipart/form-data" class="stack" style="max-width:780px">
+<form method="post" action="/admin/settings" class="stack" style="max-width:780px">
   {% include "partials/csrf.html" %}
 
   <div class="card stack">
@@ -20,6 +20,15 @@
       <div class="field"><label>{{ t('field_description', ui_lang) }} (uz)</label><textarea name="description_uz">{{ restaurant.description.get('uz', '') }}</textarea></div>
       <div class="field"><label>{{ t('field_description', ui_lang) }} (ru)</label><textarea name="description_ru">{{ restaurant.description.get('ru', '') }}</textarea></div>
       <div class="field"><label>{{ t('field_description', ui_lang) }} (en)</label><textarea name="description_en">{{ restaurant.description.get('en', '') }}</textarea></div>
+    </div>
+    {#
+      Valyuta dizayn emas, ish sozlamasi — u shu yerda qoladi. Ilgari
+      uslub blokining ichida turgan edi va dizayn ko'chirilganda birga
+      ketib qolishiga sal qoldi.
+    #}
+    <div class="field" style="max-width:220px">
+      <label for="currency">{{ t('field_currency', ui_lang) }}</label>
+      <input id="currency" name="currency" value="{{ restaurant.currency }}">
     </div>
   </div>
 
@@ -81,59 +90,14 @@
     {% endif %}
   </div>
 
+  {#
+    Dizayn endi alohida bo'limda. U bir marta qilinadigan va vaqt talab
+    qiladigan ish — ish vaqti va Wi-Fi paroli orasida turishi noto'g'ri edi.
+  #}
   <div class="card stack">
-    <h2>{{ t('settings_style', ui_lang) }}</h2>
-    <p class="hint" style="margin-top:-.5rem">
-      Uslub shrift, burchak yumaloqligi va sukut bo'yicha rangni birga o'zgartiradi.
-      Tanlaganingizdan keyin rangni o'zingizga moslashtirishingiz mumkin.
-    </p>
-    <div class="theme-picker">
-      {% for key, preset in THEMES.items() %}
-        <label class="theme-option {{ 'is-active' if restaurant.theme == key }}">
-          <input type="radio" name="theme" value="{{ key }}"
-                 data-accent="{{ preset.accent }}"
-                 {{ 'checked' if restaurant.theme == key }}>
-          <span class="theme-swatch" style="background:{{ preset.accent }}"></span>
-          <span class="theme-text">
-            <strong style="font-family:{{ preset.font_head }}">{{ preset.name }}</strong>
-            <span class="muted small">{{ preset.hint }}</span>
-          </span>
-        </label>
-      {% endfor %}
-    </div>
-
-    <div class="grid-2">
-      <div class="field">
-        <label for="theme_color">{{ t('field_accent', ui_lang) }}</label>
-        <input id="theme_color" name="theme_color" type="color" value="{{ restaurant.theme_color }}">
-        <p class="hint">Uslub tanlaganingizda avtomatik o'zgaradi, keyin o'zgartirsangiz shu qoladi.</p>
-      </div>
-      <div class="field">
-        <label for="currency">{{ t('field_currency', ui_lang) }}</label>
-        <input id="currency" name="currency" value="{{ restaurant.currency }}">
-      </div>
-    </div>
-  </div>
-
-  <div class="card stack">
-    <h2>{{ t('settings_images', ui_lang) }}</h2>
-    <div class="grid-2">
-      <div class="field">
-        <label for="logo">{{ t('field_logo', ui_lang) }}</label>
-        {% if restaurant.logo %}
-          <img src="/media/{{ restaurant.logo }}" alt="" style="width:64px;height:64px;border-radius:var(--r-md);object-fit:cover;margin-bottom:.5rem">
-        {% endif %}
-        <input id="logo" name="logo" type="file" accept="image/*">
-      </div>
-      <div class="field">
-        <label for="cover_image">{{ t('field_cover', ui_lang) }}</label>
-        {% if restaurant.cover_image %}
-          <img src="/media/{{ restaurant.cover_image }}" alt="" style="width:100%;max-width:220px;aspect-ratio:16/7;border-radius:var(--r-md);object-fit:cover;margin-bottom:.5rem">
-        {% endif %}
-        <input id="cover_image" name="cover_image" type="file" accept="image/*">
-        <p class="hint">Keng rasm tanlang — menyu tepasida to'liq enlikda chiqadi.</p>
-      </div>
-    </div>
+    <h2>{{ t('design_title', ui_lang) }}</h2>
+    <p class="muted small">{{ t('design_moved', ui_lang) }}</p>
+    <div><a class="btn btn-primary" href="/admin/design">{{ t('design_open', ui_lang) }}</a></div>
   </div>
 
   <div><button class="btn btn-primary" type="submit">{{ t('action_save', ui_lang) }}</button></div>

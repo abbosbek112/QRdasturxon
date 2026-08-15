@@ -229,13 +229,9 @@ async def update_settings(
     telegram: Annotated[str, Form()] = "",
     wifi_name: Annotated[str, Form()] = "",
     wifi_password: Annotated[str, Form()] = "",
-    theme: Annotated[str, Form()] = "",
-    theme_color: Annotated[str, Form()] = "#c2410c",
     currency: Annotated[str, Form()] = "so'm",
     orders_enabled: Annotated[bool, Form()] = False,
     order_window_minutes: Annotated[int, Form()] = 30,
-    logo: Annotated[UploadFile | None, File()] = None,
-    cover_image: Annotated[UploadFile | None, File()] = None,
 ):
     restaurant = get_restaurant(db, user)
     restaurant.name = name.strip() or restaurant.name
@@ -247,9 +243,6 @@ async def update_settings(
     restaurant.telegram = telegram.strip() or None
     restaurant.wifi_name = wifi_name.strip() or None
     restaurant.wifi_password = wifi_password.strip() or None
-    if theme in themes.THEMES:
-        restaurant.theme = theme
-    restaurant.theme_color = theme_color.strip() or restaurant.theme_color
     restaurant.currency = currency.strip() or restaurant.currency
     restaurant.orders_enabled = orders_enabled
     # 0 = cheksiz. Yuqori chegara — formadan tasodifan katta son kelib qolmasin
@@ -257,17 +250,90 @@ async def update_settings(
         0 if order_window_minutes <= 0 else min(order_window_minutes, 240)
     )
 
+    db.commit()
+    return RedirectResponse("/admin/settings", status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/design")
+def design_page(request: Request, db: DbSession, user: AdminUser):
+    """Menyu dizayni — Sozlamalardan chiqarilgan alohida bo'lim.
+
+    Ilgari uslub tanlash Sozlamalarning o'rtasida, ish vaqti va Wi-Fi
+    paroli orasida turardi. Dizayn bir marta qilinadigan va vaqt talab
+    qiladigan ish — u o'z sahifasiga arziydi. Sozlamalarda esa faqat
+    ishlash sozlamalari qoldi.
+    """
+    restaurant = get_restaurant(db, user)
+    return templates.TemplateResponse(
+        request,
+        "admin/design.html",
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "accents": themes.ACCENTS,
+            # Hozirgi uslub shu yerda hal qilinadi: shablonda "agar
+            # ro'yxatda bo'lsa, aks holda standarti" degan shart
+            # `themes.get()` mantiqini ikkinchi marta yozgan bo'lardi
+            "current_theme": themes.get(restaurant.theme),
+            # Ko'rish uchun namuna taom: egasining o'z menyusidan olinadi,
+            # shunda u o'z taomini o'z uslubida ko'radi
+            "sample": db.scalar(
+                select(MenuItem)
+                .where(
+                    MenuItem.restaurant_id == restaurant.id,
+                    MenuItem.is_available.is_(True),
+                )
+                .order_by(MenuItem.image.is_(None), MenuItem.sort_order, MenuItem.id)
+            ),
+        },
+    )
+
+
+@router.post("/design", dependencies=[Depends(verify_csrf)])
+async def update_design(
+    db: DbSession,
+    user: AdminUser,
+    theme: Annotated[str, Form()] = "",
+    theme_color: Annotated[str, Form()] = "",
+    own_color: Annotated[str, Form()] = "",
+    remove_logo: Annotated[bool, Form()] = False,
+    remove_cover: Annotated[bool, Form()] = False,
+    logo: Annotated[UploadFile | None, File()] = None,
+    cover_image: Annotated[UploadFile | None, File()] = None,
+):
+    restaurant = get_restaurant(db, user)
+
+    if theme in themes.THEMES:
+        restaurant.theme = theme
+    # `__own__` — "yonidagi maydondan ol" degan belgi. Tayyor ranglar
+    # radio bo'lib keladi va ular bilan bir nomda `<input type="color">`
+    # yuborib bo'lmaydi.
+    tanlangan = own_color if theme_color == "__own__" else theme_color
+    # Rang menyu sahifasining <style> ichiga tushadi — shakli
+    # tekshirilmasa u yerdan chiqib ketish mumkin edi
+    if tanlangan:
+        restaurant.theme_color = themes.safe_accent(
+            themes.get(restaurant.theme), tanlangan
+        )
+
     if logo is not None and logo.filename:
         old = restaurant.logo
         restaurant.logo = await save_image(logo, restaurant.id, max_width=400)
         delete_image(old)
+    elif remove_logo:
+        delete_image(restaurant.logo)
+        restaurant.logo = None
+
     if cover_image is not None and cover_image.filename:
         old = restaurant.cover_image
         restaurant.cover_image = await save_image(cover_image, restaurant.id, max_width=1600)
         delete_image(old)
+    elif remove_cover:
+        delete_image(restaurant.cover_image)
+        restaurant.cover_image = None
 
     db.commit()
-    return RedirectResponse("/admin/settings", status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/admin/design", status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/menu")

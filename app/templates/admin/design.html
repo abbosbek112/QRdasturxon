@@ -1,0 +1,171 @@
+{% extends "admin/_shell.html" %}
+{% import "partials/icons.html" as ui %}
+{% block title %}{{ t('design_title', ui_lang) }}{% endblock %}
+
+{#
+  Menyu dizayni — Sozlamalardan chiqarilgan alohida bo'lim.
+
+  Bu yerdagi asosiy fikr: shablon RO'YXAT bo'lib emas, KO'RINISHI bilan
+  tanlanadi. "Klassik" degan so'z hech nima demaydi; egasi o'z taomini
+  o'sha uslubda ko'rsa bir qarashda qaror qiladi.
+
+  Shuning uchun har katakcha haqiqiy taom kartasini o'z palitrasida
+  chizadi. Palitra uslublar varag'ida beriladi, teg atributida emas:
+  uslub shriftlari ichida qo'shtirnoq bor ("Iowan Old Style") va u
+  atributni o'sha yerda uzib qo'yardi.
+#}
+
+{% block content %}
+{#
+  Varaq `content` ICHIDA: undan tashqarida qolgan har qanday matnni
+  Jinja meros qoidasi bo'yicha tashlab yuboradi va palitralar sahifaga
+  umuman chiqmasdi.
+#}
+<style>
+  {%- for preset in THEMES.values() %}
+  .tpl[data-theme="{{ preset.key }}"] { {{ css_variables(preset) }} }
+  {%- endfor %}
+  {#- Hozirgi shablon egasi tanlagan rangda ko'rinsin -#}
+  .tpl.is-current { {{ css_variables(current_theme, restaurant.theme_color) }} }
+</style>
+
+<div class="page-head spread">
+  <div>
+    <h1>{{ t('design_title', ui_lang) }}</h1>
+    <p class="muted small">{{ t('design_sub', ui_lang) }}</p>
+  </div>
+  <a class="btn" href="/r/{{ restaurant.slug }}" target="_blank" rel="noopener">
+    {{ ui.icon('external') }} {{ t('design_open_menu', ui_lang) }}
+  </a>
+</div>
+
+<form method="post" action="/admin/design" enctype="multipart/form-data" class="stack">
+  {% include "partials/csrf.html" %}
+
+  {# --- Shablonlar --- #}
+  <div class="card stack">
+    <h2>{{ t('design_templates', ui_lang) }}</h2>
+    <p class="hint" style="margin-top:-.5rem">{{ t('design_templates_hint', ui_lang) }}</p>
+
+    <div class="tpl-grid">
+      {% for key, preset in THEMES.items() %}
+        <label class="tpl {{ 'is-current' if restaurant.theme == key }}" data-theme="{{ key }}">
+          <input type="radio" name="theme" value="{{ key }}"
+                 data-accent="{{ preset.accent }}"
+                 {{ 'checked' if restaurant.theme == key }}>
+
+          {# Haqiqiy taom kartasi — menyudagi sinflarning o'zi bilan #}
+          <span class="tpl-shot">
+            <span class="dish">
+              <span class="dish-media">
+                {% if sample and sample.image %}
+                  <img src="/media/{{ sample.image }}" alt="" loading="lazy">
+                {% else %}
+                  <span class="dish-ph">{{ ui.icon('plate') }}</span>
+                {% endif %}
+                <span class="dish-meta">
+                  <span class="price-pill">
+                    {{ (sample.price if sample else 45000) | price }}
+                    <small>{{ restaurant.currency }}</small>
+                  </span>
+                </span>
+              </span>
+              <span class="dish-body">
+                <span class="dish-name">
+                  {{ tr(sample.name, 'uz') if sample else t('design_sample_dish', ui_lang) }}
+                </span>
+              </span>
+            </span>
+          </span>
+
+          <span class="tpl-text">
+            <strong>{{ preset.name }}</strong>
+            <span class="muted small">{{ preset.hint }}</span>
+          </span>
+        </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# --- Rang --- #}
+  <div class="card stack">
+    <h2>{{ t('design_colour', ui_lang) }}</h2>
+    <p class="hint" style="margin-top:-.5rem">{{ t('design_colour_hint', ui_lang) }}</p>
+
+    {#
+      Tayyor ranglar — egasi rang tanlagichni ochib o'ylab o'tirmasin.
+      Hammasi to'q: och rang tanlangan tugmadagi oq yozuvni yo'q qilardi.
+    #}
+    {% set hozirgi = restaurant.theme_color | lower %}
+    {% set tayyorda_bor = accents | map('lower') | select('equalto', hozirgi) | list %}
+    <div class="swatches">
+      {% for colour in accents %}
+        <label class="swatch" style="--sw:{{ colour }}">
+          <input type="radio" name="theme_color" value="{{ colour }}"
+                 {{ 'checked' if hozirgi == colour | lower }}>
+          <span aria-hidden="true"></span>
+          <span class="sr-only">{{ colour }}</span>
+        </label>
+      {% endfor %}
+
+      {#
+        O'z rangi. Radio va rang tanlagich JUFT bo'lib ishlaydi: radio
+        "o'z rangimni ol" deydi, qiymatning o'zi esa yonidagi maydondan
+        keladi.
+
+        Nega shunday: bitta `<input type="color">` ning qiymatini
+        radiolar bilan bir nomda yuborib bo'lmaydi. Bu ko'rinishda esa
+        JS o'chirilgan brauzerda ham ishlaydi — odam rangni tanlaydi va
+        radioni belgilaydi.
+      #}
+      <label class="swatch swatch-own" style="--sw:{{ restaurant.theme_color }}">
+        <input type="radio" name="theme_color" value="__own__"
+               {{ 'checked' if not tayyorda_bor }}>
+        <span aria-hidden="true"></span>
+        <span class="sr-only">{{ t('design_own_colour', ui_lang) }}</span>
+      </label>
+    </div>
+
+    <div class="field" style="max-width:260px">
+      <label for="own_color">{{ t('design_own_colour', ui_lang) }}</label>
+      <input id="own_color" name="own_color" type="color" value="{{ restaurant.theme_color }}">
+      <p class="hint">{{ t('design_own_colour_hint', ui_lang) }}</p>
+    </div>
+  </div>
+
+  {# --- Logotip va muqova --- #}
+  <div class="card stack">
+    <h2>{{ t('settings_images', ui_lang) }}</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="logo">{{ t('field_logo', ui_lang) }}</label>
+        {% if restaurant.logo %}
+          <img class="design-logo" src="/media/{{ restaurant.logo }}" alt="">
+          <div class="check">
+            <input id="remove_logo" name="remove_logo" type="checkbox" value="true">
+            <label for="remove_logo">{{ t('item_remove_image', ui_lang) }}</label>
+          </div>
+        {% endif %}
+        <input id="logo" name="logo" type="file" accept="image/*">
+      </div>
+      <div class="field">
+        <label for="cover_image">{{ t('field_cover', ui_lang) }}</label>
+        {% if restaurant.cover_image %}
+          <img class="design-cover" src="/media/{{ restaurant.cover_image }}" alt="">
+          <div class="check">
+            <input id="remove_cover" name="remove_cover" type="checkbox" value="true">
+            <label for="remove_cover">{{ t('item_remove_image', ui_lang) }}</label>
+          </div>
+        {% endif %}
+        <input id="cover_image" name="cover_image" type="file" accept="image/*">
+        <p class="hint">{{ t('design_cover_hint', ui_lang) }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="btn btn-primary" type="submit">{{ t('action_save', ui_lang) }}</button>
+    <span class="hint" style="margin:0">{{ t('design_save_hint', ui_lang) }}</span>
+  </div>
+</form>
+{% endblock %}
