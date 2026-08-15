@@ -133,6 +133,9 @@ UI: dict[str, dict[str, str]] = {
         "en": "One click changes the whole look \u2014 type, corners, shadows and colour together. "
               "Then you tune the accent colour to match your brand.",
     },
+    "carousel_prev": {"uz": "Oldingi shablon", "ru": "Предыдущий шаблон", "en": "Previous template"},
+    "carousel_next": {"uz": "Keyingi shablon", "ru": "Следующий шаблон", "en": "Next template"},
+    "show_themes_count": {"uz": "shablon", "ru": "шаблонов", "en": "templates"},
     "show_themes_note": {
         "uz": "Quyidagi to'rt karta \u2014 aynan menyudagi ko'rinish.",
         "ru": "Четыре карточки ниже \u2014 это ровно то, что видит гость.",

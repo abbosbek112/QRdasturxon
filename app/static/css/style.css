@@ -1524,31 +1524,117 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
 
 /* --- 2. uslublar --- */
 
-.astra .show-themes { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
 /*
-  Har bir katak o'z palitrasini inline `style` dan oladi, `data-theme` esa
-  tuzilmaviy farqlarni yoqadi. Fon ataylab `--page`: uslub farqi kartaning
-  o'zida emas, uning fon bilan munosabatida ham ko'rinadi.
+  Shablonlar karuseli — bittasi o'rtada katta, qo'shnilari yonidan
+  mo'ralab turadi.
+
+  Ilgari bu ikki ustunli ro'yxat, keyin aylana edi. Ikkalasida ham bitta
+  muammo: sakkiztasi bir vaqtda ko'rsatilganda har biri shunchalik
+  kichrayardiki, ularning ORASIDAGI FARQ — aynan ko'rsatmoqchi bo'lgan
+  narsa — ko'rinmay qolardi.
+
+  Asosi `scroll-snap`: JS o'chirilgan brauzerda ham surib ko'rish
+  mumkin, telefonda esa barmoq bilan. Strelka va nuqtalar qulaylik.
 */
-.astra .show-theme {
-  padding: .8rem;
-  background: var(--page);
-  border: 1px solid var(--line);
+.astra .carousel { position: relative; }
+
+.astra .carousel-track {
+  display: flex; gap: 1rem;
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  /* Chetdagi kartochka ham markazga tusha olishi uchun yon bo'shliq */
+  padding: .5rem calc(50% - var(--slide) / 2) 1rem;
+  scrollbar-width: none;
+}
+.astra .carousel-track::-webkit-scrollbar { display: none; }
+
+.astra .carousel {
+  --slide: clamp(13rem, 42vw, 17rem);
+}
+
+.astra .carousel-slide {
+  flex: 0 0 var(--slide); width: var(--slide);
+  scroll-snap-align: center;
+  padding: .9rem;
   border-radius: var(--r-xl);
+  /* Fon — shablonning O'Z sahifa rangi: farq shu yerda ko'rinadi */
+  background: var(--page);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgb(16 24 40 / .08);
+  /* Chetdagilar biroz kichik va so'nik — markazdagisi ajralib tursin */
+  transform: scale(.9); opacity: .55;
+  transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .35s, box-shadow .35s;
 }
+.astra .carousel-slide.is-active {
+  transform: scale(1); opacity: 1;
+  box-shadow: 0 12px 32px rgb(16 24 40 / .16);
+}
+@media (prefers-reduced-motion: reduce) {
+  .astra .carousel-slide { transition: none; }
+}
+
 /* Menyuda bular <a>, <h3>, <p> — bu yerda <span>, ya'ni blokka aylantiramiz */
-.astra .show-theme .dish,
-.astra .show-theme .dish-media,
-.astra .show-theme .dish-body,
-.astra .show-theme .dish-name,
-.astra .show-theme .dish-desc { display: block; }
-.astra .show-theme .dish { text-decoration: none; }
-.astra .show-theme .dish-desc { font-size: var(--text-xs); }
-.astra .show-theme-name {
-  margin: .6rem 0 0; text-align: center;
+.astra .carousel-slide .dish,
+.astra .carousel-slide .dish-media,
+.astra .carousel-slide .dish-body,
+.astra .carousel-slide .dish-name,
+.astra .carousel-slide .dish-desc { display: block; }
+.astra .carousel-slide .dish { text-decoration: none; }
+/*
+  Rang ATAYLAB shu yerda beriladi. `.dish-name` menyuda rang o'rnatmaydi
+  — u meros oladi. Bosh sahifada meros qora bo'lgani uchun qorong'i
+  shablonda qora fonda qora yozuv chiqib, taom nomi butunlay
+  yo'qolgandi.
+*/
+.astra .carousel-slide .dish-name { color: var(--ink); }
+.astra .carousel-slide .dish-desc { color: var(--ink-2); font-size: var(--text-xs); }
+
+.astra .carousel-name {
+  display: block; margin-top: .7rem; text-align: center;
+  font-family: var(--font-head);
   font-size: var(--text-xs); font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-2);
 }
+
+/* --- strelkalar --- */
+.astra .carousel-arrow {
+  position: absolute; top: 42%; z-index: 2;
+  display: grid; place-content: center;
+  width: 2.6rem; height: 2.6rem; padding: 0;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface); color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgb(16 24 40 / .12);
+  transition: background .15s, transform .15s;
+}
+.astra .carousel-arrow:hover { background: var(--surface-2); }
+.astra .carousel-arrow:active { transform: scale(.94); }
+.astra .carousel-arrow svg { width: 1.1rem; height: 1.1rem; }
+.astra .carousel-prev { left: 0; }
+/* Bitta "orqaga" belgisi ikkala tomonga ishlatiladi — ikkinchisi teskari */
+.astra .carousel-next { right: 0; }
+.astra .carousel-next svg { transform: rotate(180deg); }
+/* Chekkaga yetganda o'chadi, lekin joyidan ketmaydi: sakrash bo'lmasin */
+.astra .carousel-arrow[disabled] { opacity: .35; cursor: default; box-shadow: none; }
+
+/* --- nuqtalar --- */
+.astra .carousel-dots {
+  display: flex; justify-content: center; gap: .4rem;
+  margin-top: .2rem;
+}
+.astra .carousel-dot {
+  width: .5rem; height: .5rem; padding: 0;
+  border: 0; border-radius: 50%;
+  background: var(--line-2); cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+.astra .carousel-dot.is-on { background: var(--accent); transform: scale(1.25); }
+
+/* JS yo'q bo'lsa strelka ham, nuqta ham ish bermaydi — yashiriladi.
+   Tasma esa surilaveradi, ya'ni bo'lim baribir ishlaydi. */
+html:not(.js) .astra .carousel-arrow,
+html:not(.js) .astra .carousel-dots { display: none; }
 
 /* --- 3. izohlar --- */
 
@@ -2964,3 +3050,22 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
 
 .section-head { align-items: baseline; margin-top: 1.4rem; }
 .section-head .small { white-space: nowrap; }
+
+/*
+  Tor telefonda sarlavha sig'masdi: brend, til tanlagich va ikkita tugma
+  `nowrap` bilan yonma-yon turib, 375px ekranda 412px joy talab qilardi —
+  butun sahifa yon tomonga suriladigan bo'lib qolgandi.
+
+  Yechim: elementlar qisiladi, til tanlagich esa eng kichik ekranda
+  yashiriladi. Til baribir yo'qolmaydi — u manzildagi `?lang=` va
+  cookie orqali saqlanadi, menyu sahifasida esa o'z tanlagichi bor.
+*/
+@media (max-width: 560px) {
+  .astra .site-head-inner { padding-inline: .7rem; gap: .4rem; }
+  .astra .site-head-cta { gap: .25rem; }
+  .astra .site-head-cta .btn { padding-inline: .6rem; font-size: var(--text-xs); }
+  .astra .langs-solid a { padding: .2rem .35rem; font-size: 10px; }
+}
+@media (max-width: 400px) {
+  .astra .site-head-cta .langs { display: none; }
+}

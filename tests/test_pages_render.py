@@ -1,3 +1,4 @@
+import re
 import html
 
 import pytest
@@ -147,10 +148,51 @@ def test_theme_palettes_go_into_a_style_block_not_an_attribute(client):
     umuman qo'llanmaydi.
     """
     body = client.get("/").text
-    assert '.show-theme[data-theme="klassik"]' in body
+    assert '.carousel-slide[data-theme="klassik"]' in body
     assert 'Iowan Old Style' in body
     # Palitra hech qachon inline atributda bo'lmasin
     assert 'style="--page' not in body
+
+
+def test_every_template_appears_in_the_carousel(client):
+    """Shablon qo'shilsa karuselga o'zi tushsin.
+
+    Ro'yxat qo'lda yozilgan bo'lsa, yangi shablon qo'shgan odam bosh
+    sahifani yangilashni unitib qo'yardi va sahifa kam ko'rsatib turardi.
+    """
+    from app.themes import THEMES
+
+    body = client.get("/").text
+    for key in THEMES:
+        assert f'data-theme="{key}"' in body, key
+    # Har shablonga bittadan nuqta.
+    #
+    # `data-go` bo'yicha sanaladi, sinf nomi bo'yicha emas: konteyner
+    # `carousel-dots` deb ataladi va oddiy sanoq uni ham qo'shib
+    # yuborardi — test bir dona ortiq ko'rsatardi.
+    assert len(re.findall(r'data-go="\d+"', body)) == len(THEMES)
+
+
+def test_the_dark_template_card_sets_its_own_text_colour(client):
+    """Qorong'i shablonda taom nomi ko'rinib tursin.
+
+    `.dish-name` menyuda rang o'rnatmaydi — u meros oladi. Bosh sahifada
+    meros QORA bo'lgani uchun qorong'i kartochkada qora fonda qora yozuv
+    chiqib, taom nomi butunlay yo'qolgandi. Faqat "Tungi" da bilinardi,
+    chunki qolgan shablonlarning foni och.
+    """
+    css = client.get("/static/css/style.css").text
+
+    # Qoida bor va u rangni SHABLONNING o'z siyohidan oladi
+    qoida = re.search(
+        r"\.carousel-slide \.dish-name\s*\{([^}]*)\}", css
+    )
+    assert qoida, "`.carousel-slide .dish-name` qoidasi yo'q"
+    assert "color: var(--ink)" in qoida.group(1)
+
+    # Qorong'i shablon palitrasi sahifada bor — usiz qoida ish bermasdi
+    body = client.get("/").text
+    assert '.carousel-slide[data-theme="tungi"]' in body
 
 
 def test_the_landing_embeds_a_real_qr_for_the_demo(client, db, monkeypatch):

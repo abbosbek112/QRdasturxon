@@ -202,25 +202,67 @@
       #}
       <style>
         {%- for theme in THEMES.values() %}
-        .show-theme[data-theme="{{ theme.key }}"] { {{ css_variables(theme) }} }
+        .carousel-slide[data-theme="{{ theme.key }}"] { {{ css_variables(theme) }} }
         {%- endfor %}
       </style>
-      <div class="show-themes" data-stagger aria-hidden="true">
-        {% for theme in THEMES.values() %}
-          <div class="show-theme" data-reveal="scale" data-theme="{{ theme.key }}">
-            <span class="dish">
-              <span class="dish-media">
-                <img src="/static/img/dish-osh.webp?v={{ asset_v }}" alt="" decoding="async">
-                <span class="price-pill">45 000 <small>so'm</small></span>
+      {#
+        Shablonlar g'ildirak bo'lib joylashadi: o'rtada soni, atrofida
+        har biri o'z rangi va o'z shriftida.
+
+        Ilgari ular ikki ustunli ro'yxat edi va sakkiztasi to'rt qator
+        bo'lib cho'zilib ketardi — yonidagi matn o'rtada osilib qolardi.
+        Aylana ularni bir ko'rishda qamraydi va "bittasini tanlaysiz"
+        degan ma'noni o'zi beradi.
+
+        Burchak `--i` dan hisoblanadi, ya'ni uslub qo'shilsa bu yerga
+        hech narsa yozish shart emas — `--n` o'zi o'zgaradi.
+      #}
+      {#
+        Karusel: bitta shablon o'rtada katta, qo'shnilari yonidan
+        mo'ralab turadi.
+
+        Ilgari bu ikki ustunli ro'yxat, keyin aylana edi. Ikkalasida ham
+        bitta muammo: sakkiz shablon bir vaqtda ko'rsatilganda har biri
+        shunchalik kichrayardiki, ularning ORASIDAGI FARQ — aynan
+        ko'rsatmoqchi bo'lgan narsa — ko'rinmay qolardi. Karusel bittasini
+        katta beradi.
+
+        JS'siz ham ishlaydi: bu oddiy gorizontal aylanadigan tasma,
+        `scroll-snap` bilan. Strelka va nuqtalar shunchaki qulaylik.
+        O'zi aylanmaydi — o'qiyotgan odamni surib yuborish eng ko'p
+        shikoyat qilinadigan naqsh.
+      #}
+      <div class="carousel" data-carousel data-reveal="scale">
+        <div class="carousel-track" data-carousel-track>
+          {% for theme in THEMES.values() %}
+            <div class="carousel-slide {{ 'is-active' if loop.first }}"
+                 data-theme="{{ theme.key }}" data-index="{{ loop.index0 }}">
+              <span class="dish">
+                <span class="dish-media">
+                  <img src="/static/img/dish-osh.webp?v={{ asset_v }}" alt="" decoding="async">
+                  <span class="price-pill">45 000 <small>so'm</small></span>
+                </span>
+                <span class="dish-body">
+                  <span class="dish-name">Osh</span>
+                  <span class="dish-desc">Qo'y go'shti bilan</span>
+                </span>
               </span>
-              <span class="dish-body">
-                <span class="dish-name">Osh</span>
-                <span class="dish-desc">Qo'y go'shti bilan</span>
-              </span>
-            </span>
-            <p class="show-theme-name">{{ theme.name }}</p>
-          </div>
-        {% endfor %}
+              <span class="carousel-name">{{ theme.name }}</span>
+            </div>
+          {% endfor %}
+        </div>
+
+        <button class="carousel-arrow carousel-prev" type="button" data-carousel-prev
+                aria-label="{{ t('carousel_prev', lang) }}">{{ ui.icon('back') }}</button>
+        <button class="carousel-arrow carousel-next" type="button" data-carousel-next
+                aria-label="{{ t('carousel_next', lang) }}">{{ ui.icon('back') }}</button>
+
+        <div class="carousel-dots" data-carousel-dots>
+          {% for theme in THEMES.values() %}
+            <button class="carousel-dot {{ 'is-on' if loop.first }}" type="button"
+                    data-go="{{ loop.index0 }}" aria-label="{{ theme.name }}"></button>
+          {% endfor %}
+        </div>
       </div>
     </div>
 

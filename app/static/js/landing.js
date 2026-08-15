@@ -109,3 +109,70 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 });
+
+/*
+  Shablonlar karuseli.
+
+  Uch narsa qiladi: strelka bilan surish, nuqta bilan sakrash va
+  markazdagi kartochkani belgilash. Uchalasi ham QULAYLIK — bularsiz
+  ham tasma barmoq yoki sichqoncha bilan surilaveradi.
+
+  O'ZI AYLANMAYDI. Avtomatik surilish eng ko'p shikoyat qilinadigan
+  naqsh: odam o'qib turganda kartochka ostidan sirg'alib ketadi.
+*/
+document.addEventListener("DOMContentLoaded", function () {
+  var box = document.querySelector("[data-carousel]");
+  if (!box) return;
+
+  var track = box.querySelector("[data-carousel-track]");
+  var slides = Array.prototype.slice.call(track.children);
+  var dots = Array.prototype.slice.call(box.querySelectorAll(".carousel-dot"));
+  var prev = box.querySelector("[data-carousel-prev]");
+  var next = box.querySelector("[data-carousel-next]");
+  if (!slides.length) return;
+
+  var joriy = 0;
+
+  function belgila(i) {
+    joriy = i;
+    slides.forEach(function (s, n) { s.classList.toggle("is-active", n === i); });
+    dots.forEach(function (d, n) { d.classList.toggle("is-on", n === i); });
+    if (prev) prev.disabled = i === 0;
+    if (next) next.disabled = i === slides.length - 1;
+  }
+
+  function surish(i) {
+    i = Math.max(0, Math.min(i, slides.length - 1));
+    var s = slides[i];
+    // `scrollIntoView` sahifani ham vertikal siljitardi — faqat
+    // tasmaning ichki siljishini o'zgartiramiz
+    track.scrollTo({
+      left: s.offsetLeft - (track.clientWidth - s.offsetWidth) / 2,
+      behavior: "smooth",
+    });
+    belgila(i);
+  }
+
+  if (prev) prev.addEventListener("click", function () { surish(joriy - 1); });
+  if (next) next.addEventListener("click", function () { surish(joriy + 1); });
+  dots.forEach(function (d) {
+    d.addEventListener("click", function () { surish(parseInt(d.getAttribute("data-go"), 10) || 0); });
+  });
+
+  // Barmoq bilan surilganda ham markazdagisi belgilansin
+  var kutish;
+  track.addEventListener("scroll", function () {
+    clearTimeout(kutish);
+    kutish = setTimeout(function () {
+      var markaz = track.scrollLeft + track.clientWidth / 2;
+      var eng = 0, farq = Infinity;
+      slides.forEach(function (s, n) {
+        var d = Math.abs(s.offsetLeft + s.offsetWidth / 2 - markaz);
+        if (d < farq) { farq = d; eng = n; }
+      });
+      belgila(eng);
+    }, 90);
+  }, { passive: true });
+
+  belgila(0);
+});
