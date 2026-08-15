@@ -16,6 +16,13 @@ FROM python:3.13-slim
 # Konteyner root ostida ishlamasin — buzib kirilsa zarar cheklangan bo'ladi
 RUN useradd --create-home --uid 10001 app
 
+# QR kartochkasidagi yozuv uchun shrift. `slim` obrazda birorta ham shrift
+# yo'q va usiz stol raqami chizilmasdi. DejaVu lotin va kirillni ham
+# qamraydi — o'zbek va rus nomlari bir xil chiqadi.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \

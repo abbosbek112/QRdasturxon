@@ -1,0 +1,65 @@
+{#
+  Barcha QR'larni bitta arxivda yuklab olish.
+
+  Ikki sahifada turadi: Bino (stollar shu yerda) va QR sahifasi (buyurtma
+  tizimi yoqilmagan restoranda stol bo'lmaydi, lekin menyu QR'i kerak).
+
+  "O'z rasmim" tanlansa qo'shimcha maydonlar ochiladi. Buni `:has()` qiladi,
+  JS emas — sahifada allaqachon shu usul ishlatilgan. Agar brauzer `:has()`
+  ni bilmasa qoida butunlay tushib qoladi va maydonlar KO'RINIB qoladi:
+  ortiqcha, lekin ishlaydi. Teskarisi — yashirinib qolishi — foydalanuvchini
+  rasm yuklay olmaydigan holga solardi.
+#}
+<details class="card stack qr-pack">
+  <summary>{{ ui.icon('download') }} {{ t('qr_pack', ui_lang) }}</summary>
+
+  <p class="muted small">{{ t('qr_pack_hint', ui_lang) }}</p>
+
+  <form method="post" action="/admin/tables/qr-pack" enctype="multipart/form-data"
+        class="stack qr-pack-form">
+    {% include "partials/csrf.html" %}
+
+    <fieldset class="pick-set">
+      <legend>{{ t('qr_style', ui_lang) }}</legend>
+      <div class="pick-row">
+        <label class="pick">
+          <input type="radio" name="style" value="qr" checked>
+          <span>{{ t('qr_style_qr', ui_lang) }}</span>
+        </label>
+        <label class="pick">
+          <input type="radio" name="style" value="karta">
+          <span>{{ t('qr_style_card', ui_lang) }}</span>
+        </label>
+        <label class="pick">
+          <input type="radio" name="style" value="rasm">
+          <span>{{ t('qr_style_image', ui_lang) }}</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="qr-pack-extra stack-sm">
+      <p class="hint">{{ t('qr_style_image_hint', ui_lang) }}</p>
+      <div class="field">
+        <label for="qr-pack-bg">{{ t('qr_style_image', ui_lang) }}</label>
+        <input id="qr-pack-bg" type="file" name="background" accept="image/*">
+      </div>
+      <fieldset class="pick-set">
+        <legend>{{ t('qr_position', ui_lang) }}</legend>
+        <div class="pick-row">
+        {% for spot in ['markaz', 'yuqori', 'past'] %}
+          <label class="pick">
+            <input type="radio" name="position" value="{{ spot }}" {{ 'checked' if spot == 'markaz' }}>
+            <span>{{ t('qr_position_' ~ spot, ui_lang) }}</span>
+          </label>
+        {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div>
+      <button class="btn btn-primary" type="submit">
+        {{ ui.icon('download') }} {{ t('qr_pack', ui_lang) }}
+      </button>
+    </div>
+  </form>
+</details>

@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import RedirectResponse, Response
+from PIL import UnidentifiedImageError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -13,8 +14,8 @@ from app.models import Category, ItemComment, MenuItem, Restaurant, Role, TableK
 from app.plans import limits_for, refresh_status, trial_days_left
 from app.security import hash_password, require_restaurant_admin, verify_csrf
 from app import themes
-from app.services import areas, comments, onboarding, orders, qr, stats, tables
-from app.services.images import delete_image, save_image
+from app.services import areas, comments, onboarding, orders, qr, qr_pack, stats, tables
+from app.services.images import MAX_BYTES as MAX_IMAGE_BYTES, delete_image, save_image
 from app.templating import floor_label, templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -817,6 +818,65 @@ def add_tables_to_zone(
     except HTTPException as error:
         return form_failed(request, error, "/admin/tables")
     return RedirectResponse("/admin/tables", status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/tables/qr-pack", dependencies=[Depends(verify_csrf)])
+async def download_qr_pack(
+    request: Request,
+    db: DbSession,
+    user: AdminUser,
+    style: Annotated[str, Form()] = qr_pack.QR_ONLY,
+    position: Annotated[str, Form()] = "markaz",
+    background: Annotated[UploadFile | None, File()] = None,
+):
+    """Butun binoning QR'lari — bitta arxivda.
+
+    Ilgari egasi har stolni alohida yuklab olardi va brauzer fayllarni
+    `qr (1).png` deb saqlab, qaysi biri qaysi stolniki ekanini yo'qotardi.
+
+    POST, chunki egasi o'z fonini yuklashi mumkin va so'rov CSRF bilan
+    himoyalanadi.
+    """
+    restaurant = get_restaurant(db, user)
+    lang = resolve_lang(request)
+
+    # Forma qiymatlariga ishonilmaydi: noma'lum ko'rinish yalang'och QR'ga
+    # tushadi, aks holda tanlanmagan yo'l chaqirilib qolardi
+    if style not in qr_pack.STYLES:
+        style = qr_pack.QR_ONLY
+    if position not in qr_pack.POSITIONS:
+        position = "markaz"
+
+    canvas = None
+    if style == qr_pack.OWN_IMAGE and background is not None and background.filename:
+        raw = await background.read(MAX_IMAGE_BYTES + 1)
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise HTTPException(
+                status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Rasm hajmi 5 MB dan oshmasin"
+            )
+        try:
+            canvas = qr_pack.prepare_background(raw)
+        except qr_pack.TooNarrow as juda_ingichka:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, str(juda_ingichka))
+        except (UnidentifiedImageError, OSError):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Fayl rasm emas")
+
+    archive = qr_pack.build(
+        db,
+        restaurant,
+        lang=lang,
+        style=style,
+        background=canvas,
+        position=position,
+        hint=t("qr_card_hint", lang),
+    )
+    return Response(
+        archive,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{qr_pack.filename(restaurant)}"'
+        },
+    )
 
 
 @router.post("/tables/{table_id}", dependencies=[Depends(verify_csrf)])

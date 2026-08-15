@@ -2580,3 +2580,33 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   .menu-dish-order { grid-area: order; }
   .menu-dish-tools { grid-area: tools; justify-content: flex-start; }
 }
+
+/* ==========================================================================
+   Barcha QR'larni bitta arxivda yuklab olish
+   ========================================================================== */
+
+.qr-pack { margin-top: 1rem; }
+.qr-pack > summary {
+  cursor: pointer; font-weight: 600;
+  display: flex; align-items: center; gap: .45rem;
+}
+.qr-pack[open] > summary { margin-bottom: .8rem; }
+
+/* Fieldset'ning tug'ma ramkasi va ichki bo'shlig'i bu yerda ortiqcha —
+   guruhni `legend` o'zi ajratib turadi */
+.pick-set { border: 0; padding: 0; margin: 0; min-width: 0; }
+.pick-set > legend {
+  padding: 0 0 .4rem; font-size: var(--text-sm); color: var(--ink-2);
+}
+
+/* "O'z rasmim" tanlanmaguncha yuklash maydoni kerak emas.
+
+   Qoida ATAYLAB teskari yozilgan — "tanlansa ko'rsat" emas, "boshqasi
+   tanlansa yashir". Sababi: `:has()` ni bilmaydigan brauzerda qoida
+   butunlay tushib qoladi. Bu yozuvda maydon shunchaki ko'rinib turadi
+   (ortiqcha, lekin ishlaydi); teskarisida esa u abadiy yashirinib,
+   rasm yuklashning iloji qolmasdi. */
+.qr-pack-form:has(input[name="style"][value="qr"]:checked) .qr-pack-extra,
+.qr-pack-form:has(input[name="style"][value="karta"]:checked) .qr-pack-extra {
+  display: none;
+}

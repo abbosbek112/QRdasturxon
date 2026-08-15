@@ -21,3 +21,7 @@ python-slugify==8.0.4
 # faqat ishlab chiqish va testlar uchun
 pytest==9.1.1
 httpx==0.28.1
+# QR kodni ORQAGA o'qish uchun. Faqat testda ishlatiladi: chizilgan QR
+# telefon kamerasi bilan chindan skanerlanishini boshqa hech narsa
+# tekshirmaydi — rasm ko'rinishidan joyida bo'lib, o'qilmasligi mumkin.
+zxing-cpp==3.1.1

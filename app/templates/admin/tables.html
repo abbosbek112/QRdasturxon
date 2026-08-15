@@ -57,6 +57,8 @@
     </a>
   </div>
 
+  {% include "admin/_qr_pack_form.html" %}
+
   <div class="building">
     {% for floor, zone_rows in building %}
       {% set floor_tables = zone_rows | sum(attribute=1, start=[]) | length %}
