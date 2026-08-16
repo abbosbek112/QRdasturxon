@@ -176,3 +176,63 @@ def test_an_openable_but_unlisted_format_is_refused(client, db, kirgan):
     assert "XBM" in body and "qo'llab-quvvatlanmaydi" in body
     # Kategoriya rasmsiz ham yaratilmasin — forma butunlay rad etildi
     assert db.query(Category).filter(Category.name["uz"].as_string() == "Ajabtovur").count() == 0
+
+
+def test_a_compression_bomb_is_refused(client, kirgan):
+    """Kichik fayl ochilganda ulkan bo'lishi mumkin.
+
+    5 MB chegarasi buni to'smaydi: bir xil rangli 9000x9000 PNG atigi
+    77 KB bo'ladi, ochilganda esa 81 megapiksel — RGB'da 230 MB xotira.
+    Serverda ikkita ishchi jarayon bor va bitta so'rov ularni butun
+    sayt bilan birga yiqitardi.
+
+    O'lcham SARLAVHADAN o'qiladi, ya'ni rasm xotiraga umuman
+    yozilmaydi.
+    """
+    buf = io.BytesIO()
+    Image.new("L", (9000, 9000), 0).save(buf, "PNG", optimize=True)
+    assert len(buf.getvalue()) < images.MAX_BYTES, "sinov fayli hajm chegarasiga tushib qoldi"
+
+    response = yubor(client, {"name_uz": "Bomba"},
+                     files={"image": ("bomba.png", buf.getvalue(), "image/png")})
+
+    assert response.status_code == 303
+    assert "juda katta" in html.unescape(client.get("/admin/menu").text)
+
+
+def test_the_size_check_covers_pillows_blind_spot(client, kirgan):
+    """Pillow o'zi FAQAT ikki barobar chegaradan keyin yiqiladi.
+
+    Oralig'ida u shunchaki ogohlantiradi va rasmni ochib beraveradi.
+    49 megapikselli fayl aynan shu oraliqda: bizning chegaramizdan
+    (40 MP) katta, Pillow yiqiladigan chegaradan (80 MP) kichik.
+
+    Ya'ni aniq tekshiruvsiz bunday fayl 140 MB xotira yeb o'tib
+    ketardi. Mutatsiya sinovi shuni ko'rsatdi — tekshiruvni olib
+    tashlaganda 81 MP li sinov baribir o'tardi va bo'shliq
+    ko'rinmasdi.
+    """
+    buf = io.BytesIO()
+    Image.new("L", (7000, 7000), 0).save(buf, "PNG", optimize=True)
+    assert images.MAX_PIXELS < 7000 * 7000 < images.MAX_PIXELS * 2
+
+    response = yubor(client, {"name_uz": "Oraliq"},
+                     files={"image": ("katta.png", buf.getvalue(), "image/png")})
+
+    assert response.status_code == 303
+    assert "juda katta" in html.unescape(client.get("/admin/menu").text)
+
+
+def test_a_normal_camera_photo_still_fits(client, kirgan):
+    """Chegara haqiqiy kamera rasmini to'smasin.
+
+    24 megapikselli telefon rasmi — odatdagi holat va u o'tishi kerak.
+    """
+    buf = io.BytesIO()
+    Image.new("RGB", (6000, 4000), (120, 90, 60)).save(buf, "JPEG", quality=40)
+    assert 6000 * 4000 < images.MAX_PIXELS
+
+    response = yubor(client, {"name_uz": "Kamera"},
+                     files={"image": ("photo.jpg", buf.getvalue(), "image/jpeg")})
+    assert response.status_code == 303
+    assert "juda katta" not in html.unescape(client.get("/admin/menu").text)

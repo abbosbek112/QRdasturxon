@@ -17,6 +17,20 @@ from app.config import settings
 
 MAX_BYTES = 5 * 1024 * 1024
 
+# Ochilgandan keyingi eng katta ruxsat etilgan o'lcham, pikselda.
+#
+# Fayl hajmi 5 MB bilan chegaralangan, lekin bu YETARLI EMAS: siqilgan
+# PNG bir necha yuz kilobayt bo'lib, ochilganda gigabaytlab xotira
+# talab qilishi mumkin ("rasm bombasi"). Serverda ikkita ishchi jarayon
+# bor va bitta so'rov ularni butun sayt bilan birga yiqitardi.
+#
+# Pillow'ning o'z chegarasi 89 megapiksel — bu RGB'da 256 MB. Menyudagi
+# rasm uchun bu bema'ni katta: eng kattasi 1600 px enida saqlanadi.
+# 40 megapiksel (taxminan 8000x5000) har qanday telefon va kamera
+# uchun ortig'i bilan yetadi.
+MAX_PIXELS = 40_000_000
+Image.MAX_IMAGE_PIXELS = MAX_PIXELS
+
 # iPhone rasmlari HEIC formatida keladi va Pillow ularni O'ZI ocha
 # olmaydi. Bu haqiqiy foydalanuvchini to'sgan: kategoriyaga rasm
 # qo'ymoqchi bo'lgan odam "Fayl rasm emas" degan xatoga urilgan,
@@ -57,7 +71,21 @@ async def save_image(upload: UploadFile, restaurant_id: int, max_width: int = 12
     try:
         with Image.open(BytesIO(raw)) as probe:
             image_format = probe.format
+            # `verify()` dan OLDIN tekshiriladi: o'lcham sarlavhadan
+            # o'qiladi va butun rasmni xotiraga yozmasdan bilinadi
+            kengligi, balandligi = probe.size
+            if kengligi * balandligi > MAX_PIXELS:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    f"Rasm juda katta: {kengligi}x{balandligi}. "
+                    "Kichikroq rasm tanlang yoki uni qirqib yuboring.",
+                )
             probe.verify()
+    except Image.DecompressionBombError:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Rasm juda katta. Kichikroq rasm tanlang yoki uni qirqib yuboring.",
+        )
     except (UnidentifiedImageError, OSError):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
