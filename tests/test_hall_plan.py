@@ -120,15 +120,36 @@ def test_new_tables_continue_the_numbering(db, hall):
     assert all(table.kind is TableKind.vip for table in created)
 
 
-def test_new_tables_skip_labels_already_taken(db, hall):
-    """Oraliqda bo'sh raqam qolgan bo'lsa ham urishmasin."""
+def test_new_tables_fill_the_gaps(db, hall):
+    """Yangi stol eng kichik BO'SH raqamni oladi.
+
+    Ilgari raqam eng kattadan davom etardi va haqiqiy restoranda
+    chalkashlik bergan: bir qavatda 2 va 3 turgan holda qo'shilgan
+    to'rttasi 21, 22, 23, 24 bo'lib chiqqan. Egasi buni "tartibsiz" deb
+    ko'rgan va haq edi.
+
+    Jamlanmada 1..4 bor, ustiga 6 qo'shiladi — ya'ni 5 bo'sh qoladi.
+    Ikkita yangi stol 5 va 7 ni olishi kerak, 7 va 8 ni emas.
+    """
     restaurant, _, vip = hall
     db.add(Table(restaurant_id=restaurant.id, label="6", code="oldindan"))
     db.commit()
 
     created = tables.add_next(db, restaurant, 2, "stol", vip.id)
 
-    assert [table.label for table in created] == ["7", "8"]
+    assert [table.label for table in created] == ["5", "7"]
+
+
+def test_new_tables_never_collide_with_an_existing_label(db, hall):
+    """Bo'shliqni to'ldirish band raqamni bosib ketmasin."""
+    restaurant, _, vip = hall
+    oldin = {row.label for row in tables.list_for(db, restaurant.id)}
+
+    created = tables.add_next(db, restaurant, 5, "stol", vip.id)
+
+    yangi = [table.label for table in created]
+    assert len(set(yangi)) == 5
+    assert not (set(yangi) & oldin)
 
 
 def test_word_labels_do_not_break_the_numbering(db, hall):
@@ -422,3 +443,54 @@ def test_the_page_offers_the_starting_number(client, db, hall):
     login(client, "osh", "adminpass123")
 
     assert 'name="start"' in client.get("/admin/tables").text
+
+
+# --- raqamlarni oldindan ko'rsatish ---
+
+
+def test_the_page_hands_the_taken_numbers_to_the_browser(client, hall):
+    """Sahifa qaysi raqamlar chiqishini o'zi hisoblab ko'rsatadi.
+
+    Buning uchun unga band raqamlar kerak. Ular yo'q bo'lsa hisob
+    jimgina noto'g'ri chiqardi — server bo'shliqni to'ldiradi, sahifa
+    esa buni bilmay boshqa raqam yozib turardi.
+    """
+    import re
+
+    from tests.conftest import login
+
+    login(client, "osh", "adminpass123")
+    body = client.get("/admin/tables").text
+
+    topildi = re.search(r'data-taken="([^"]*)"', body)
+    assert topildi, "band raqamlar sahifaga berilmagan"
+    # Ro'yxat BO'SH bo'lmasin: bo'sh bo'lsa sahifadagi hisob band
+    # raqamlarni bilmay, server yaratadiganidan boshqa son yozib turardi
+    raqamlar = [x for x in topildi.group(1).split(",") if x]
+    assert raqamlar, "data-taken bo'sh — hisob noto'g'ri chiqadi"
+    assert "data-preview" in body
+
+
+def test_the_preview_rule_matches_the_server(db, hall):
+    """Ikki joydagi qoida bir xil bo'lsin.
+
+    Hisob brauzerda ham takrorlanadi (har tugmachada serverga so'rov
+    yubormaslik uchun). Qoidalar ajralib ketsa sahifa bir raqam va'da
+    qilib, server boshqasini yaratardi.
+    """
+    restaurant, _, vip = hall
+    band = {row.label for row in tables.list_for(db, restaurant.id)}
+
+    kutilgan = tables.next_labels(band, 3)
+    created = tables.add_next(db, restaurant, 3, "stol", vip.id)
+
+    assert [table.label for table in created] == kutilgan
+
+
+def test_the_owner_can_still_choose_where_numbering_starts(db, hall):
+    """"2-qavat 11 dan boshlansin" degan odat saqlanadi."""
+    restaurant, _, vip = hall
+
+    created = tables.add_next(db, restaurant, 3, "stol", vip.id, start=11)
+
+    assert [table.label for table in created] == ["11", "12", "13"]

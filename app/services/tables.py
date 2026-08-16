@@ -166,6 +166,35 @@ def bulk_create(
     return created
 
 
+def next_labels(taken: set[str], count: int, start: int | None = None) -> list[str]:
+    """Yaratiladigan raqamlar — BO'SHLIQLARNI to'ldirib.
+
+    Ilgari raqam eng kattadan davom etardi va bu haqiqiy restoranda
+    chalkashlik bergan: bir qavatda 2 va 3 turgan holda yangi qo'shilgan
+    to'rttasi 21, 22, 23, 24 bo'lib chiqqan. Egasi buni "tartibsiz" deb
+    ko'rgan va haq edi — oradagi 4 dan 18 gacha bo'sh raqamlar
+    boshqa joyda emas, umuman ishlatilmagan bo'lishi mumkin.
+
+    Endi eng kichik bo'sh raqamdan boshlanadi. Egasi `start` bersa esa
+    o'sha yerdan — "2-qavat 11 dan boshlansin" degan odat shu bilan
+    saqlanadi.
+
+    Faqat SON bo'lgan nomlar hisobga olinadi: "Terasa A" alohida
+    yashaydi va raqamlashga aralashmaydi.
+    """
+    number = start if start and start >= 1 else 1
+    chiqdi: list[str] = []
+    # Yuqori chegara: eng yomon holatda hamma raqam band bo'lsa ham
+    # tsikl abadiy aylanmasin
+    chek = number + len(taken) + count + 1
+    while len(chiqdi) < count and number < chek:
+        label = str(number)
+        if label not in taken:
+            chiqdi.append(label)
+        number += 1
+    return chiqdi
+
+
 def add_next(
     db: Session,
     restaurant: Restaurant,
@@ -190,33 +219,18 @@ def add_next(
             status.HTTP_400_BAD_REQUEST, f"{MAX_TABLES} tadan ortiq stol qo'shib bo'lmaydi"
         )
 
-    # Eng katta raqamdan davom etamiz. Raqam bo'lmagan nomlar ("Terasa A")
-    # hisobga olinmaydi — ular alohida qatorda yashaydi.
-    # Raqamlashni EGASI belgilashi mumkin. Restoranlar buni har xil qiladi:
-    # birida har qavat 1 dan boshlanadi, boshqasida 1-qavatda 10 stol bo'lsa
-    # 2-qavatniki 11 dan ketadi — afitsant chalkashmasin degan.
-    # Ko'rsatilmasa eng katta raqamdan davom etadi.
-    if start is None or start < 1:
-        numbers = [int(label) for label in have if label.isdigit()]
-        start = max(numbers, default=0) + 1
-
     chosen_kind = _clean_kind(kind)
     chosen_zone = _clean_zone(db, restaurant.id, zone_id)
-    created, number = [], start
-    while len(created) < count:
-        label = str(number)
-        number += 1
-        if label in have:
-            continue
-        created.append(
-            Table(
-                restaurant_id=restaurant.id,
-                label=label,
-                kind=chosen_kind,
-                zone_id=chosen_zone,
-                code=new_code(),
-            )
+    created = [
+        Table(
+            restaurant_id=restaurant.id,
+            label=label,
+            kind=chosen_kind,
+            zone_id=chosen_zone,
+            code=new_code(),
         )
+        for label in next_labels(have, count, start)
+    ]
     db.add_all(created)
     db.commit()
     return created

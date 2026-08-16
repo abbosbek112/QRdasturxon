@@ -3136,3 +3136,11 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
 @media (max-width: 400px) {
   .astra .site-head-cta .langs { display: none; }
 }
+
+/* Bino: qo'shiladigan raqamlar oldindan ko'rinsin */
+.zone-preview {
+  align-self: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 14rem;
+}

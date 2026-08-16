@@ -148,3 +148,60 @@ document.addEventListener("click", function (event) {
     if (own && ownRadio) ownRadio.closest(".swatch").style.setProperty("--sw", own.value);
   }
 })();
+
+/*
+  Bino: qaysi raqamlar chiqishini BOSISHDAN OLDIN ko'rsatish.
+
+  Ilgari natija kutilmagan bo'lib chiqardi. Haqiqiy holat: qavatda 2 va
+  3 turgan, egasi to'rtta qo'shgan va 21, 22, 23, 24 chiqqan — chunki
+  raqam butun restorandagi eng kattadan davom etardi.
+
+  Endi server bo'shliqlarni to'ldiradi, bu yerdagi hisob esa AYNAN o'sha
+  qoidani takrorlaydi. Ikki joyda bir xil mantiq bo'lgani yoqimsiz, lekin
+  muqobili — har tugmachada serverga so'rov yuborish.
+*/
+(function () {
+  var bino = document.querySelector(".building[data-taken]");
+  if (!bino) return;
+
+  var band = (bino.getAttribute("data-taken") || "")
+    .split(",")
+    .filter(Boolean);
+
+  function keyingiRaqamlar(count, start) {
+    var olingan = band.slice();
+    var son = start && start >= 1 ? start : 1;
+    var chiqdi = [];
+    var chek = son + olingan.length + count + 1;
+    while (chiqdi.length < count && son < chek) {
+      var nom = String(son);
+      if (olingan.indexOf(nom) === -1) chiqdi.push(nom);
+      son += 1;
+    }
+    return chiqdi;
+  }
+
+  function yangila(forma) {
+    var joy = forma.querySelector("[data-preview]");
+    if (!joy) return;
+    var count = parseInt(forma.querySelector('[name="count"]').value, 10);
+    var startEl = forma.querySelector('[name="start"]');
+    var start = startEl ? parseInt(startEl.value, 10) : NaN;
+    if (!count || count < 1) {
+      joy.textContent = "";
+      return;
+    }
+    // Ko'p bo'lsa hammasini yozib chiqish o'qishga xalaqit beradi
+    var raqamlar = keyingiRaqamlar(Math.min(count, 50), isNaN(start) ? null : start);
+    var matn = raqamlar.slice(0, 8).join(", ");
+    if (raqamlar.length > 8) matn += " …";
+    joy.textContent = matn;
+  }
+
+  var formalar = bino.querySelectorAll(".zone-add");
+  Array.prototype.forEach.call(formalar, function (forma) {
+    if (!forma.querySelector('[name="count"]')) return;
+    yangila(forma);
+    forma.addEventListener("input", function () { yangila(forma); });
+  });
+})();

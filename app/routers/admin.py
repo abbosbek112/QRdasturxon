@@ -976,6 +976,11 @@ def tables_page(request: Request, db: DbSession, user: AdminUser):
             "tables": rows,
             "zones": zones,
             "kinds": list(TableKind),
+            # Qaysi raqamlar chiqishini sahifaning o'zi ko'rsatadi —
+            # egasi natijani bosishdan oldin biladi
+            "taken_labels": sorted(
+                (row.label for row in rows if row.label.isdigit()), key=int
+            ),
             # Keyingi bo'sh qavat — "qavat qo'shish" formasi bo'sh kelmasin
             "next_floor": max((zone.floor for zone in zones), default=0) + 1,
         },

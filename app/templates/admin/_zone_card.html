@@ -80,6 +80,15 @@
         </select>
       </div>
       <button class="btn btn-sm" type="submit">{{ ui.icon('plus') }} {{ t('hall_add_tables', ui_lang) }}</button>
+      {#
+        Qaysi raqamlar chiqishi BOSISHDAN OLDIN ko'rinadi.
+
+        Ilgari ko'rinmasdi va natija kutilmagan bo'lib chiqardi: bir
+        qavatda 2 va 3 turgan holda qo'shilgan to'rttasi 21, 22, 23, 24
+        bo'lib chiqqan. Endi raqamlar shu yerda yozib turadi va
+        yoqmasa "Raqamlash" maydoniga o'zi yozadi.
+      #}
+      <span class="zone-preview muted small" data-preview aria-live="polite"></span>
     </form>
   </footer>
 </article>

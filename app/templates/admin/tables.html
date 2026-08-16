@@ -59,7 +59,12 @@
 
   {% include "admin/_qr_pack_form.html" %}
 
-  <div class="building">
+  {#
+    Band raqamlar JS ga beriladi: u qaysi raqamlar chiqishini shu yerda
+    hisoblab ko'rsatadi. Server bilan bir xil qoida — eng kichik
+    bo'shdan boshlab to'ldirish.
+  #}
+  <div class="building" data-taken="{{ taken_labels | join(',') }}">
     {% for floor, zone_rows in building %}
       {% set floor_tables = zone_rows | sum(attribute=1, start=[]) | length %}
       <section class="floor" data-floor="{{ floor }}">
