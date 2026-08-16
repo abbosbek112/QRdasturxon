@@ -265,7 +265,19 @@ class Combo(Base):
 
 
 class ComboLine(Base):
-    """Kombo tarkibidagi bitta taom va uning soni.
+    """Kombo tarkibidagi bitta qator.
+
+    Qator IKKI XIL bo'ladi va aynan bittasi to'ldiriladi:
+
+    * `item_id` — menyudagi taom. Narxi bor, ya'ni tejash hisobiga
+      kiradi va taom yashirilsa kombo ham to'xtaydi.
+    * `custom_name` — egasi o'zi yozgan qo'shimcha: "cheksiz choy",
+      "shirinlik sovg'a", "ikki kishilik idish". Menyuda alohida taom
+      emas, shuning uchun narxi ham yo'q va tejash hisobiga kirmaydi.
+
+    Nega qo'shimchaning narxi yo'q: tejash mijozga ko'rsatiladigan
+    raqam. Menyuda turmagan narsaga narx yozib, uni "tejaysiz" ga
+    qo'shish o'ylab topilgan chegirma bo'lardi.
 
     Taom o'chirilsa qator ham o'chadi (`CASCADE`): tarkibida yo'q taom
     turgan kombo mijozga yolg'on va'da bo'lardi. Kombo o'zi qoladi va
@@ -278,9 +290,10 @@ class ComboLine(Base):
     combo_id: Mapped[int] = mapped_column(
         ForeignKey("combos.id", ondelete="CASCADE"), index=True
     )
-    item_id: Mapped[int] = mapped_column(
+    item_id: Mapped[int | None] = mapped_column(
         ForeignKey("menu_items.id", ondelete="CASCADE"), index=True
     )
+    custom_name: Mapped[str | None] = mapped_column(String(120))
     quantity: Mapped[int] = mapped_column(Integer, default=1)
 
     combo: Mapped[Combo] = relationship(back_populates="lines")

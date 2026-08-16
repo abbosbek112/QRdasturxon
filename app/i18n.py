@@ -838,6 +838,20 @@ UI: dict[str, dict[str, str]] = {
     },
     "combo_new": {"uz": "Yangi kombo", "ru": "Новое комбо", "en": "New combo"},
     "combo_example": {"uz": "Masalan: Tushlik to'plami", "ru": "Например: Обеденный набор", "en": "For example: Lunch set"},
+    "combo_extra": {"uz": "O'z qo'shimchalaringiz", "ru": "Ваши дополнения", "en": "Your own extras"},
+    "combo_extra_example": {
+        "uz": "Masalan: cheksiz choy",
+        "ru": "Например: чай без ограничений",
+        "en": "For example: unlimited tea",
+    },
+    "combo_extra_hint": {
+        "uz": "Menyuda alohida taom bo'lmagan narsalar. Ular tarkibda ko'rinadi, "
+              "lekin narxi yo'q — shuning uchun \"tejaysiz\" hisobiga kirmaydi.",
+        "ru": "То, чего нет в меню отдельным блюдом. Показываются в составе, "
+              "но без цены — поэтому в расчёт экономии не входят.",
+        "en": "Things that are not separate menu dishes. They show in the contents "
+              "but carry no price, so they do not affect the saving.",
+    },
     "combo_contents": {"uz": "Tarkibi", "ru": "Состав", "en": "Contents"},
     "combo_empty": {"uz": "Tarkibi hali tanlanmagan", "ru": "Состав ещё не выбран", "en": "Nothing chosen yet"},
     "combo_line_count": {"uz": "ta taom", "ru": "блюд", "en": "dishes"},

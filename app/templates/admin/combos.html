@@ -40,6 +40,40 @@
   </div>
 {% endmacro %}
 
+
+{% macro extra_picker(extras, suffix) %}
+  {#
+    Egasining O'Z qo'shimchalari: "cheksiz choy", "shirinlik sovg'a",
+    "ikki kishilik idish". Bular menyuda alohida taom emas, shuning
+    uchun ularning narxi ham yo'q va "tejaysiz" hisobiga kirmaydi.
+
+    Bo'sh qatorlar serverda jimgina tashlanadi — egasi uchala maydonni
+    ham to'ldirishi shart emas.
+  #}
+  <div class="combo-extras">
+    {% for extra in extras %}
+      <div class="combo-extra-row">
+        <input name="extra_name" maxlength="120" value="{{ extra.custom_name }}"
+               placeholder="{{ t('combo_extra_example', ui_lang) }}"
+               aria-label="{{ t('combo_extra', ui_lang) }}">
+        <input class="combo-pick-qty" type="number" name="extra_qty" min="1" max="20"
+               value="{{ extra.quantity }}" aria-label="{{ t('field_qty', ui_lang) }}">
+      </div>
+    {% endfor %}
+    {# Har doim ikkita bo'sh qator — yangi qo'shish uchun tugma kerak bo'lmasin #}
+    {% for _ in range(2) %}
+      <div class="combo-extra-row">
+        <input name="extra_name" maxlength="120"
+               placeholder="{{ t('combo_extra_example', ui_lang) }}"
+               aria-label="{{ t('combo_extra', ui_lang) }}">
+        <input class="combo-pick-qty" type="number" name="extra_qty" min="1" max="20" value="1"
+               aria-label="{{ t('field_qty', ui_lang) }}">
+      </div>
+    {% endfor %}
+  </div>
+  <p class="hint">{{ t('combo_extra_hint', ui_lang) }}</p>
+{% endmacro %}
+
 {% block content %}
 <div class="page-head spread">
   <div>
@@ -134,6 +168,11 @@
             {{ line_picker(items, row.chosen, combo.id) }}
           </div>
 
+          <div class="field">
+            <label>{{ t('combo_extra', ui_lang) }}</label>
+            {{ extra_picker(row.extras, combo.id) }}
+          </div>
+
           <div class="row" style="align-items:flex-end">
             <div class="field" style="width:150px">
               <label>{{ t('field_price', ui_lang) }}</label>
@@ -190,6 +229,11 @@
       <div class="field">
         <label>{{ t('combo_contents', ui_lang) }}</label>
         {{ line_picker(items, {}, 'new') }}
+        </div>
+
+        <div class="field">
+          <label>{{ t('combo_extra', ui_lang) }}</label>
+          {{ extra_picker([], 'new') }}
       </div>
 
       <div class="row" style="align-items:flex-end">

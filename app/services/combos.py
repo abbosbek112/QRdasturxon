@@ -58,7 +58,13 @@ def owned(db: Session, restaurant_id: int, combo_id: int) -> Combo:
 
 
 def full_price(combo: Combo) -> Decimal:
-    """Tarkibdagi taomlar alohida olinganda qancha turishi."""
+    """Tarkibdagi taomlar alohida olinganda qancha turishi.
+
+    Egasi qo'shgan qo'shimchalar ("cheksiz choy") bu hisobga KIRMAYDI:
+    ular menyuda turmaydi, ya'ni ularning narxi yo'q. Ularga narx
+    o'ylab qo'shish "tejaysiz" raqamini shishirardi va mijozga
+    ko'rsatiladigan son yolg'on bo'lardi.
+    """
     return sum(
         (line.item.price * line.quantity for line in combo.lines if line.item is not None),
         Decimal("0"),
@@ -89,11 +95,16 @@ def is_orderable(combo: Combo) -> bool:
     tushadi. Mijoz uchun natija bir xil — u va'da qilingan taomni
     kutib o'tiradi.
     """
-    return bool(combo.lines) and all(
+    taomlar = [line for line in combo.lines if line.item_id is not None]
+    # Faqat qo'shimchadan iborat kombo — taomsiz to'plam, ya'ni sotiladigan
+    # narsa yo'q. U mijozga ko'rsatilmaydi.
+    if not taomlar:
+        return False
+    return all(
         line.item is not None
         and line.item.is_available
         and (line.item.category is None or line.item.category.is_active)
-        for line in combo.lines
+        for line in taomlar
     )
 
 
@@ -110,12 +121,22 @@ def _check_limit(db: Session, restaurant_id: int) -> None:
         )
 
 
-def set_lines(db: Session, combo: Combo, wanted: list[tuple[int, int]]) -> None:
+MAX_EXTRA_NAME = 120
+
+
+def set_lines(
+    db: Session,
+    combo: Combo,
+    wanted: list[tuple[int, int]],
+    extras: list[tuple[str, int]] | None = None,
+) -> None:
     """Kombo tarkibini almashtiradi.
 
-    Taomlar SHU restoranga tegishliligi tekshiriladi: formadagi raqamni
-    o'zgartirib qo'shni restoranning taomini kombo'ga solib bo'lmasin.
-    Bir taom ikki marta yuborilsa soni qo'shiladi.
+    Ikki xil qator bo'ladi. `wanted` — menyudagi taomlar; ular SHU
+    restoranga tegishliligi tekshiriladi, aks holda formadagi raqamni
+    o'zgartirib qo'shni restoranning taomini solib qo'yish mumkin
+    bo'lardi. `extras` — egasi o'zi yozgan qo'shimchalar; ular menyuga
+    bog'lanmaydi, shuning uchun tekshiradigan narsa faqat matnning o'zi.
     """
     merged: dict[int, int] = {}
     for item_id, quantity in wanted[:MAX_LINES]:
@@ -139,6 +160,18 @@ def set_lines(db: Session, combo: Combo, wanted: list[tuple[int, int]]) -> None:
         if item_id in allowed:
             combo.lines.append(ComboLine(item_id=item_id, quantity=quantity))
 
+    for nom, quantity in (extras or [])[:MAX_LINES]:
+        nom = " ".join(nom.split())[:MAX_EXTRA_NAME]
+        if not nom:
+            continue
+        combo.lines.append(
+            ComboLine(
+                item_id=None,
+                custom_name=nom,
+                quantity=max(1, min(quantity, MAX_QTY)),
+            )
+        )
+
 
 def create(
     db: Session,
@@ -150,6 +183,7 @@ def create(
     sort_order: int = 0,
     image: str | None = None,
     lines: list[tuple[int, int]] | None = None,
+    extras: list[tuple[str, int]] | None = None,
 ) -> Combo:
     if not name:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kombo nomi bo'sh bo'lmasin")
@@ -165,6 +199,6 @@ def create(
     )
     db.add(combo)
     db.flush()
-    set_lines(db, combo, lines or [])
+    set_lines(db, combo, lines or [], extras)
     db.commit()
     return combo

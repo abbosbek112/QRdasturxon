@@ -3144,3 +3144,8 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 14rem;
 }
+
+/* Kombo: egasining o'z qo'shimchalari */
+.combo-extras { display: grid; gap: .4rem; }
+.combo-extra-row { display: flex; gap: .4rem; }
+.combo-extra-row input[name="extra_name"] { flex: 1 1 auto; min-width: 0; }

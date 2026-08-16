@@ -495,8 +495,16 @@ def combos_page(request: Request, db: DbSession, user: AdminUser):
                     "full": combos.full_price(combo),
                     "saving": combos.saving(combo),
                     "orderable": combos.is_orderable(combo),
-                    # Tarkib formasi uchun: qaysi taom nechta
-                    "chosen": {line.item_id: line.quantity for line in combo.lines},
+                    # Tarkib formasi uchun: qaysi taom nechta.
+                    # Qo'shimchalarda `item_id` bo'sh — ular alohida
+                    # ro'yxatga tushadi, aks holda `None` kalit bo'lib
+                    # birinchi taomning katakchasini belgilab qo'yardi.
+                    "chosen": {
+                        line.item_id: line.quantity
+                        for line in combo.lines
+                        if line.item_id is not None
+                    },
+                    "extras": [line for line in combo.lines if line.item_id is None],
                 }
                 for combo in rows
             ],
@@ -538,6 +546,33 @@ async def _combo_lines(request: Request) -> list[tuple[int, int]]:
     return lines
 
 
+async def _combo_extras(request: Request) -> list[tuple[str, int]]:
+    """Egasi o'zi yozgan qo'shimchalar: "cheksiz choy", "shirilik sovg'a".
+
+    Menyuda turmaydigan narsalar. Ular taom emas, ya'ni narxi ham yo'q va
+    tejash hisobiga kirmaydi — bu ataylab: menyuda bo'lmagan narsaga narx
+    o'ylab qo'shish mijozga ko'rsatiladigan "tejaysiz" raqamini
+    shishirardi.
+
+    Bo'sh qatorlar jimgina tashlanadi: forma bir nechta bo'sh maydon
+    bilan keladi va egasi ularning hammasini to'ldirishi shart emas.
+    """
+    form = await request.form()
+    extras: list[tuple[str, int]] = []
+    nomlar = form.getlist("extra_name")
+    sonlar = form.getlist("extra_qty")
+    for index, nom in enumerate(nomlar):
+        nom = (nom or "").strip()
+        if not nom:
+            continue
+        try:
+            quantity = int(sonlar[index]) if index < len(sonlar) else 1
+        except (TypeError, ValueError):
+            quantity = 1
+        extras.append((nom, quantity))
+    return extras
+
+
 @router.post("/combos", dependencies=[Depends(verify_csrf)])
 async def create_combo(
     request: Request,
@@ -567,6 +602,7 @@ async def create_combo(
             sort_order=sort_order,
             image=picture,
             lines=await _combo_lines(request),
+        extras=await _combo_extras(request),
         )
     except HTTPException as error:
         delete_image(picture)
@@ -598,7 +634,7 @@ async def update_combo(
     combo.price = max(price, Decimal("0"))
     combo.sort_order = sort_order
     combo.is_active = is_active
-    combos.set_lines(db, combo, await _combo_lines(request))
+    combos.set_lines(db, combo, await _combo_lines(request), await _combo_extras(request))
 
     if image is not None and image.filename:
         old = combo.image

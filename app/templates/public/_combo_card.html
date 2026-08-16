@@ -34,8 +34,16 @@
       {% set note = tr(combo.description, lang) %}
       {% if note %}<p class="dish-desc clamp-2">{{ note }}</p>{% endif %}
       <ul class="combo-parts">
+        {#
+          Qator ikki xil: menyudagi taom yoki egasi yozgan qo'shimcha
+          ("cheksiz choy"). Ikkalasi bir xil ko'rinadi — mijoz uchun
+          farqi yo'q, u to'plamga nima kirishini bilishi kerak.
+        #}
         {% for line in combo.lines %}
-          <li>{{ line.quantity }}× {{ tr(line.item.name, lang) }}</li>
+          <li>
+            {{ line.quantity }}×
+            {{ tr(line.item.name, lang) if line.item else line.custom_name }}
+          </li>
         {% endfor %}
       </ul>
     </div>

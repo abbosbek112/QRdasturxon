@@ -419,3 +419,98 @@ def test_ordering_a_combo_from_a_hidden_category_is_refused(client, db, kafe, ko
     )
     # Buyurtma yaratilmasin
     assert db.query(Order).count() == 0
+
+
+# --- egasining o'z qo'shimchalari ---
+
+
+def test_an_owner_can_add_something_that_is_not_on_the_menu(db, kafe, kombo):
+    """To'plamga menyuda turmagan narsa ham kirsin.
+
+    "Cheksiz choy", "shirinlik sovg'a", "ikki kishilik idish" — bular
+    alohida taom emas, lekin to'plamning bir qismi va mijoz ularni
+    bilishi kerak.
+    """
+    restaurant, _, burger, _ = kafe
+    combos.set_lines(db, kombo, [(burger.id, 1)], [("Cheksiz choy", 2)])
+    db.commit()
+    db.refresh(kombo)
+
+    qoshimcha = [line for line in kombo.lines if line.item_id is None]
+    assert len(qoshimcha) == 1
+    assert qoshimcha[0].custom_name == "Cheksiz choy"
+    assert qoshimcha[0].quantity == 2
+
+
+def test_an_extra_does_not_inflate_the_saving(db, kafe, kombo):
+    """Qo'shimcha "tejaysiz" raqamini shishirmasin.
+
+    Menyuda turmagan narsaning narxi yo'q. Unga narx o'ylab qo'shish
+    mijozga ko'rsatiladigan raqamni yolg'on qilardi.
+    """
+    restaurant, _, burger, kola = kafe
+    oldin = combos.saving(kombo)
+
+    combos.set_lines(db, kombo, [(burger.id, 1), (kola.id, 1)], [("Cheksiz choy", 1)])
+    db.commit()
+    db.refresh(kombo)
+
+    assert combos.saving(kombo) == oldin
+    assert combos.full_price(kombo) == burger.price + kola.price
+
+
+def test_a_combo_made_only_of_extras_is_not_sold(db, kafe, kombo):
+    """Taomsiz to'plam — sotiladigan narsa yo'q.
+
+    Uni menyuda ko'rsatish mijozga "bir nima" sotishga urinish bo'lardi.
+    """
+    restaurant, _, _, _ = kafe
+    combos.set_lines(db, kombo, [], [("Cheksiz choy", 1)])
+    db.commit()
+    db.refresh(kombo)
+
+    assert not combos.is_orderable(kombo)
+    assert combos.visible(db, restaurant.id) == []
+
+
+def test_blank_extra_rows_are_dropped(db, kafe, kombo):
+    """Forma bir nechta bo'sh maydon bilan keladi — ular saqlanmasin."""
+    restaurant, _, burger, _ = kafe
+    combos.set_lines(db, kombo, [(burger.id, 1)], [("", 1), ("   ", 2), ("Choy", 1)])
+    db.commit()
+    db.refresh(kombo)
+
+    nomlar = [line.custom_name for line in kombo.lines if line.item_id is None]
+    assert nomlar == ["Choy"]
+
+
+def test_the_customer_sees_extras_in_the_contents(client, db, kafe, kombo):
+    """Mijoz to'plamga nima kirishini to'liq ko'rsin."""
+    restaurant, _, burger, _ = kafe
+    combos.set_lines(db, kombo, [(burger.id, 1)], [("Cheksiz choy", 2)])
+    db.commit()
+
+    body = html.unescape(client.get(f"/r/{restaurant.slug}").text)
+    assert "Cheksiz choy" in body
+    assert "2×" in body
+
+
+def test_extras_arrive_through_the_form(client, db, kafe, kombo):
+    """Marshrut formadagi qo'shimchalarni o'qiy olsin."""
+    restaurant, _, burger, _ = kafe
+    login(client, "osh", "adminpass123")
+    token = csrf(client, "/admin/combos")
+
+    client.post(
+        f"/admin/combos/{kombo.id}",
+        data={
+            "csrf_token": token, "name_uz": "Ikki kishilik", "price": "35000",
+            "item_id": str(burger.id), f"qty_{burger.id}": "1",
+            "extra_name": ["Cheksiz choy", ""], "extra_qty": ["3", "1"],
+        },
+        follow_redirects=False,
+    )
+    db.refresh(kombo)
+
+    qoshimcha = [line for line in kombo.lines if line.item_id is None]
+    assert [(x.custom_name, x.quantity) for x in qoshimcha] == [("Cheksiz choy", 3)]
