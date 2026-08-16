@@ -322,7 +322,9 @@ def history(db: Session, restaurant_id: int, start, end) -> list[Order]:
                 Order.created_at >= _day_start(start),
                 Order.created_at < _day_start(end) + timedelta(days=1),
             )
-            .options(selectinload(Order.lines))
+            # Javobgar ham oldindan olinadi: usiz jadvaldagi har qator
+            # uchun alohida so'rov ketardi
+            .options(selectinload(Order.lines), selectinload(Order.handled_by))
             .order_by(Order.created_at.desc())
             .limit(300)
         ).all()

@@ -68,6 +68,7 @@
           <th>{{ t('col_table', ui_lang) }}</th>
           <th>{{ t('dash_items', ui_lang) }}</th>
           <th>{{ t('col_total', ui_lang) }}</th>
+          <th>{{ t('col_waiter', ui_lang) }}</th>
           <th>{{ t('col_status', ui_lang) }}</th>
         </tr>
       </thead>
@@ -83,6 +84,18 @@
               {% if order.note %}<div class="muted small">{{ order.note }}</div>{% endif %}
             </td>
             <td><strong>{{ order.total | price }}</strong></td>
+            {#
+              Kim javob bergani. Bo'sh chiziqcha ikki narsani bildiradi:
+              buyurtmaga hali javob berilmagan, yoki unga egasining o'zi
+              javob bergan — egasi xodim emas va javobgar deb yozilmaydi.
+            #}
+            <td>
+              {% if order.handled_by %}
+                <a href="/admin/staff/{{ order.handled_by.id }}">{{ order.handled_by.username }}</a>
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
             <td>
               <span class="badge badge-{{ 'ok' if order.status.value == 'served' else 'off' }}">
                 {{ t('order_status_' ~ order.status.value, ui_lang) }}

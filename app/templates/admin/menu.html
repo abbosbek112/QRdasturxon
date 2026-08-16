@@ -32,10 +32,18 @@
 
   <div class="menu-tree">
     {% for category in categories %}
-      <section class="menu-cat" data-category="{{ category.id }}">
+      <section class="menu-cat {{ 'is-hidden' if not category.is_active }}"
+               data-category="{{ category.id }}">
         <header class="menu-cat-head">
           <details class="menu-cat-edit">
             <summary>
+              {#
+                Ochilish belgisi. Ilgari hech qanday belgi yo'q edi va
+                sarlavhaning bosilishini faqat tasodifan bilib olish
+                mumkin edi — odam kategoriyani tahrirlash uchun qayerni
+                bosishini topolmasdi.
+              #}
+              <span class="cat-toggle" aria-hidden="true">{{ ui.icon('back') }}</span>
               {% if category.image %}
                 <img class="cat-badge" src="/media/{{ category.image }}" alt="" loading="lazy">
               {% else %}
@@ -57,9 +65,9 @@
                   <div class="field"><label>{{ t('name_in', ui_lang) }} (uz)</label>
                     <input name="name_uz" value="{{ category.name.get('uz', '') }}" required></div>
                   <div class="field"><label>{{ t('name_in', ui_lang) }} (ru)</label>
-                    <input name="name_ru" value="{{ category.name.get('ru', '') }}"></div>
+                    <input name="name_ru" value="{{ category.name.get('ru', '') }}" required></div>
                   <div class="field"><label>{{ t('name_in', ui_lang) }} (en)</label>
-                    <input name="name_en" value="{{ category.name.get('en', '') }}"></div>
+                    <input name="name_en" value="{{ category.name.get('en', '') }}" required></div>
                 </div>
                 <div class="row" style="align-items:flex-end">
                   <div class="field" style="width:110px">

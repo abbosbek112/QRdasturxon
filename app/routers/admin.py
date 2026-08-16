@@ -104,6 +104,25 @@ def form_failed(request: Request, error: HTTPException, target: str) -> Redirect
     return RedirectResponse(target, status.HTTP_303_SEE_OTHER)
 
 
+def _check_three_languages(name_uz: str, name_ru: str, name_en: str) -> None:
+    """Kategoriya nomi UCHALA tilda ham to'ldirilsin.
+
+    Menyu uch tilli va kategoriya — mijoz ko'radigan birinchi narsa.
+    Bittasi bo'sh qolsa rus yoki ingliz tilidagi menyuda o'sha bo'lim
+    o'zbekcha nom bilan turadi va menyu chala tarjima qilingandek
+    ko'rinadi. Taomda bu yumshoqroq (nomi baribir o'zbekcha bo'lishi
+    mumkin), kategoriyada esa yo'q.
+    """
+    bosh = [nom for nom, qiymat in (
+        ("o'zbekcha", name_uz), ("ruscha", name_ru), ("inglizcha", name_en)
+    ) if not qiymat.strip()]
+    if bosh:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Kategoriya nomi uch tilda ham to'ldirilsin. Yetishmaydi: {', '.join(bosh)}.",
+        )
+
+
 def owned_category(db: Session, user: User, category_id: int) -> Category:
     category = db.scalar(
         select(Category).where(
@@ -394,8 +413,7 @@ async def create_category(
     image: Annotated[UploadFile | None, File()] = None,
 ):
     try:
-        if not name_uz.strip():
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kategoriya nomi bo'sh bo'lmasin")
+        _check_three_languages(name_uz, name_ru, name_en)
         check_category_limit(db, get_restaurant(db, user))
     except HTTPException as error:
         return form_failed(request, error, "/admin/menu")
@@ -432,6 +450,7 @@ async def update_category(
     image: Annotated[UploadFile | None, File()] = None,
 ):
     category = owned_category(db, user, category_id)
+    _check_three_languages(name_uz, name_ru, name_en)
     category.name = i18n_field(name_uz, name_ru, name_en) or category.name
     category.sort_order = sort_order
     category.is_active = is_active

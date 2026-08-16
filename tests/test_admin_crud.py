@@ -29,6 +29,7 @@ def make_category(client, db, restaurant_id) -> Category:
             "csrf_token": csrf(client, "/admin/categories"),
             "name_uz": "Issiq taomlar",
             "name_ru": "Горячее",
+            "name_en": "Hot dishes",
             "sort_order": 1,
         },
     )
@@ -38,7 +39,7 @@ def make_category(client, db, restaurant_id) -> Category:
 def test_category_is_created_with_translations(admin_client, db, tenant_a):
     restaurant, _ = tenant_a
     category = make_category(admin_client, db, restaurant.id)
-    assert category.name == {"uz": "Issiq taomlar", "ru": "Горячее"}
+    assert category.name == {"uz": "Issiq taomlar", "ru": "Горячее", "en": "Hot dishes"}
     assert category.sort_order == 1
 
 

@@ -34,9 +34,15 @@ def kirgan(client, tenant_a):
 
 
 def yubor(client, data, files=None):
+    """Kategoriya formasi. Nom uchala tilda ham majburiy, shuning uchun
+    chaqiruvchi faqat o'zbekchasini bersa qolgani shu yerda to'ldiriladi —
+    har testda uch qatordan yozib chiqish tekshirilayotgan narsani
+    ko'rinmas qilib qo'yardi."""
     token = csrf(client, "/admin/menu")
+    uz = data.get("name_uz", "")
+    toliq = {"name_ru": uz, "name_en": uz, **data}
     return client.post(
-        "/admin/categories", data={"csrf_token": token, **data}, files=files,
+        "/admin/categories", data={"csrf_token": token, **toliq}, files=files,
         follow_redirects=False,
     )
 

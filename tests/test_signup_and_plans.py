@@ -104,14 +104,17 @@ def test_free_plan_stops_at_the_category_limit(client, db, free_tenant):
     for index in range(limit):
         client.post(
             "/admin/categories",
-            data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": f"Bo'lim {index}"},
+            data={"csrf_token": csrf(client, "/admin/categories"),
+                  "name_uz": f"Bo'lim {index}", "name_ru": f"Раздел {index}",
+                  "name_en": f"Section {index}"},
         )
     assert db.query(Category).count() == limit
 
     # Cheklov xato sahifasiga otvormaydi — o'sha sahifaga sabab bilan qaytaradi
     blocked = client.post(
         "/admin/categories",
-        data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ortiqcha"},
+        data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ortiqcha",
+              "name_ru": "Лишний", "name_en": "Extra"},
     )
     assert blocked.status_code == 200
     assert blocked.url.path == "/admin/menu"
@@ -339,7 +342,8 @@ def test_the_checklist_ticks_off_each_finished_step(client, db, tenant_a):
 
     client.post(
         "/admin/categories",
-        data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ichimliklar"},
+        data={"csrf_token": csrf(client, "/admin/categories"), "name_uz": "Ichimliklar",
+              "name_ru": "Напитки", "name_en": "Drinks"},
     )
     assert "1 / 3 bajarildi" in html.unescape(client.get("/admin").text)
 

@@ -1167,6 +1167,7 @@ UI: dict[str, dict[str, str]] = {
     },
     "col_table": {"uz": "Stol", "ru": "Стол", "en": "Table"},
     "col_total": {"uz": "Summa", "ru": "Сумма", "en": "Total"},
+    "col_waiter": {"uz": "Afitsant", "ru": "Официант", "en": "Waiter"},
     "col_status": {"uz": "Holat", "ru": "Статус", "en": "Status"},
     "col_time": {"uz": "Vaqt", "ru": "Время", "en": "Time"},
 

@@ -2649,6 +2649,34 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
   display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
 }
 .menu-cat-edit > summary::-webkit-details-marker { display: none; }
+/*
+  Ochilish belgisi. "Orqaga" o'qi burilib ishlatiladi: yopiq holatda
+  pastga, ochiq holatda yuqoriga qaraydi.
+*/
+.cat-toggle {
+  flex: none; display: grid; place-content: center;
+  width: 1.5rem; height: 1.5rem;
+  border-radius: var(--r-full);
+  background: var(--surface-2); color: var(--ink-2);
+  transition: transform .25s cubic-bezier(.16, 1, .3, 1), background .2s;
+}
+.cat-toggle svg { width: .9rem; height: .9rem; transform: rotate(-90deg); }
+.menu-cat-edit[open] > summary .cat-toggle {
+  transform: rotate(180deg);
+  background: var(--accent); color: var(--accent-fg);
+}
+.menu-cat-edit > summary:hover .cat-toggle { background: var(--line-2); }
+
+/* Ochilgan qism pastdan yumshoq chiqadi */
+.menu-cat-edit[open] > .menu-cat-body { animation: cat-open .28s cubic-bezier(.16, 1, .3, 1); }
+@keyframes cat-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cat-toggle { transition: none; }
+  .menu-cat-edit[open] > .menu-cat-body { animation: none; }
+}
 .menu-cat-body {
   margin-top: .7rem; padding-top: .7rem; border-top: 1px solid var(--line);
 }
@@ -2661,7 +2689,34 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
 }
 /* Yashirilgan taom ko'zga tashlanib tursin: egasi uni menyuga qaytarishni
    unutib qo'ymasin */
-.menu-dish.is-hidden { opacity: .6; }
+/*
+  Yashirilgan taom va kategoriya — mijoz KO'RMAYDIGAN narsa. Ilgari
+  farq bor-yo'g'i biroz oqarish edi va egasi ro'yxatga qarab qaysi biri
+  menyuda turganini ayta olmasdi.
+
+  Endi u o'chirilgan tugmaga o'xshaydi: rangsiz, chiziqli fon va nomi
+  ustidan chizilgan. Uch belgi birga — faqat rang bilan ajratish rangni
+  ajrata olmaydigan odam uchun hech nima demasdi.
+*/
+.menu-dish.is-hidden,
+.menu-cat.is-hidden {
+  opacity: .72;
+  filter: grayscale(1);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    color-mix(in srgb, var(--ink) 4%, transparent) 6px 12px
+  );
+}
+.menu-dish.is-hidden .menu-dish-main strong,
+.menu-cat.is-hidden > .menu-cat-head summary strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--ink-2);
+}
+/* Yashirilgan kategoriya ichidagi taomlar ham mijozga ko'rinmaydi —
+   ular alohida yashirilmagan bo'lsa ham */
+.menu-cat.is-hidden .menu-dishes { opacity: .85; }
 .menu-dish-main { min-width: 0; }
 .menu-dish-price { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .menu-dish-order { display: flex; align-items: center; gap: .3rem; }
