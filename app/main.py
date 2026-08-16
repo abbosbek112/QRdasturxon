@@ -7,6 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import BASE_DIR, settings
+from app.flash import set_flash
 from app.i18n import resolve_lang, t
 from app.logging_setup import configure_logging
 from app.routers import admin, api, auth, hall, public, superadmin
@@ -101,6 +102,10 @@ def _way_back(request: Request) -> str:
     here = str(request.base_url).rstrip("/")
     if referer.startswith(here + "/") and referer != str(request.url):
         return referer
+    # Referer yo'q bo'lsa ham panelda ishlayotgan odam reklama
+    # sahifasiga tushib qolmasin
+    if request.url.path.startswith("/admin"):
+        return "/admin"
     return "/"
 
 
@@ -115,6 +120,27 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         return JSONResponse(
             {"detail": exc.detail}, status_code=exc.status_code, headers=exc.headers
         )
+
+    # Panelda forma to'ldirayotgan odam xato tufayli BO'SH sahifaga
+    # tushib qolmasin.
+    #
+    # Haqiqiy holat: egasi kategoriya nomini uch tilda yozib, rasm
+    # tanlaydi va yuboradi. Rasm iPhone formatida bo'lgani uchun rad
+    # etiladi va u "400 — Fayl rasm emas" degan yalang'och sahifaga
+    # tushadi. Yozganlarining hammasi yo'qoladi va nima qilishi
+    # ham tushunarsiz.
+    #
+    # Endi o'sha sahifaga qaytariladi va xabar tepasida chiqadi.
+    # Faqat FOYDALANUVCHI xatosi shunday ishlanadi: 403 (CSRF) va 404
+    # o'z holicha qoladi, chunki ularni yumshoq xabarga aylantirish
+    # haqiqiy muammoni yashirardi.
+    if (
+        request.method == "POST"
+        and request.url.path.startswith("/admin")
+        and exc.status_code in (400, 413)
+    ):
+        set_flash(request, exc.detail)
+        return RedirectResponse(_way_back(request), status_code=303)
     lang = resolve_lang(request)
     return templates.TemplateResponse(
         request,

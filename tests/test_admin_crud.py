@@ -169,8 +169,12 @@ def test_non_image_upload_is_rejected(admin_client, db, tenant_a):
             "price": 38000,
         },
         files={"image": ("payload.png", BytesIO(b"<?php echo 1; ?>"), "image/png")},
+        follow_redirects=False,
     )
-    assert response.status_code == 400
+    # Endi forma sahifasiga qaytariladi va xabar tepasida chiqadi —
+    # ilgari bu yalang'och 400 sahifasi edi va odam yozganini yo'qotardi
+    assert response.status_code == 303
+    # Eng muhimi o'zgarmadi: soxta "rasm" saqlanmaydi
     assert db.query(MenuItem).count() == 0
 
 

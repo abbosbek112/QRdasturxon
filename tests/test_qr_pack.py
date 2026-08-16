@@ -351,10 +351,11 @@ def test_a_ribbon_upload_gets_a_clear_answer_not_a_crash(client, bino, tmp_path)
             "/admin/tables/qr-pack",
             data={"csrf_token": token, "style": "rasm"},
             files={"background": ("lenta.png", handle, "image/png")},
+            follow_redirects=False,
         )
 
-    assert response.status_code == 400
-    assert "ingichka" in response.text
+    assert response.status_code == 303
+    assert "ingichka" in client.get("/admin/tables").text
 
 
 def test_own_image_without_a_file_falls_back_to_a_card(client, bino):
@@ -373,8 +374,11 @@ def test_a_file_that_is_not_an_image_is_refused_clearly(client, bino):
         "/admin/tables/qr-pack",
         data={"csrf_token": token, "style": "rasm"},
         files={"background": ("hujjat.pdf", io.BytesIO(b"%PDF-1.4 emas rasm"), "application/pdf")},
+        follow_redirects=False,
     )
-    assert response.status_code == 400
+    # Forma sahifasiga qaytariladi, sabab esa xabarda aytiladi
+    assert response.status_code == 303
+    assert "rasm emas" in client.get("/admin/tables").text
 
 
 # ------------------------------------------------------------------ arxiv

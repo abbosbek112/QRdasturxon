@@ -773,13 +773,19 @@ def test_the_back_link_ignores_a_foreign_referer(client, cafe):
         "/admin/items/999999/edit", headers={"referer": "https://yomon-sayt.example/tuzoq"}
     )
     assert "yomon-sayt.example" not in response.text
-    assert 'href="/"' in response.text
+    # Panelda ishlayotgan odam reklama sahifasiga emas, panelga qaytadi
+    assert 'href="/admin"' in response.text
 
 
 def test_the_back_link_falls_back_without_a_referer(client, cafe):
+    """Referer bo'lmasa ham panelda qolinadi.
+
+    Ilgari bosh sahifaga tashlanardi: panelda ishlayotgan odam bitta
+    noto'g'ri havoladan keyin reklama sahifasida paydo bo'lardi.
+    """
     login(client, "osh", "adminpass123")
     response = client.get("/admin/items/999999/edit")
-    assert 'href="/"' in response.text
+    assert 'href="/admin"' in response.text
 
 
 # --- chop etilgan QR nimadan o'ladi, nimadan o'lmaydi ----------------------
