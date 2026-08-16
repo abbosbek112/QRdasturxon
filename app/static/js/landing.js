@@ -29,6 +29,20 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  /*
+    Xavfsizlik to'ri: nima bo'lganda ham mazmun ko'rinsin.
+
+    `data-reveal` elementlari CSS bilan yashirilgan va faqat JS ularni
+    ochadi. Ya'ni kuzatuvchi ishlamay qolsa sahifaning yarmi BO'SH
+    qoladi — bu eng yomon nosozlik va u haqiqatan sodir bo'ldi: joylashuv
+    xatosi tufayli matn ustuni ekran tashqarisiga surilib, kuzatuvchi uni
+    hech qachon "ko'rinadi" deb hisoblamadi va u ko'rinmay qoldi.
+
+    Endi uch soniyadan keyin qolganlari baribir ochiladi. Animatsiya
+    yo'qoladi, mazmun esa qoladi.
+  */
+  setTimeout(showAll, 3000);
+
   // Guruh ichidagi elementlar navbat bilan chiqsin: CSS kechikishni
   // --i dan oladi, biz shu raqamni qo'yamiz.
   var groups = document.querySelectorAll("[data-stagger]");

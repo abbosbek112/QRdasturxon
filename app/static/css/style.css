@@ -1536,7 +1536,22 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
   Asosi `scroll-snap`: JS o'chirilgan brauzerda ham surib ko'rish
   mumkin, telefonda esa barmoq bilan. Strelka va nuqtalar qulaylik.
 */
-.astra .carousel { position: relative; }
+.astra .carousel {
+  position: relative;
+  /*
+    `min-width: 0` SHART. Grid va flex elementining standart
+    `min-width: auto` qiymati uni MAZMUNIGA qarab kengaytiradi: tasma
+    ichida sakkiz kartochka bor, demak karusel 2185px bo'lib, 1048px
+    qatordan chiqib ketardi. Yonidagi matn ustuni esa ekran tashqarisiga
+    surilib, umuman ko'rinmay qolgandi.
+
+    Ustiga ustak `padding: 50%` o'sha kengaygan enga nisbatan
+    hisoblanib, 1008px bo'shliq berardi.
+  */
+  min-width: 0;
+  /* Bitta kartochkaning eni — tasma bo'shlig'i ham shundan hisoblanadi */
+  --slide: clamp(13rem, 42vw, 17rem);
+}
 
 .astra .carousel-track {
   display: flex; gap: 1rem;
@@ -1548,9 +1563,6 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
 }
 .astra .carousel-track::-webkit-scrollbar { display: none; }
 
-.astra .carousel {
-  --slide: clamp(13rem, 42vw, 17rem);
-}
 
 .astra .carousel-slide {
   flex: 0 0 var(--slide); width: var(--slide);
