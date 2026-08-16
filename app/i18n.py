@@ -133,6 +133,40 @@ UI: dict[str, dict[str, str]] = {
         "en": "One click changes the whole look \u2014 type, corners, shadows and colour together. "
               "Then you tune the accent colour to match your brand.",
     },
+    # --- Bosh sahifadagi NAMUNA mazmuni ---
+    #
+    # Bu matnlar mijozning ma'lumoti emas, biz yozgan ko'rgazma. Ilgari
+    # ular shablonga o'zbekcha qotirilgan edi va ruscha sahifada yarmi
+    # o'zbekcha chiqib turardi: rus tilida o'qiyotgan restoran egasi
+    # "Ikki kishilik" va "Guruch · Qo'y go'shti" degan yozuvlarni ko'rardi.
+    "demo_tagline": {"uz": "Qahva va uy taomlari", "ru": "Кофе и домашняя еда", "en": "Coffee and home cooking"},
+    "demo_cat_hot": {"uz": "Issiq taomlar", "ru": "Горячие блюда", "en": "Hot dishes"},
+    "demo_cat_salad": {"uz": "Salatlar", "ru": "Салаты", "en": "Salads"},
+    "demo_cat_sweet": {"uz": "Shirinlik", "ru": "Десерты", "en": "Desserts"},
+    "demo_osh": {"uz": "Osh", "ru": "Плов", "en": "Plov"},
+    "demo_osh_note": {"uz": "Qo'y go'shti bilan", "ru": "С бараниной", "en": "With lamb"},
+    "demo_lagmon": {"uz": "Lag'mon", "ru": "Лагман", "en": "Lagman"},
+    "demo_lagmon_note": {"uz": "Qo'lda cho'zilgan", "ru": "Ручной работы", "en": "Hand-pulled"},
+    "demo_somsa": {"uz": "Somsa", "ru": "Самса", "en": "Samsa"},
+    "demo_somsa_note": {"uz": "Tandirdan", "ru": "Из тандыра", "en": "From the tandoor"},
+    "demo_norin": {"uz": "Norin", "ru": "Норин", "en": "Norin"},
+    "demo_norin_note": {"uz": "Qo'lda kesilgan", "ru": "Нарезан вручную", "en": "Hand-cut"},
+    "demo_mastava": {"uz": "Mastava", "ru": "Мастава", "en": "Mastava"},
+    "demo_mastava_note": {"uz": "Issiq sho'rva", "ru": "Горячий суп", "en": "Hot soup"},
+    "demo_kapuchino": {"uz": "Kapuchino", "ru": "Капучино", "en": "Cappuccino"},
+    "demo_kapuchino_note": {"uz": "Ikki qavat", "ru": "Двойной слой", "en": "Double shot"},
+    "demo_tea": {"uz": "Ko'k choy", "ru": "Зелёный чай", "en": "Green tea"},
+    "demo_combo_name": {"uz": "Ikki kishilik", "ru": "На двоих", "en": "For two"},
+    "demo_combo_tex": {
+        "uz": "Guruch · Qo'y go'shti · Sabzi · Zira",
+        "ru": "Рис · Баранина · Морковь · Зира",
+        "en": "Rice · Lamb · Carrot · Cumin",
+    },
+    "demo_review": {
+        "uz": "Choyxona oshidan qolishmaydi. Sabzisi ham xuddi kerakligicha.",
+        "ru": "Не хуже, чем в чайхане. И морковь именно такая, как надо.",
+        "en": "As good as any teahouse plov. The carrot is just right, too.",
+    },
     "carousel_prev": {"uz": "Oldingi shablon", "ru": "Предыдущий шаблон", "en": "Previous template"},
     "carousel_next": {"uz": "Keyingi shablon", "ru": "Следующий шаблон", "en": "Next template"},
     "show_themes_count": {"uz": "shablon", "ru": "шаблонов", "en": "templates"},

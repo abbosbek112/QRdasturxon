@@ -63,12 +63,12 @@
     #}
     {# Rasmlar static: scripts/demo_art.py chizadi, bazaga bog'liq emas #}
     {% set demo_dishes = [
-      ('osh', '45 000', 'Osh', "Qo'y go'shti bilan"),
-      ('lagmon', '38 000', "Lag'mon", "Qo'lda cho'zilgan"),
-      ('somsa', '15 000', 'Somsa', 'Tandirdan'),
-      ('norin', '42 000', 'Norin', "Qo'lda kesilgan"),
-      ('mastava', '28 000', 'Mastava', "Issiq sho'rva"),
-      ('kapuchino', '25 000', 'Kapuchino', 'Ikki qavat'),
+      ('osh', '45 000', t('demo_osh', lang), t('demo_osh_note', lang)),
+      ('lagmon', '38 000', t('demo_lagmon', lang), t('demo_lagmon_note', lang)),
+      ('somsa', '15 000', t('demo_somsa', lang), t('demo_somsa_note', lang)),
+      ('norin', '42 000', t('demo_norin', lang), t('demo_norin_note', lang)),
+      ('mastava', '28 000', t('demo_mastava', lang), t('demo_mastava_note', lang)),
+      ('kapuchino', '25 000', t('demo_kapuchino', lang), t('demo_kapuchino_note', lang)),
     ] %}
     <div class="lp-shot" data-reveal="scale" aria-hidden="true">
       <div class="phone-float">
@@ -78,13 +78,13 @@
               <div class="ph-langs"><span class="on">UZ</span><span>RU</span><span>EN</span></div>
               <div class="ph-brand">
                 <span class="ph-logo"></span>
-                <span class="ph-name"><b>Bodom Kafe</b><i>Qahva va uy taomlari</i></span>
+                <span class="ph-name"><b>Bodom Kafe</b><i>{{ t('demo_tagline', lang) }}</i></span>
               </div>
               <div class="ph-meta"><span>09:00 – 23:00</span><span>Wi-Fi</span></div>
             </div>
             <div class="ph-sheet">
-              <div class="ph-chips"><span class="on">Issiq taomlar</span><span>Salatlar</span><span>Shirinlik</span></div>
-              <p class="ph-sec">Issiq taomlar</p>
+              <div class="ph-chips"><span class="on">{{ t('demo_cat_hot', lang) }}</span><span>{{ t('demo_cat_salad', lang) }}</span><span>{{ t('demo_cat_sweet', lang) }}</span></div>
+              <p class="ph-sec">{{ t('demo_cat_hot', lang) }}</p>
               <div class="ph-scroll">
                 <div class="ph-track">
                   {% for _ in range(2) %}
@@ -170,7 +170,7 @@
           {% endfor %}
         </div>
         <ul class="show-top">
-          {% for name, count, width, stars in [('Osh', '675', 100, 5), ("Lag'mon", '459', 68, 4), ('Norin', '316', 47, 4)] %}
+          {% for name, count, width, stars in [(t('demo_osh', lang), '675', 100, 5), (t('demo_lagmon', lang), '459', 68, 4), (t('demo_norin', lang), '316', 47, 4)] %}
             <li>
               <span class="show-top-name">{{ name }}</span>
               <span class="meter"><span style="width:{{ width }}%"></span></span>
@@ -243,8 +243,8 @@
                   <span class="price-pill">45 000 <small>so'm</small></span>
                 </span>
                 <span class="dish-body">
-                  <span class="dish-name">Osh</span>
-                  <span class="dish-desc">Qo'y go'shti bilan</span>
+                  <span class="dish-name">{{ t('demo_osh', lang) }}</span>
+                  <span class="dish-desc">{{ t('demo_osh_note', lang) }}</span>
                 </span>
               </span>
               <span class="carousel-name">{{ theme.name }}</span>
@@ -281,7 +281,7 @@
             <span class="stars-show small"><span class="on">★</span><span class="on">★</span><span class="on">★</span><span class="on">★</span><span class="on">★</span></span>
             <span class="badge badge-ok">{{ t('badge_published', lang) }}</span>
           </div>
-          <p class="muted small">Choyxona oshidan qolishmaydi. Sabzisi ham xuddi kerakligicha.</p>
+          <p class="muted small">{{ t('demo_review', lang) }}</p>
         </div>
         <div class="show-comment is-waiting">
           <div class="show-comment-head">
@@ -334,11 +334,11 @@
               <strong>{{ t('show_order_new', lang) }}</strong>
               <span class="muted small">{{ t('show_order_ago', lang) }}</span>
             </div>
-            <span class="show-order-seat">7-stol</span>
+            <span class="show-order-seat">{{ t('kind_stol', lang).replace('{n}', '7') }}</span>
           </div>
           <ul class="show-order-lines">
-            <li><span>1× Osh</span><b>45 000</b></li>
-            <li><span>2× Ko'k choy</span><b>16 000</b></li>
+            <li><span>1× {{ t('demo_osh', lang) }}</span><b>45 000</b></li>
+            <li><span>2× {{ t('demo_tea', lang) }}</span><b>16 000</b></li>
           </ul>
           <div class="show-order-foot">
             <span class="muted small">{{ t('show_order_total', lang) }}</span>
@@ -363,13 +363,13 @@
             <span class="show-combo-save">−18 000 {{ t('show_combo_save', lang) }}</span>
             <b>70 000 <small>so'm</small></b>
           </div>
-          <p class="show-combo-name">Ikki kishilik</p>
+          <p class="show-combo-name">{{ t('demo_combo_name', lang) }}</p>
           <ul class="show-combo-parts">
-            <li>1× Osh</li>
-            <li>1× Lag'mon</li>
-            <li>2× Ko'k choy</li>
+            <li>1× {{ t('demo_osh', lang) }}</li>
+            <li>1× {{ t('demo_lagmon', lang) }}</li>
+            <li>2× {{ t('demo_tea', lang) }}</li>
           </ul>
-          <p class="show-combo-tex">{{ ui.icon('leaf') }} Guruch · Qo'y go'shti · Sabzi · Zira</p>
+          <p class="show-combo-tex">{{ ui.icon('leaf') }} {{ t('demo_combo_tex', lang) }}</p>
         </div>
       </div>
     </div>

@@ -343,3 +343,36 @@ def test_structured_data_survives_a_quote_in_the_name(client, db, menu_with_item
     body = client.get(f"/r/{restaurant.slug}").text
     found = re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S)
     assert json.loads(found.group(1))["name"] == 'Kafe "Bahor"'
+
+
+UZBEKCHA_NAMUNA = [
+    "Ikki kishilik", "Guruch", "Choyxona oshidan", "Ko'k choy",
+    "Qo'y go'shti bilan", "Issiq taomlar", "Qahva va uy",
+]
+
+
+@pytest.mark.parametrize("lang", ["ru", "en"])
+def test_the_landing_demo_content_is_translated(client, lang):
+    """Ko'rgazma mazmuni ham tarjima qilinsin.
+
+    Bu matnlar mijozning ma'lumoti emas — biz yozgan namuna. Ular
+    shablonga o'zbekcha qotirilgan edi va ruscha sahifada yarmi
+    o'zbekcha chiqib turardi: rus tilida o'qiyotgan restoran egasi
+    "Ikki kishilik" va "Guruch · Qo'y go'shti" degan yozuvlarni ko'rardi.
+    """
+    body = html.unescape(client.get(f"/?lang={lang}").text)
+
+    qolgan = [matn for matn in UZBEKCHA_NAMUNA if matn in body]
+    assert not qolgan, f"{lang} sahifasida o'zbekcha qolgan: {qolgan}"
+
+
+def test_the_russian_landing_really_says_it_in_russian(client):
+    """Tekshiruv bo'sh bo'lmasin: ruscha matn CHINDAN bor.
+
+    Faqat "o'zbekcha yo'q" deb tekshirish yetarli emas — matn butunlay
+    yo'qolib qolsa ham o'sha tekshiruv o'tib ketardi.
+    """
+    body = html.unescape(client.get("/?lang=ru").text)
+
+    for kutilgan in ("Плов", "На двоих", "Рис · Баранина", "Горячие блюда"):
+        assert kutilgan in body, kutilgan
