@@ -946,7 +946,14 @@ def qr_page(request: Request, db: DbSession, user: AdminUser):
     return templates.TemplateResponse(
         request,
         "admin/qr.html",
-        {"user": user, "restaurant": restaurant, "menu_url": qr.menu_url(restaurant.slug)},
+        {
+            "user": user,
+            "restaurant": restaurant,
+            "menu_url": qr.menu_url(restaurant.slug),
+            "MIN_QR": qr_pack.MIN_QR_PERCENT,
+            "MAX_QR": qr_pack.MAX_QR_PERCENT,
+            "DEFAULT_QR": qr_pack.DEFAULT_QR_PERCENT,
+        },
     )
 
 
@@ -1014,6 +1021,13 @@ def tables_page(request: Request, db: DbSession, user: AdminUser):
             "kinds": list(TableKind),
             # Qaysi raqamlar chiqishini sahifaning o'zi ko'rsatadi —
             # egasi natijani bosishdan oldin biladi
+            # QR o'lchami chegaralari formadagi slayder uchun. Ular
+            # `qr_pack` da yashaydi va shu yerdan uzatiladi: shablon
+            # global o'zgaruvchi orqali olsa aylanma import chiqardi
+            # (`qr_pack` ning o'zi `templating` ni chaqiradi).
+            "MIN_QR": qr_pack.MIN_QR_PERCENT,
+            "MAX_QR": qr_pack.MAX_QR_PERCENT,
+            "DEFAULT_QR": qr_pack.DEFAULT_QR_PERCENT,
             "taken_labels": sorted(
                 (row.label for row in rows if row.label.isdigit()), key=int
             ),
@@ -1138,6 +1152,9 @@ async def download_qr_pack(
     user: AdminUser,
     style: Annotated[str, Form()] = qr_pack.QR_ONLY,
     position: Annotated[str, Form()] = "markaz",
+    qr_x: Annotated[float, Form()] = -1,
+    qr_y: Annotated[float, Form()] = -1,
+    qr_size: Annotated[int, Form()] = qr_pack.DEFAULT_QR_PERCENT,
     background: Annotated[UploadFile | None, File()] = None,
 ):
     """Butun binoning QR'lari — bitta arxivda.
@@ -1172,6 +1189,13 @@ async def download_qr_pack(
         except (UnidentifiedImageError, OSError):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Fayl rasm emas")
 
+    # Aniq joy faqat ikkala son ham berilganda ishlatiladi. JS ishlamasa
+    # ular umuman kelmaydi va tayyor joylardan biri qo'llanadi — forma
+    # o'sha holatda ham ishlashi kerak.
+    spot = None
+    if 0 <= qr_x <= 100 and 0 <= qr_y <= 100:
+        spot = (qr_x, qr_y)
+
     archive = qr_pack.build(
         db,
         restaurant,
@@ -1180,6 +1204,8 @@ async def download_qr_pack(
         background=canvas,
         position=position,
         hint=t("qr_card_hint", lang),
+        spot=spot,
+        percent=qr_size,
     )
     return Response(
         archive,

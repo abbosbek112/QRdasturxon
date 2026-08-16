@@ -972,6 +972,12 @@ UI: dict[str, dict[str, str]] = {
         "ru": "Загрузите свой дизайн — QR и номер стола лягут поверх него.",
         "en": "Upload your own design — the QR and table number are placed onto it.",
     },
+    "qr_place_hint": {
+        "uz": "QR'ni bosing yoki surib joyiga qo'ying. Taomning ustiga tushmasin.",
+        "ru": "Нажмите или перетащите QR на нужное место. Не поверх блюда.",
+        "en": "Tap or drag the QR where you want it. Keep it off the food.",
+    },
+    "qr_size": {"uz": "QR o'lchami", "ru": "Размер QR", "en": "QR size"},
     "qr_position": {"uz": "QR qayerda tursin", "ru": "Где разместить QR", "en": "QR position"},
     "qr_position_markaz": {"uz": "O'rtada", "ru": "По центру", "en": "Centre"},
     "qr_position_yuqori": {"uz": "Yuqorida", "ru": "Сверху", "en": "Top"},

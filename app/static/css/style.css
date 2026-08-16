@@ -3149,3 +3149,41 @@ input[aria-invalid="true"], select[aria-invalid="true"] {
 .combo-extras { display: grid; gap: .4rem; }
 .combo-extra-row { display: flex; gap: .4rem; }
 .combo-extra-row input[name="extra_name"] { flex: 1 1 auto; min-width: 0; }
+
+/* ==========================================================================
+   QR'ni o'z rasmiga qo'yish: joyni ko'rib tanlash
+   ========================================================================== */
+
+.qr-place { margin-top: .8rem; }
+
+.qr-place-stage {
+  position: relative;
+  max-width: 22rem;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  /* Barmoq bilan surilganda sahifa siljib ketmasin */
+  touch-action: none;
+  cursor: crosshair;
+  background: var(--surface-2);
+}
+.qr-place-stage img { display: block; width: 100%; height: auto; }
+
+/* QR turadigan joyni ko'rsatuvchi belgi. Ichida to'r bor — u haqiqiy
+   QR emas, lekin o'lchami va joyi AYNIQSA to'g'ri: server bilan bir xil
+   hisob (eng qisqa tomonga nisbatan foiz). */
+.qr-place-marker {
+  position: absolute;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  background: rgb(255 255 255 / .85);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / .3), 0 2px 10px rgb(0 0 0 / .35);
+  pointer-events: none;
+}
+.qr-place-grid {
+  position: absolute; inset: 14%;
+  background-image:
+    linear-gradient(#111 2px, transparent 2px),
+    linear-gradient(90deg, #111 2px, transparent 2px);
+  background-size: 22% 22%;
+  opacity: .8;
+}

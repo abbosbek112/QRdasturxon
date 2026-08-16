@@ -43,7 +43,35 @@
         <label for="qr-pack-bg">{{ t('qr_style_image', ui_lang) }}</label>
         <input id="qr-pack-bg" type="file" name="background" accept="image/*">
       </div>
-      <fieldset class="pick-set">
+      {#
+        Joyni KO'RIB tanlash: rasm yuklangach shu yerda chiziladi va
+        QR'ni barmoq yoki sichqoncha bilan surib qo'yish mumkin.
+
+        Ilgari faqat uchta qo'pol tanlov bor edi va QR ko'pincha
+        taomning ustiga tushib, rasmni ham, o'zini ham buzardi.
+
+        Aniq son yashirin maydonlarda ketadi. JS ishlamasa ular
+        bo'sh qoladi va server pastdagi tayyor joylarni ishlatadi —
+        forma o'sha holatda ham to'liq ishlaydi.
+      #}
+      <div class="qr-place" data-place hidden>
+        <div class="qr-place-stage" data-stage>
+          <img alt="" data-preview>
+          <span class="qr-place-marker" data-marker>
+            <span class="qr-place-grid"></span>
+          </span>
+        </div>
+        <p class="hint">{{ t('qr_place_hint', ui_lang) }}</p>
+        <div class="field">
+          <label for="qr-size">{{ t('qr_size', ui_lang) }}</label>
+          <input id="qr-size" name="qr_size" type="range"
+                 min="{{ MIN_QR }}" max="{{ MAX_QR }}" value="{{ DEFAULT_QR }}" data-size>
+        </div>
+      </div>
+      <input type="hidden" name="qr_x" value="-1" data-x>
+      <input type="hidden" name="qr_y" value="-1" data-y>
+
+      <fieldset class="pick-set" data-presets>
         <legend>{{ t('qr_position', ui_lang) }}</legend>
         <div class="pick-row">
         {% for spot in ['markaz', 'yuqori', 'past'] %}

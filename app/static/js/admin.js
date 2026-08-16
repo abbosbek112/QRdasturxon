@@ -205,3 +205,86 @@ document.addEventListener("click", function (event) {
     forma.addEventListener("input", function () { yangila(forma); });
   });
 })();
+
+/*
+  QR'ni o'z rasmiga qo'yish: joyni KO'RIB tanlash.
+
+  Egasi rasm tanlaydi, u shu yerda chiziladi va QR belgisini barmoq
+  yoki sichqoncha bilan surib qo'yadi. Ilgari faqat uchta qo'pol joy
+  bor edi va QR ko'pincha taomning ustiga tushib, rasmni ham, o'zini
+  ham buzardi.
+
+  Aniq son yashirin maydonlarda ketadi. Bu blok umuman ishlamasa
+  maydonlar `-1` bo'lib qoladi va server tayyor joylardan birini
+  ishlatadi — forma o'sha holatda ham to'liq ishlaydi.
+*/
+(function () {
+  var forma = document.querySelector(".qr-pack-form");
+  if (!forma) return;
+
+  var joy = forma.querySelector("[data-place]");
+  var sahna = forma.querySelector("[data-stage]");
+  var rasm = forma.querySelector("[data-preview]");
+  var belgi = forma.querySelector("[data-marker]");
+  var olcham = forma.querySelector("[data-size]");
+  var xMaydon = forma.querySelector("[data-x]");
+  var yMaydon = forma.querySelector("[data-y]");
+  var tayyorlar = forma.querySelector("[data-presets]");
+  var fayl = forma.querySelector('input[name="background"]');
+  if (!joy || !fayl || !belgi) return;
+
+  var x = 50, y = 46;
+
+  function chiz() {
+    var foiz = parseInt(olcham.value, 10);
+    // Belgi eng QISQA tomonga nisbatan o'lchanadi — server ham shunday
+    // hisoblaydi, aks holda ko'rsatilgan joy natijaga to'g'ri kelmasdi
+    var w = sahna.clientWidth, h = sahna.clientHeight;
+    var tomon = Math.min(w, h) * foiz / 100;
+    belgi.style.width = tomon + "px";
+    belgi.style.height = tomon + "px";
+    belgi.style.left = (x / 100 * w - tomon / 2) + "px";
+    belgi.style.top = (y / 100 * h - tomon / 2) + "px";
+    xMaydon.value = x;
+    yMaydon.value = y;
+  }
+
+  function joyla(event) {
+    var quti = sahna.getBoundingClientRect();
+    var nuqta = event.touches ? event.touches[0] : event;
+    x = Math.max(0, Math.min(100, (nuqta.clientX - quti.left) / quti.width * 100));
+    y = Math.max(0, Math.min(100, (nuqta.clientY - quti.top) / quti.height * 100));
+    chiz();
+  }
+
+  fayl.addEventListener("change", function () {
+    var f = fayl.files && fayl.files[0];
+    if (!f) { joy.hidden = true; return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      rasm.src = e.target.result;
+      rasm.onload = function () {
+        joy.hidden = false;
+        // Tayyor joylar endi kerak emas — ular JS'siz holat uchun
+        if (tayyorlar) tayyorlar.hidden = true;
+        chiz();
+      };
+    };
+    reader.readAsDataURL(f);
+  });
+
+  olcham.addEventListener("input", chiz);
+  window.addEventListener("resize", function () { if (!joy.hidden) chiz(); });
+
+  // Bosish ham, surish ham ishlaydi
+  var suryapmiz = false;
+  sahna.addEventListener("pointerdown", function (e) {
+    suryapmiz = true;
+    sahna.setPointerCapture(e.pointerId);
+    joyla(e);
+    e.preventDefault();
+  });
+  sahna.addEventListener("pointermove", function (e) { if (suryapmiz) joyla(e); });
+  sahna.addEventListener("pointerup", function () { suryapmiz = false; });
+  sahna.addEventListener("pointercancel", function () { suryapmiz = false; });
+})();

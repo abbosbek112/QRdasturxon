@@ -491,3 +491,102 @@ def test_a_name_without_an_extension_keeps_its_shape():
     taken = set()
     assert qr_pack._unique("a.png", taken) == "a.png"
     assert qr_pack._unique("a.png", taken) == "a-2.png"
+
+
+# ------------------------------------------------- QR joyini egasi tanlaydi
+
+
+@pytest.mark.parametrize(
+    "spot, izoh",
+    [
+        ((50, 46), "markaz"),
+        ((10, 10), "chap tepa"),
+        ((90, 90), "o'ng past"),
+        ((50, 97), "eng past chekka"),
+        ((50, 2), "eng tepa chekka"),
+    ],
+)
+def test_the_qr_lands_where_the_owner_put_it(spot, izoh):
+    """Egasi tanlagan joy natijada saqlansin.
+
+    QR markazi berilgan nuqtaga tushishi kerak — chetga yaqin bo'lsa
+    rasmdan chiqib ketmasligi uchun ichkariga suriladi, lekin baribir
+    o'sha tomonda qoladi.
+    """
+    zxingcpp = pytest.importorskip("zxingcpp")
+    fon = Image.new("RGB", (1000, 1000), "white")
+    chiqdi = Image.open(io.BytesIO(
+        qr_pack.render_on_background(fon, "https://x.uz/t/abc", "1-stol", "markaz", spot, 30)
+    ))
+
+    joy = zxingcpp.read_barcodes(chiqdi)[0].position
+    cx = (joy.top_left.x + joy.bottom_right.x) / 2
+    cy = (joy.top_left.y + joy.bottom_right.y) / 2
+
+    # Chetga surilgan bo'lsa ham to'g'ri yarmida qolsin
+    assert (cx < 500) == (spot[0] < 50) or spot[0] == 50, izoh
+    assert (cy < 500) == (spot[1] < 50) or spot[1] == 50, izoh
+
+
+def test_the_qr_never_hangs_off_the_edge():
+    """Chetga surib qo'yilsa QR yarmi qirqilmasin.
+
+    Qirqilgan QR umuman skanerlanmaydi va egasi buni faqat chop
+    etgandan keyin bilib qolardi.
+    """
+    zxingcpp = pytest.importorskip("zxingcpp")
+    fon = Image.new("RGB", (900, 900), "white")
+    for spot in [(0, 0), (100, 100), (0, 100), (100, 0), (150, -50)]:
+        chiqdi = Image.open(io.BytesIO(
+            qr_pack.render_on_background(fon, "https://x.uz/t/abc", "1-stol", "markaz", spot, 40)
+        ))
+        assert zxingcpp.read_barcodes(chiqdi), f"{spot}: QR o'qilmadi"
+
+
+@pytest.mark.parametrize("percent, kutilgan", [(5, 20), (38, 38), (200, 60)])
+def test_the_size_is_kept_inside_safe_limits(percent, kutilgan):
+    """Juda kichik QR skanerlanmaydi, juda kattasi rasmni bosib ketadi."""
+    zxingcpp = pytest.importorskip("zxingcpp")
+    fon = Image.new("RGB", (1000, 1000), "white")
+    chiqdi = Image.open(io.BytesIO(
+        qr_pack.render_on_background(fon, "https://x.uz/t/abc", "1-stol", "markaz", (50, 50), percent)
+    ))
+
+    joy = zxingcpp.read_barcodes(chiqdi)[0].position
+    kenglik = joy.top_right.x - joy.top_left.x
+    # Skanerlanadigan kvadrat rasmnikidan ~10% kichik
+    assert abs(kenglik / 1000 * 100 - kutilgan * 0.9) < 4
+
+
+def test_a_low_qr_still_gets_its_seat_label():
+    """QR pastga qo'yilganda yozuv USTIGA chiqsin.
+
+    Ilgari bunday tekshiruv yo'q edi: yozuv qutisining pastki cheti
+    yuqorigisidan baland bo'lib qolib, Pillow yiqilardi. Ya'ni egasi
+    QR'ni pastga qo'ysa butun arxiv yaratilmasdi.
+    """
+    zxingcpp = pytest.importorskip("zxingcpp")
+    fon = Image.new("RGB", (800, 800), "white")
+    # Yiqilmasligi o'zi tekshiruv
+    data = qr_pack.render_on_background(fon, "https://x.uz/t/abc", "7-stol", "markaz", (50, 95), 40)
+    assert zxingcpp.read_barcodes(Image.open(io.BytesIO(data)))
+
+
+def test_without_javascript_the_presets_still_work(client, bino):
+    """JS ishlamasa aniq son kelmaydi — tayyor joylar ishlashi kerak."""
+    zxingcpp = pytest.importorskip("zxingcpp")
+    login(client, "osh", "adminpass123")
+    token = csrf(client, "/admin/tables")
+    fon = io.BytesIO()
+    Image.new("RGB", (900, 900), "white").save(fon, "PNG")
+
+    response = client.post(
+        "/admin/tables/qr-pack",
+        data={"csrf_token": token, "style": "rasm", "position": "yuqori"},
+        files={"background": ("fon.png", fon.getvalue(), "image/png")},
+    )
+    archive = zip_of(response)
+    chiqdi = Image.open(io.BytesIO(archive.read("1-qavat/Asosiy-zal/1-stol.jpg")))
+    joy = zxingcpp.read_barcodes(chiqdi)[0].position
+    # "Yuqorida" — markaz rasmning yuqori yarmida
+    assert (joy.top_left.y + joy.bottom_right.y) / 2 < chiqdi.height / 2

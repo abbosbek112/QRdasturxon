@@ -317,33 +317,71 @@ def _big_enough(background: Image.Image) -> Image.Image:
     return yirik
 
 
-def render_on_background(background: Image.Image, url: str, caption: str, position: str) -> bytes:
+# QR o'lchamining chegaralari, eng qisqa tomonga nisbatan foizda.
+#
+# Standart 38% ATAYLAB. QR rasmining chetida majburiy bo'sh hoshiya bor
+# va SKANERLANADIGAN kvadrat rasmning o'zidan ~10% kichik chiqadi: 34%
+# qo'yilganda haqiqiy kvadrat 31% ga tushib qoladi. Buni test o'lchaydi
+# (`test_the_qr_is_big_enough_to_scan_from_print`) — u aynan shu
+# kamchilikni ushlagan.
+#
+# Pastki chegara 20%: undan kichik QR stol kartochkasida bir qarich
+# masofadan ham o'qilmaydi va egasi buni faqat restoranda, mijoz
+# uddalay olmaganda bilib qolardi.
+MIN_QR_PERCENT = 20
+MAX_QR_PERCENT = 60
+DEFAULT_QR_PERCENT = 38
+
+# Tayyor joylar — JS ishlamaganda ishlatiladi. Qiymat: (x, y) markazi,
+# rasm o'lchamiga nisbatan foizda.
+POSITION_POINTS = {
+    "markaz": (50, 46),
+    "yuqori": (50, 22),
+    "past": (50, 74),
+}
+
+
+def render_on_background(
+    background: Image.Image,
+    url: str,
+    caption: str,
+    position: str = "markaz",
+    spot: tuple[float, float] | None = None,
+    percent: int = DEFAULT_QR_PERCENT,
+) -> bytes:
     """Egasining o'z rasmiga QR va stol yozuvini qo'yadi.
 
-    QR eng qisqa tomonga nisbatan o'lchanadi — shunda u bo'yiga cho'zilgan
-    rasmda ham, keng rasmda ham sig'adi.
+    Joyni egasi TANLAYDI: `spot` — QR markazining rasmga nisbatan
+    o'rni, foizda. Ilgari faqat uchta qo'pol joy bor edi va QR ko'pincha
+    taomning ustiga tushib, rasmni ham, o'zini ham buzardi.
 
-    38% ATAYLAB: QR rasmining chetida majburiy bo'sh hoshiya bor va
-    skanerlanadigan kvadrat rasmning o'zidan ~10% kichik chiqadi. 34%
-    qo'yilganda haqiqiy kvadrat 31% ga tushib qolgan edi.
+    `spot` berilmasa tayyor joylardan biri olinadi — JS ishlamaganda
+    forma shu yo'l bilan ishlaydi.
+
+    O'lchami ham egasida, lekin chegara bilan: juda kichik QR bir
+    metrdan skanerlanmaydi va buni egasi faqat restoranda, mijoz
+    uddalay olmaganda bilib qolardi.
 
     Yozuv oq to'rtburchak ustiga tushadi, chunki rasmning rangi oldindan
     noma'lum va qora yozuv qora fonda ko'rinmay qolardi.
     """
     canvas = _big_enough(background)
     width, height = canvas.size
-    side = int(min(width, height) * 0.38)
+
+    percent = max(MIN_QR_PERCENT, min(int(percent or DEFAULT_QR_PERCENT), MAX_QR_PERCENT))
+    side = int(min(width, height) * percent / 100)
 
     code = _qr_image(url, 12).resize((side, side), Image.NEAREST)
 
-    x = (width - side) // 2
-    if position == "yuqori":
-        y = max(20, int(height * 0.08))
-    elif position == "past":
-        # Pastda joy qoldiriladi: stol yozuvi QR ostiga tushadi
-        y = height - side - max(20, int(height * 0.14))
-    else:
-        y = (height - side) // 2 - int(side * 0.08)
+    if spot is None:
+        spot = POSITION_POINTS.get(position, POSITION_POINTS["markaz"])
+    cx, cy = spot
+    x = int(width * cx / 100) - side // 2
+    y = int(height * cy / 100) - side // 2
+
+    # Rasmdan chiqib ketmasin: egasi chetga surib qo'ysa QR yarmi
+    # qirqilib, umuman skanerlanmay qolardi
+    x = max(10, min(x, width - side - 10))
     y = max(10, min(y, height - side - 10))
 
     # QR ostidagi oq hoshiya: rangli fonda ham kamera aniq o'qisin
@@ -355,13 +393,34 @@ def render_on_background(background: Image.Image, url: str, caption: str, positi
     font = _fit(caption, max(20, side // 7), side + pad * 2, True)
     left, top, right, bottom = draw.textbbox((0, 0), caption, font=font)
     text_w, text_h = right - left, bottom - top
-    box_top = y + side + pad + max(6, side // 30)
-    box_bottom = min(height - 4, box_top + text_h + pad)
+    box_h = text_h + pad
+
+    #
+    # Yozuv odatda QR OSTIDA turadi. Lekin egasi QR'ni pastga surib
+    # qo'ysa u yerda joy qolmaydi — unda yozuv QR USTIGA chiqadi.
+    #
+    # Ilgari bunday tekshiruv yo'q edi va to'rtburchakning pastki cheti
+    # yuqorigisidan baland bo'lib qolib, Pillow "y1 must be greater than
+    # y0" deb yiqilardi. Ya'ni egasi QR'ni pastga qo'ysa butun arxiv
+    # yaratilmasdi.
+    #
+    oraliq = max(6, side // 30)
+    box_top = y + side + pad + oraliq
+    if box_top + box_h > height - 4:
+        box_top = y - pad - oraliq - box_h
+    # Tepada ham sig'masa (juda past rasm) — QR ichiga, pastki chetiga
+    box_top = max(4, min(box_top, height - box_h - 4))
+
+    qr_markaz = x + side / 2
     draw.rectangle(
-        [(width - text_w) / 2 - pad, box_top, (width + text_w) / 2 + pad, box_bottom],
+        [qr_markaz - text_w / 2 - pad, box_top,
+         qr_markaz + text_w / 2 + pad, box_top + box_h],
         fill="white",
     )
-    draw.text(((width - text_w) / 2 - left, box_top + pad / 2 - top), caption, font=font, fill=(17, 24, 39))
+    draw.text(
+        (qr_markaz - text_w / 2 - left, box_top + pad / 2 - top),
+        caption, font=font, fill=(17, 24, 39),
+    )
 
     return _as_jpeg(canvas)
 
@@ -395,6 +454,8 @@ def entries(
     background: Image.Image | None = None,
     position: str = "markaz",
     hint: str = "",
+    spot: tuple[float, float] | None = None,
+    percent: int = DEFAULT_QR_PERCENT,
 ) -> Iterator[Entry]:
     """Arxivga tushadigan fayllar.
 
@@ -413,7 +474,7 @@ def entries(
     if style == QR_ONLY:
         menu_data = qr.png_bytes(menu_url)
     elif style == OWN_IMAGE:
-        menu_data = render_on_background(background, menu_url, menu_caption, position)
+        menu_data = render_on_background(background, menu_url, menu_caption, position, spot, percent)
     else:
         menu_data = render_card(menu_url, restaurant.name, menu_caption, hint)
     yield Entry(_unique(f"menyu.{extension}", taken), menu_data)
@@ -431,7 +492,7 @@ def entries(
         if style == QR_ONLY:
             data = qr.png_bytes(url)
         elif style == OWN_IMAGE:
-            data = render_on_background(background, url, caption, position)
+            data = render_on_background(background, url, caption, position, spot, percent)
         else:
             data = render_card(url, restaurant.name, caption, hint)
         path = table_path(table, zones.get(table.zone_id), lang, extension)
@@ -446,11 +507,13 @@ def build(
     background: Image.Image | None = None,
     position: str = "markaz",
     hint: str = "",
+    spot: tuple[float, float] | None = None,
+    percent: int = DEFAULT_QR_PERCENT,
 ) -> bytes:
     """Tayyor ZIP arxivi."""
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        for entry in entries(db, restaurant, lang, style, background, position, hint):
+        for entry in entries(db, restaurant, lang, style, background, position, hint, spot, percent):
             archive.writestr(entry.path, entry.data)
     return buffer.getvalue()
 
