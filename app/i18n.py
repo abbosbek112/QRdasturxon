@@ -318,6 +318,33 @@ UI: dict[str, dict[str, str]] = {
     },
 
     # --- Tez orada ---
+    "feat_staff_title": {"uz": "Xodimlar", "ru": "Сотрудники", "en": "Staff"},
+    "feat_staff_text": {
+        "uz": "Kim nechta buyurtmaga javob berdi va qancha tez. Har xodimning "
+              "ish tarixi, bahosi va parolini o'zingiz boshqarasiz.",
+        "ru": "Кто сколько заказов принял и как быстро. История работы, оценка "
+              "и пароль каждого сотрудника — под вашим контролем.",
+        "en": "Who answered how many orders, and how fast. Each person's history, "
+              "rating and password are yours to manage.",
+    },
+    "feat_design_title": {"uz": "Menyu dizayni", "ru": "Дизайн меню", "en": "Menu design"},
+    "feat_design_text": {
+        "uz": "Sakkizta tayyor shablon va o'z rangingiz. Tanlaganingizni "
+              "o'z taomingiz bilan darrov ko'rasiz.",
+        "ru": "Восемь готовых шаблонов и свой цвет. Выбранный сразу видно "
+              "на вашем же блюде.",
+        "en": "Eight ready templates and your own colour. You see each one "
+              "on your own dish straight away.",
+    },
+    "feat_dash_title": {"uz": "Boshqaruv paneli", "ru": "Панель управления", "en": "Dashboard"},
+    "feat_dash_text": {
+        "uz": "Bugun nechta buyurtma javob kutyapti, qancha summa yig'ildi va "
+              "o'rtacha qancha vaqtda javob berilyapti — bir qarashda.",
+        "ru": "Сколько заказов ждут ответа, какая сумма за день и за сколько "
+              "в среднем отвечают — с одного взгляда.",
+        "en": "How many orders are waiting, today's total, and the average reply "
+              "time — at a glance.",
+    },
     "soon_title": {"uz": "Ustida ishlayapmiz", "ru": "В работе", "en": "In the works"},
     "soon_sub": {
         "uz": "Bular hali tayyor emas. Rejada bor va navbat bilan chiqadi.",

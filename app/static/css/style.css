@@ -1562,6 +1562,18 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
   scrollbar-width: none;
 }
 .astra .carousel-track::-webkit-scrollbar { display: none; }
+/*
+  Chetlari yumshoq so'nadi. Usiz qo'shni kartochka tasma chegarasida
+  keskin kesilib, "buzilgan" bo'lib ko'rinardi — endi u ataylab
+  ko'rsatilgan "keyingisi bor" ishorasiga o'xshaydi.
+*/
+@supports (mask-image: linear-gradient(#000, #000)) {
+  .astra .carousel-track {
+    mask-image: linear-gradient(
+      to right, transparent 0, #000 12%, #000 88%, transparent 100%
+    );
+  }
+}
 
 
 .astra .carousel-slide {
@@ -1609,10 +1621,13 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
   color: var(--ink-2);
 }
 
-/* --- strelkalar --- */
+/* --- boshqaruv qatori: strelka, nuqtalar, strelka --- */
+.astra .carousel-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: .8rem; margin-top: .2rem;
+}
 .astra .carousel-arrow {
-  position: absolute; top: 42%; z-index: 2;
-  display: grid; place-content: center;
+  display: grid; place-content: center; flex: none;
   width: 2.6rem; height: 2.6rem; padding: 0;
   border: 1px solid var(--line); border-radius: 50%;
   background: var(--surface); color: var(--ink);
@@ -1623,18 +1638,13 @@ body.is-sheet-locked { position: fixed; inset-inline: 0; overflow: hidden; }
 .astra .carousel-arrow:hover { background: var(--surface-2); }
 .astra .carousel-arrow:active { transform: scale(.94); }
 .astra .carousel-arrow svg { width: 1.1rem; height: 1.1rem; }
-.astra .carousel-prev { left: 0; }
 /* Bitta "orqaga" belgisi ikkala tomonga ishlatiladi — ikkinchisi teskari */
-.astra .carousel-next { right: 0; }
 .astra .carousel-next svg { transform: rotate(180deg); }
 /* Chekkaga yetganda o'chadi, lekin joyidan ketmaydi: sakrash bo'lmasin */
 .astra .carousel-arrow[disabled] { opacity: .35; cursor: default; box-shadow: none; }
 
 /* --- nuqtalar --- */
-.astra .carousel-dots {
-  display: flex; justify-content: center; gap: .4rem;
-  margin-top: .2rem;
-}
+.astra .carousel-dots { display: flex; gap: .4rem; }
 .astra .carousel-dot {
   width: .5rem; height: .5rem; padding: 0;
   border: 0; border-radius: 50%;

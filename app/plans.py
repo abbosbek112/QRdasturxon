@@ -55,8 +55,8 @@ LIMITS: dict[Plan, Limits] = {
     ),
     Plan.full: Limits(
         name="To'liq",
-        price_yearly=499_000,
-        price_monthly=60_000,
+        price_yearly=1_000_000,
+        price_monthly=100_000,
         max_items=None,
         max_categories=None,
         languages=("uz", "ru", "en"),

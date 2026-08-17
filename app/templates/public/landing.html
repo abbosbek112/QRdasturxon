@@ -252,16 +252,27 @@
           {% endfor %}
         </div>
 
-        <button class="carousel-arrow carousel-prev" type="button" data-carousel-prev
-                aria-label="{{ t('carousel_prev', lang) }}">{{ ui.icon('back') }}</button>
-        <button class="carousel-arrow carousel-next" type="button" data-carousel-next
-                aria-label="{{ t('carousel_next', lang) }}">{{ ui.icon('back') }}</button>
+        {#
+          Boshqaruv tasmaning OSTIDA, ustida emas.
 
-        <div class="carousel-dots" data-carousel-dots>
-          {% for theme in THEMES.values() %}
-            <button class="carousel-dot {{ 'is-on' if loop.first }}" type="button"
-                    data-go="{{ loop.index0 }}" aria-label="{{ theme.name }}"></button>
-          {% endfor %}
+          Ilgari strelkalar tasma ustida turardi va o'lchov shuni
+          ko'rsatdi: qo'shni kartochkaning atigi 64 piksel ko'rinar,
+          strelka esa aynan o'sha ustiga tushardi. Chap strelka esa
+          umuman bo'sh joyda osilib turardi.
+        #}
+        <div class="carousel-bar">
+          <button class="carousel-arrow" type="button" data-carousel-prev
+                  aria-label="{{ t('carousel_prev', lang) }}">{{ ui.icon('back') }}</button>
+
+          <div class="carousel-dots" data-carousel-dots>
+            {% for theme in THEMES.values() %}
+              <button class="carousel-dot {{ 'is-on' if loop.first }}" type="button"
+                      data-go="{{ loop.index0 }}" aria-label="{{ theme.name }}"></button>
+            {% endfor %}
+          </div>
+
+          <button class="carousel-arrow carousel-next" type="button" data-carousel-next
+                  aria-label="{{ t('carousel_next', lang) }}">{{ ui.icon('back') }}</button>
         </div>
       </div>
     </div>
@@ -413,24 +424,23 @@
         <h3>{{ t('feat_app_title', lang) }}</h3>
         <p class="muted small">{{ t('feat_app_text', lang) }}</p>
       </div>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('users') }}</span>
+        <h3>{{ t('feat_staff_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_staff_text', lang) }}</p>
+      </div>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('star') }}</span>
+        <h3>{{ t('feat_design_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_design_text', lang) }}</p>
+      </div>
+      <div class="lp-panel lp-card" data-reveal>
+        <span class="lp-tile">{{ ui.icon('chart') }}</span>
+        <h3>{{ t('feat_dash_title', lang) }}</h3>
+        <p class="muted small">{{ t('feat_dash_text', lang) }}</p>
+      </div>
     </div>
 
-    {#
-      Rejadagi ishlar ATAYLAB alohida va ochiq belgilangan. Ular tayyor
-      imkoniyatlar qatorida turgan bo'lsa, kelgan odam ularni bugun bor
-      deb o'ylardi va ro'yxatdan o'tgach aldangan his qilardi.
-    #}
-    <div class="lp-panel lp-soon" data-reveal>
-      <div>
-        <p class="lp-kicker">{{ ui.icon('clock') }} {{ t('soon_title', lang) }}</p>
-        <p class="muted small">{{ t('soon_sub', lang) }}</p>
-      </div>
-      <ul class="lp-soon-list">
-        <li>{{ t('soon_staff', lang) }}</li>
-        <li>{{ t('soon_design', lang) }}</li>
-        <li>{{ t('soon_dash', lang) }}</li>
-      </ul>
-    </div>
   </div>
 </section>
 

@@ -376,3 +376,27 @@ def test_the_russian_landing_really_says_it_in_russian(client):
 
     for kutilgan in ("Плов", "На двоих", "Рис · Баранина", "Горячие блюда"):
         assert kutilgan in body, kutilgan
+
+
+def test_the_carousel_controls_sit_below_the_track(client):
+    """Strelka kartochka ustida turmasin.
+
+    O'lchov shuni ko'rsatgan edi: 444px tasmada qo'shni kartochkaning
+    atigi 64 piksel ko'rinar, strelka esa aynan o'sha ustiga tushardi.
+    Chap strelka esa umuman bo'sh joyda osilib turardi.
+
+    Endi ikkalasi ham nuqtalar bilan bitta qatorda, tasmaning OSTIDA.
+    """
+    body = client.get("/").text
+
+    # Boshqaruv qatori bor va strelkalar uning ichida
+    assert "carousel-bar" in body
+    bar = body.split('class="carousel-bar"', 1)[1].split("</div>\n        </div>", 1)[0]
+    assert "data-carousel-prev" in bar
+    assert "data-carousel-next" in bar
+    assert "carousel-dot" in bar
+
+    css = client.get("/static/css/style.css").text
+    # Strelka endi mutlaq joylashtirilmaydi — u oddiy qatorda turadi
+    qoida = re.search(r"\.astra \.carousel-arrow\s*\{([^}]*)\}", css)
+    assert qoida and "position: absolute" not in qoida.group(1)

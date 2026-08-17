@@ -299,10 +299,19 @@ def test_superadmin_can_grant_a_paid_plan(client, db, tenant_a, superadmin):
 # --- landing ---
 
 def test_landing_page_lists_every_plan(client):
+    """Narx MANBADAN olinadi, qo'lda yozilmaydi.
+
+    Ilgari bu yerda "499 000" deb qotirilgan edi va narx o'zgarganda
+    test yiqilib, sababi esa "narx noto'g'ri" emas, "test eskirgan"
+    bo'lib chiqardi.
+    """
     body = html.unescape(client.get("/").text)
     for limits in LIMITS.values():
         assert limits.name in body
-    assert "499 000" in body  # yillik narx ko'rinishi
+
+    pullik = LIMITS[Plan.full]
+    for narx in (pullik.price_monthly, pullik.price_yearly):
+        assert f"{narx:,}".replace(",", " ") in body, narx
     assert "/signup" in body
 
 
