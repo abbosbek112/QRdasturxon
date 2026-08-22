@@ -95,6 +95,21 @@ def new_order_count(restaurant) -> int:
         return orders.new_count(session, restaurant.id)
 
 
+def theme_key(restaurant) -> str:
+    """Sahifaga qo'yiladigan uslub kaliti — HAL QILINGAN holda.
+
+    Shablon bazadagi xom qiymatni yozsa, eski kalitli restoranda
+    (`zamonaviy`, `klassik`, ...) `[data-theme="..."]` qoidalari topilmay
+    qolardi. Palitra baribir qo'llanardi, chunki u `themes.get()` orqali
+    o'tadi — natijada uslub SOYA VA SHAKLINI yo'qotib, faqat rangi
+    boshqa bo'lgan bir xil dizaynga aylanardi. Aynan shundan qochish
+    uchun bu yerda ham `get()` ishlatiladi.
+    """
+    if restaurant is None:
+        return ""
+    return themes.get(restaurant.theme).key
+
+
 def theme_css(restaurant) -> str:
     """Restoran tanlagan uslub uchun CSS o'zgaruvchilari.
 
@@ -123,6 +138,7 @@ templates.env.globals.update(
     # Bosh sahifadagi ko'rgazma uslublarni restoransiz chizadi: har bir
     # namuna karta o'z palitrasini shu yerdan oladi
     css_variables=themes.css_variables,
+    theme_key=theme_key,
     THEMES=themes.THEMES,
     # Havola kartochkasidagi manzillar MUTLAQ bo'lishi shart — Telegram va
     # Facebook nisbiy yo'lni tanimaydi

@@ -148,7 +148,7 @@ def test_theme_palettes_go_into_a_style_block_not_an_attribute(client):
     umuman qo'llanmaydi.
     """
     body = client.get("/").text
-    assert '.carousel-slide[data-theme="klassik"]' in body
+    assert '.carousel-slide[data-theme="skeyo"]' in body
     assert 'Iowan Old Style' in body
     # Palitra hech qachon inline atributda bo'lmasin
     assert 'style="--page' not in body
@@ -192,7 +192,7 @@ def test_the_dark_template_card_sets_its_own_text_colour(client):
 
     # Qorong'i shablon palitrasi sahifada bor — usiz qoida ish bermasdi
     body = client.get("/").text
-    assert '.carousel-slide[data-theme="tungi"]' in body
+    assert '.carousel-slide[data-theme="glass"]' in body
 
 
 def test_the_landing_embeds_a_real_qr_for_the_demo(client, db, monkeypatch):

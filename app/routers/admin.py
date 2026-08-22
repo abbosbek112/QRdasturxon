@@ -246,7 +246,11 @@ def settings_form(request: Request, db: DbSession, user: AdminUser):
     return templates.TemplateResponse(
         request,
         "admin/settings.html",
-        {"user": user, "restaurant": get_restaurant(db, user)},
+        {
+            "user": user,
+            "restaurant": get_restaurant(db, user),
+            "MAX_SERVICE": orders.MAX_SERVICE_PERCENT,
+        },
     )
 
 
@@ -270,6 +274,7 @@ async def update_settings(
     currency: Annotated[str, Form()] = "so'm",
     orders_enabled: Annotated[bool, Form()] = False,
     order_window_minutes: Annotated[int, Form()] = 30,
+    service_percent: Annotated[int, Form()] = 0,
 ):
     restaurant = get_restaurant(db, user)
     restaurant.name = name.strip() or restaurant.name
@@ -286,6 +291,11 @@ async def update_settings(
     # 0 = cheksiz. Yuqori chegara — formadan tasodifan katta son kelib qolmasin
     restaurant.order_window_minutes = (
         0 if order_window_minutes <= 0 else min(order_window_minutes, 240)
+    )
+    # Chegara serverda ham qo'yiladi: formadagi `max` faqat brauzerni
+    # to'xtatadi, so'rovni qo'lda yuborgan odamni emas
+    restaurant.service_percent = max(
+        0, min(service_percent, orders.MAX_SERVICE_PERCENT)
     )
 
     db.commit()

@@ -83,7 +83,14 @@
               {% endfor %}
               {% if order.note %}<div class="muted small">{{ order.note }}</div>{% endif %}
             </td>
-            <td><strong>{{ order.total | price }}</strong></td>
+            <td>
+              <strong>{{ order.total | price }}</strong>
+              {% if order.service_percent %}
+                <div class="muted small">
+                  {{ order.subtotal | price }} + {{ order.service_percent }}%
+                </div>
+              {% endif %}
+            </td>
             {#
               Kim javob bergani. Bo'sh chiziqcha ikki narsani bildiradi:
               buyurtmaga hali javob berilmagan, yoki unga egasining o'zi

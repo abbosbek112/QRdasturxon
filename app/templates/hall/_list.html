@@ -38,7 +38,13 @@
         <p class="hall-note">{{ ui.icon('chat') }} {{ order.note }}</p>
       {% endif %}
 
-      <p class="hall-total">{{ order.total | price }} {{ restaurant.currency }}</p>
+      <p class="hall-total">
+        {{ order.total | price }} {{ restaurant.currency }}
+        {# Afitsant mijozga aytadigan raqam — xizmat haqi ichida ekanini bilsin #}
+        {% if order.service_percent %}
+          <span class="muted small">({{ t('order_service', ui_lang) }} {{ order.service_percent }}%)</span>
+        {% endif %}
+      </p>
 
       <div class="hall-actions">
         {% if fresh %}

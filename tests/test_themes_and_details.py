@@ -57,7 +57,7 @@ def test_each_theme_sends_its_own_palette(client, db, cafe):
 def test_theme_fonts_are_not_html_escaped(client, db, cafe):
     """Qo'shtirnoq &#34; ga aylansa CSS buziladi va shrift umuman qo'llanmaydi."""
     restaurant, _ = cafe
-    restaurant.theme = "klassik"
+    restaurant.theme = "skeyo"
     db.commit()
 
     body = client.get(f"/r/{restaurant.slug}").text
@@ -77,7 +77,9 @@ def test_a_broken_accent_falls_back_instead_of_injecting_css(client, db, cafe):
 
     head = client.get(f"/r/{restaurant.slug}").text.split("</head>")[0]
     assert "--accent:</style>" not in head
-    assert f"--accent:{themes.THEMES[restaurant.theme].accent}" in head
+    # `get()` orqali: u eski kalitlarni ham tushunadi va aynan
+    # sahifa ishlatadigan yo'l shu
+    assert f"--accent:{themes.get(restaurant.theme).accent}" in head
 
 
 def test_unknown_theme_falls_back_to_default(db, cafe):
@@ -95,12 +97,12 @@ def test_owner_can_switch_theme_from_the_design_section(client, db, cafe):
         "/admin/design",
         data={
             "csrf_token": csrf(client, "/admin/design"),
-            "theme": "issiq",
+            "theme": "neomorf",
             "theme_color": "#c2410c",
         },
     )
     db.refresh(restaurant)
-    assert restaurant.theme == "issiq"
+    assert restaurant.theme == "neomorf"
     assert restaurant.theme_color == "#c2410c"
 
 
@@ -289,10 +291,105 @@ def test_another_owner_cannot_restyle_this_menu(client, db, cafe, tenant_b):
     login(client, "choy", "adminpass123")
     client.post(
         "/admin/design",
-        data={"csrf_token": csrf(client, "/admin/design"), "theme": "tungi"},
+        data={"csrf_token": csrf(client, "/admin/design"), "theme": "glass"},
     )
     db.refresh(restaurant)
     db.refresh(boshqa)
 
     assert restaurant.theme == oldin
-    assert boshqa.theme == "tungi"
+    assert boshqa.theme == "glass"
+
+
+# --- sakkizta uslub CHINDAN farq qiladimi ---
+
+
+def test_every_style_has_its_own_structural_rules(client):
+    """Uslub faqat rang bilan farq qilmasin.
+
+    Aynan shu sodir bo'lgan: uchta uslub qo'shilgan, lekin ularning
+    tuzilmaviy CSS'i umuman yozilmagan edi. Yonma-yon qo'yilganda ular
+    bir xil dizayn, boshqa rangda ko'rinardi — egasi "nima farqi bor?"
+    deb haqli savol berdi.
+    """
+    from app.themes import THEMES
+
+    css = client.get("/static/css/style.css").text
+    for key in THEMES:
+        qoidalar = css.count(f'[data-theme="{key}"]')
+        assert qoidalar >= 5, f"{key}: atigi {qoidalar} ta tuzilmaviy qoida"
+
+
+def test_the_styles_do_not_share_the_same_shape(client):
+    """Ikki uslub bir xil ko'rinmasin.
+
+    Har uslubning kartochka SOYASI tekshiriladi: u dizayn maktabini
+    eng ko'p bildiradigan xususiyat. Neomorfizmda ikki tomonlama
+    yumshoq soya, brutalizmda qattiq siljigan to'rtburchak, yassida
+    esa umuman yo'q.
+    """
+    import re
+
+    from app.themes import THEMES
+
+    # Izohlar OLIB TASHLANADI: ular selektor ro'yxatiga qo'shilib
+    # ketardi va qoida topilmay qolardi
+    css = re.sub(r"/\*.*?\*/", "", client.get("/static/css/style.css").text, flags=re.S)
+
+    def dish_soyasi(key: str) -> str:
+        """`.dish` ning ASOSIY qoidasidagi soya.
+
+        `:hover` va boshqa holatlar ATAYLAB chetlab o'tiladi: ilgari
+        regex ularni ham topardi va asosiy qoida butunlay yo'qolganda
+        ham test o'tib ketardi — mutatsiya sinovi shuni ko'rsatdi.
+        """
+        for qoida in re.finditer(r"([^{}]+)\{([^}]*)\}", css):
+            selektorlar = [x.strip() for x in qoida.group(1).split(",")]
+            if f'[data-theme="{key}"] .dish' not in selektorlar:
+                continue
+            soya = re.search(r"box-shadow:([^;]*);", qoida.group(2))
+            if soya:
+                return soya.group(1).strip()
+            return "yo'q"
+        return None
+
+    soyalar = {}
+    for key in THEMES:
+        soya = dish_soyasi(key)
+        assert soya is not None, f"{key}: `.dish` uchun asosiy qoida yo'q"
+        soyalar[key] = soya
+
+    # Kamida oltitasi bir-birinikidan farq qilsin
+    assert len(set(soyalar.values())) >= 6, soyalar
+
+
+@pytest.mark.parametrize("key", ["minimal", "neomorf", "glass", "yassi",
+                                 "material", "brutal", "skeyo", "tipografik"])
+def test_each_style_opens_the_menu(client, db, cafe, key):
+    """Har uslubda mijoz menyusi ochilsin va o'sha uslub qo'llansin."""
+    restaurant, _ = cafe
+    restaurant.theme = key
+    db.commit()
+
+    response = client.get(f"/r/{restaurant.slug}")
+    assert response.status_code == 200
+    assert f'data-theme="{key}"' in response.text
+
+
+@pytest.mark.parametrize(
+    "eski, kutilgan",
+    [("zamonaviy", "material"), ("klassik", "skeyo"), ("issiq", "neomorf"),
+     ("tungi", "glass"), ("bogh", "yassi"), ("qirol", "tipografik")],
+)
+def test_an_old_style_name_still_finds_its_menu(client, db, cafe, eski, kutilgan):
+    """Bazadagi eski uslub nomi menyuni buzmasin.
+
+    Uslublar qayta yozilganda kalitlar o'zgardi. Eski qiymat standartga
+    tushib ketsa, restoran menyusi BIR KECHADA boshqa ko'rinishga o'tib
+    qolardi — egasi hech narsaga tegmagan bo'lsa ham.
+    """
+    restaurant, _ = cafe
+    restaurant.theme = eski
+    db.commit()
+
+    body = client.get(f"/r/{restaurant.slug}").text
+    assert f'data-theme="{kutilgan}"' in body

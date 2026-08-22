@@ -47,6 +47,24 @@
           <b>{{ line.line_total | price }}</b>
         </div>
       {% endfor %}
+      {#
+        Xizmat haqi ALOHIDA qator bo'lib ko'rinadi. Uni jimgina jamiga
+        qo'shib qo'yish mijoz uchun yoqimsiz kutilmagan bo'lardi: u
+        taomlar narxini hisoblab o'tiradi, chek esa boshqa raqam
+        ko'rsatadi.
+      #}
+      {% if order.service_percent %}
+        <div class="order-line">
+          <span class="grow muted">{{ t('order_subtotal', lang) }}</span>
+          <span class="muted">{{ order.subtotal | price }}</span>
+        </div>
+        <div class="order-line">
+          <span class="grow muted">
+            {{ t('order_service', lang) }} · {{ order.service_percent }}%
+          </span>
+          <span class="muted">{{ order.service_amount | price }}</span>
+        </div>
+      {% endif %}
       <div class="order-line order-line-total">
         <span class="grow">{{ t('order_total', lang) }}</span>
         <b>{{ order.total | price }} {{ restaurant.currency }}</b>

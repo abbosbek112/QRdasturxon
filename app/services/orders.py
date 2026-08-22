@@ -10,7 +10,7 @@ tekshiriladi, miqdor qisiladi. Formadan kelgan `price` umuman o'qilmaydi ham.
 
 import secrets
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from typing import NamedTuple
 
 from fastapi import HTTPException, status
@@ -32,6 +32,11 @@ from app.plans import menu_is_live
 MAX_LINES = 40
 MAX_QTY = 20
 MAX_NOTE = 280
+
+# Xizmat haqining yuqori chegarasi. Bu narx emas, HIMOYA: formadagi
+# raqamni o'zgartirib 900% qo'yib bo'lmasin va nol bilan adashib
+# ketilgan qiymat mijozga ulkan hisob chiqarmasin.
+MAX_SERVICE_PERCENT = 30
 
 # Cheklov IP bo'yicha EMAS, stol bo'yicha. Sabab oddiy: kafedagi hamma mijoz
 # bitta Wi-Fi ortida o'tiradi, ya'ni ular uchun IP bitta. IP bo'yicha cheklov
@@ -180,6 +185,18 @@ def place(
             )
         )
         total += combo.price * quantity
+
+    #
+    # Xizmat haqi. Foiz buyurtma paytidagi holicha NUSXA bo'lib yoziladi:
+    # egasi ertaga uni ko'tarsa, kechagi buyurtmaning hisobi o'zgarmasligi
+    # kerak. Taom narxi nusxa bo'lib saqlangani bilan bir xil sabab.
+    #
+    foiz = max(0, min(restaurant.service_percent or 0, MAX_SERVICE_PERCENT))
+    order.service_percent = foiz
+    if foiz:
+        # Yaxlitlash MIJOZ FOYDASIGA: 1234.56 -> 1234. Tepaga yaxlitlash
+        # har buyurtmada bir necha so'm qo'shib, chekni "g'alati" qilardi.
+        total += (total * foiz / 100).quantize(Decimal("1"), rounding=ROUND_DOWN)
 
     order.total = total
     db.add(order)

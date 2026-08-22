@@ -1,12 +1,19 @@
 """Menyu uslublari.
 
-Har uslub — alohida dizayn, faqat boshqa rang emas. O'zgaradigan narsalar:
-palitra (fon, qog'oz, matn), tipografika, burchak yumaloqligi. Bundan tashqari
-`style.css` da `[data-theme="..."]` bloklari bor — ular soya, chegara va
-sarlavha bezagi kabi tuzilmaviy farqlarni beradi.
+Har uslub — alohida DIZAYN TILI, boshqa rang emas. Farq uch qatlamda:
 
-Shuning uchun bu yerda rang emas, **butun palitra** saqlanadi: fon iliq qog'oz
-bo'lsa, matn ham iliq bo'lishi kerak, aks holda uslub pachoq ko'rinadi.
+1. Palitra — bu yerda, `variables` ichida.
+2. Tipografika va burchak yumaloqligi — ham shu yerda.
+3. TUZILMA — `style.css` dagi `[data-theme="..."]` bloklarida: soya
+   turi, chegara qalinligi, kartochka shakli, sarlavha bezagi.
+
+Uchinchisi eng muhimi. Bir paytlar uchta uslub faqat rang bilan farq
+qilardi va ular yonma-yon qo'yilganda bir xil ko'rinardi — egasi
+"nima farqi bor?" deb haqli savol berdi.
+
+Har uslub tanilgan dizayn maktabidan olingan, shuning uchun ular
+bir-biriga o'xshamaydi: yumshoq soya (neomorfizm) bilan qalin qora
+chegara (brutalizm) bitta menyuda turolmaydi.
 """
 
 import re
@@ -19,6 +26,8 @@ SYSTEM_SANS = (
 )
 SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif'
 ROUNDED = '"SF Pro Rounded", ui-rounded, "Nunito", ' + SYSTEM_SANS
+MONO = '"SF Mono", ui-monospace, "Cascadia Mono", Consolas, monospace'
+GROTESK = '"Arial Black", "Helvetica Neue", Impact, sans-serif'
 
 
 @dataclass(frozen=True)
@@ -35,218 +44,170 @@ class Theme:
 
 
 THEMES: dict[str, Theme] = {
-    # Sovuq oq, yumshoq soyalar — bugungi ilovalar tili
-    "zamonaviy": Theme(
-        key="zamonaviy",
-        name="Zamonaviy",
-        hint="Toza oq, yumshoq soyalar — kafe va qahvaxonalar uchun",
-        accent="#b45309",
-        variables={
-            "--page": "#f7f8fa",
-            "--surface": "#ffffff",
-            "--surface-2": "#f2f3f5",
-            "--surface-3": "#e9ebef",
-            "--ink": "#0f1115",
-            "--ink-2": "#6b7280",
-            "--ink-3": "#9ca3af",
-            "--line": "#eceef1",
-            "--line-2": "#dfe2e7",
-            "--font-sans": SYSTEM_SANS,
-            "--font-head": SYSTEM_SANS,
-            "--head-spacing": "-.025em",
-            "--r-sm": "10px",
-            "--r-md": "12px",
-            "--r-lg": "16px",
-            "--r-xl": "24px",
-            "--r-full": "999px",
-        },
-    ),
-    # Iliq qog'oz, serif, soyasiz — chop etilgan restoran menyusi hissi
-    "klassik": Theme(
-        key="klassik",
-        name="Klassik",
-        hint="Iliq qog'oz va serif sarlavhalar — milliy oshxona va restoranlar",
-        accent="#7c2d12",
-        variables={
-            "--page": "#f7f2ea",
-            "--surface": "#fffdf9",
-            "--surface-2": "#f2ebe0",
-            "--surface-3": "#e8dfd1",
-            "--ink": "#211a14",
-            "--ink-2": "#6b5b4a",
-            "--ink-3": "#9c8a76",
-            "--line": "#e5dbcd",
-            "--line-2": "#d6c8b4",
-            "--font-sans": SYSTEM_SANS,
-            "--font-head": SERIF,
-            "--head-spacing": "0",
-            "--r-sm": "3px",
-            "--r-md": "3px",
-            "--r-lg": "4px",
-            "--r-xl": "4px",
-            "--r-full": "3px",
-        },
-    ),
-    # Shaftoli fon, juda yumaloq, chegarasiz — shirinlik do'koni
-    "issiq": Theme(
-        key="issiq",
-        name="Issiq",
-        hint="Shaftoli tuslar, juda yumaloq shakllar — shirinlik va non mahsulotlari",
-        accent="#c2410c",
-        variables={
-            "--page": "#fff6ef",
-            "--surface": "#ffffff",
-            "--surface-2": "#fdece1",
-            "--surface-3": "#f9dcc9",
-            "--ink": "#2b1a12",
-            "--ink-2": "#7c6255",
-            "--ink-3": "#a89184",
-            "--line": "#f8e3d4",
-            "--line-2": "#f0d0b8",
-            "--font-sans": ROUNDED,
-            "--font-head": ROUNDED,
-            "--head-spacing": "-.015em",
-            "--r-sm": "14px",
-            "--r-md": "20px",
-            "--r-lg": "26px",
-            "--r-xl": "32px",
-            "--r-full": "999px",
-        },
-    ),
-    # Sof oq, qora urg'u, faqat ingichka chiziqlar — rang faqat fotolardan
+    # 1. MINIMALIZM — bezak yo'q, bo'sh joy ko'p. Rang faqat fotodan keladi.
     "minimal": Theme(
         key="minimal",
         name="Minimal",
-        hint="Sof oq va qora, bezaksiz — taom fotosuratlari o'zi gapiradi",
+        hint="Bezaksiz, ko'p bo'sh joy — taom fotosurati o'zi gapiradi",
         accent="#18181b",
         variables={
-            "--page": "#ffffff",
-            "--surface": "#ffffff",
-            "--surface-2": "#f4f4f5",
-            "--surface-3": "#e4e4e7",
-            "--ink": "#09090b",
-            "--ink-2": "#71717a",
-            "--ink-3": "#a1a1aa",
-            "--line": "#e4e4e7",
-            "--line-2": "#d4d4d8",
-            "--font-sans": SYSTEM_SANS,
-            "--font-head": SYSTEM_SANS,
+            "--page": "#ffffff", "--surface": "#ffffff",
+            "--surface-2": "#f4f4f5", "--surface-3": "#e4e4e7",
+            "--ink": "#09090b", "--ink-2": "#71717a", "--ink-3": "#a1a1aa",
+            "--line": "#e4e4e7", "--line-2": "#d4d4d8",
+            "--font-sans": SYSTEM_SANS, "--font-head": SYSTEM_SANS,
             "--head-spacing": "-.04em",
-            "--r-sm": "2px",
-            "--r-md": "2px",
-            "--r-lg": "2px",
-            "--r-xl": "2px",
-            "--r-full": "2px",
+            "--r-sm": "2px", "--r-md": "2px", "--r-lg": "2px",
+            "--r-xl": "2px", "--r-full": "2px",
         },
     ),
-    # Qorong'i fon — yagona uslub bo'lib, kechqurun ishlaydigan joylar uchun.
-    # Matn ataylab sof oq emas: qora fonda sof oq ko'zni charchatadi.
-    "tungi": Theme(
-        key="tungi",
-        name="Tungi",
-        hint="Qorong'i fon, yorqin urg'u — bar, lounge va kechki restoranlar",
-        accent="#f59e0b",
+    # 2. NEOMORFIZM — element fondan bo'rtib chiqqandek. Buning ishlashi
+    # uchun fon va kartochka RANGI BIR XIL bo'lishi shart: butun ta'sir
+    # ikki tomonlama soyadan keladi, chegaradan emas.
+    "neomorf": Theme(
+        key="neomorf",
+        name="Neomorfizm",
+        hint="Yumshoq soyalar, bo'rtib chiqqan shakllar — zamonaviy qahvaxona",
+        accent="#6366f1",
         variables={
-            "--page": "#0b0d10",
-            "--surface": "#14171c",
-            "--surface-2": "#1c2027",
-            "--surface-3": "#262b33",
-            "--ink": "#e8eaed",
-            "--ink-2": "#9aa1ab",
-            "--ink-3": "#6c737d",
-            "--line": "#242931",
-            "--line-2": "#333a44",
-            "--font-sans": SYSTEM_SANS,
-            "--font-head": SYSTEM_SANS,
-            "--head-spacing": "-.03em",
-            "--r-sm": "8px",
-            "--r-md": "12px",
-            "--r-lg": "16px",
-            "--r-xl": "22px",
-            "--r-full": "999px",
-        },
-    ),
-    # Sovuq yashil, tabiiy tuslar — sabzavot va sog'lom taomlar
-    "bogh": Theme(
-        key="bogh",
-        name="Bog'",
-        hint="Yashil va tabiiy tuslar — sog'lom taomlar va sabzavotli menyu",
-        accent="#15803d",
-        variables={
-            "--page": "#f4f8f3",
-            "--surface": "#ffffff",
-            "--surface-2": "#e9f1e7",
-            "--surface-3": "#d9e7d6",
-            "--ink": "#12210f",
-            "--ink-2": "#5b6b57",
-            "--ink-3": "#8b9a87",
-            "--line": "#e0eade",
-            "--line-2": "#cadcc5",
-            "--font-sans": SYSTEM_SANS,
-            "--font-head": SERIF,
-            "--head-spacing": "-.01em",
-            "--r-sm": "8px",
-            "--r-md": "14px",
-            "--r-lg": "18px",
-            "--r-xl": "26px",
-            "--r-full": "999px",
-        },
-    ),
-    # Sovuq ko'k — baliq, dengiz mahsulotlari va yozgi terassalar
-    "dengiz": Theme(
-        key="dengiz",
-        name="Dengiz",
-        hint="Sovuq ko'k tuslar — baliq, dengiz mahsulotlari va yozgi terassa",
-        accent="#0369a1",
-        variables={
-            "--page": "#f2f7fb",
-            "--surface": "#ffffff",
-            "--surface-2": "#e6eff7",
-            "--surface-3": "#d3e3ef",
-            "--ink": "#0c1a24",
-            "--ink-2": "#54687a",
-            "--ink-3": "#8497a6",
-            "--line": "#dde9f2",
-            "--line-2": "#c4d8e7",
-            "--font-sans": SYSTEM_SANS,
-            "--font-head": SYSTEM_SANS,
+            "--page": "#e8ecf3", "--surface": "#e8ecf3",
+            "--surface-2": "#e2e7ef", "--surface-3": "#d8dfe9",
+            "--ink": "#28303f", "--ink-2": "#697386", "--ink-3": "#94a0b4",
+            "--line": "#e8ecf3", "--line-2": "#d8dfe9",
+            "--font-sans": ROUNDED, "--font-head": ROUNDED,
             "--head-spacing": "-.02em",
-            "--r-sm": "10px",
-            "--r-md": "14px",
-            "--r-lg": "18px",
-            "--r-xl": "26px",
-            "--r-full": "999px",
+            "--r-sm": "14px", "--r-md": "20px", "--r-lg": "26px",
+            "--r-xl": "34px", "--r-full": "999px",
         },
     ),
-    # To'q zarhal va serif — qimmat restoran hissi
-    "qirol": Theme(
-        key="qirol",
-        name="Qirol",
-        hint="To'q ranglar va serif — qimmat restoran va bayram ziyofatlari",
-        accent="#a16207",
+    # 3. GLASSMORFIZM — xira shisha. Fon rangli bo'lishi shart, aks holda
+    # shaffoflikning ortida ko'rinadigan narsa qolmaydi va effekt yo'qoladi.
+    "glass": Theme(
+        key="glass",
+        name="Glassmorfizm",
+        hint="Xira shisha kartochkalar, rangli fon — bar va lounge",
+        accent="#a855f7",
         variables={
-            "--page": "#faf7f2",
-            "--surface": "#ffffff",
-            "--surface-2": "#f3ede3",
-            "--surface-3": "#e7ddcd",
-            "--ink": "#1c1917",
-            "--ink-2": "#5f574e",
-            "--ink-3": "#928878",
-            "--line": "#ebe3d7",
-            "--line-2": "#dbcfbd",
-            "--font-sans": SERIF,
-            "--font-head": SERIF,
-            "--head-spacing": ".01em",
-            "--r-sm": "2px",
-            "--r-md": "6px",
-            "--r-lg": "8px",
-            "--r-xl": "10px",
-            "--r-full": "999px",
+            "--page": "#1a1033", "--surface": "#ffffff14",
+            "--surface-2": "#ffffff1f", "--surface-3": "#ffffff2b",
+            "--ink": "#f4f1fb", "--ink-2": "#c3bad9", "--ink-3": "#9288b0",
+            "--line": "#ffffff2b", "--line-2": "#ffffff42",
+            "--font-sans": SYSTEM_SANS, "--font-head": SYSTEM_SANS,
+            "--head-spacing": "-.03em",
+            "--r-sm": "12px", "--r-md": "16px", "--r-lg": "22px",
+            "--r-xl": "28px", "--r-full": "999px",
+        },
+    ),
+    # 4. YASSI — gradient ham, soya ham, 3D ham yo'q. Faqat tekis rang
+    # va aniq chegara. Rang to'yingan bo'lishi kerak: yassi dizaynda
+    # ajratuvchi yagona vosita — rangning o'zi.
+    "yassi": Theme(
+        key="yassi",
+        name="Yassi",
+        hint="Soyasiz, tekis ranglar — tez ovqatlanish va yetkazib berish",
+        accent="#e11d48",
+        variables={
+            "--page": "#f1f5f9", "--surface": "#ffffff",
+            "--surface-2": "#e2e8f0", "--surface-3": "#cbd5e1",
+            "--ink": "#0f172a", "--ink-2": "#475569", "--ink-3": "#94a3b8",
+            "--line": "#cbd5e1", "--line-2": "#94a3b8",
+            "--font-sans": SYSTEM_SANS, "--font-head": SYSTEM_SANS,
+            "--head-spacing": "-.01em",
+            "--r-sm": "4px", "--r-md": "6px", "--r-lg": "8px",
+            "--r-xl": "10px", "--r-full": "999px",
+        },
+    ),
+    # 5. MATERIAL — qog'oz va siyoh. Har qatlam o'z balandligiga ega va
+    # soya aynan shu balandlikni ko'rsatadi, bezak uchun emas.
+    "material": Theme(
+        key="material",
+        name="Material",
+        hint="Qatlamli soyalar, aniq tuzilma — kafe va qahvaxonalar",
+        accent="#00695c",
+        variables={
+            "--page": "#fafafa", "--surface": "#ffffff",
+            "--surface-2": "#f5f5f5", "--surface-3": "#eeeeee",
+            "--ink": "#212121", "--ink-2": "#616161", "--ink-3": "#9e9e9e",
+            "--line": "#eeeeee", "--line-2": "#e0e0e0",
+            "--font-sans": SYSTEM_SANS, "--font-head": SYSTEM_SANS,
+            "--head-spacing": "0",
+            "--r-sm": "4px", "--r-md": "8px", "--r-lg": "12px",
+            "--r-xl": "16px", "--r-full": "999px",
+        },
+    ),
+    # 6. BRUTALIZM — qalin qora chegara, ulkan shrift, keskin kontrast.
+    # Soya bor, lekin yumshoq emas: u qattiq, siljigan qora to'rtburchak.
+    "brutal": Theme(
+        key="brutal",
+        name="Brutalizm",
+        hint="Qalin chiziq, yirik shrift, keskin rang — ko'cha ovqati va fast-food",
+        accent="#facc15",
+        variables={
+            "--page": "#fefce8", "--surface": "#ffffff",
+            "--surface-2": "#fef9c3", "--surface-3": "#fef08a",
+            "--ink": "#000000", "--ink-2": "#292524", "--ink-3": "#57534e",
+            "--line": "#000000", "--line-2": "#000000",
+            "--font-sans": SYSTEM_SANS, "--font-head": GROTESK,
+            "--head-spacing": "-.04em",
+            "--r-sm": "0px", "--r-md": "0px", "--r-lg": "0px",
+            "--r-xl": "0px", "--r-full": "0px",
+        },
+    ),
+    # 7. SKEYOMORFIZM — haqiqiy buyumga o'xshatish: qog'oz teksturasi,
+    # ipli chekka, biroz sarg'aygan varaq. Chop etilgan menyu hissi.
+    "skeyo": Theme(
+        key="skeyo",
+        name="Skeyomorfizm",
+        hint="Qog'oz teksturasi va serif — milliy oshxona, chop etilgan menyu hissi",
+        accent="#78350f",
+        variables={
+            "--page": "#e8ddc8", "--surface": "#fdf8ec",
+            "--surface-2": "#f3e9d2", "--surface-3": "#e6d8ba",
+            "--ink": "#2b2013", "--ink-2": "#6b5940", "--ink-3": "#9a866a",
+            "--line": "#d9c9a8", "--line-2": "#c2ad86",
+            "--font-sans": SERIF, "--font-head": SERIF,
+            "--head-spacing": "0",
+            "--r-sm": "2px", "--r-md": "3px", "--r-lg": "4px",
+            "--r-xl": "5px", "--r-full": "3px",
+        },
+    ),
+    # 8. TIPOGRAFIK — asosiy urg'u shriftda. Rasm kichrayadi, nom esa
+    # o'sadi va katta harflar bilan yoziladi.
+    "tipografik": Theme(
+        key="tipografik",
+        name="Tipografik",
+        hint="Rasm emas, shrift gapiradi — vinoxona, qahva va mualliflik oshxonasi",
+        accent="#0f766e",
+        variables={
+            "--page": "#faf9f7", "--surface": "#ffffff",
+            "--surface-2": "#f2f0ec", "--surface-3": "#e6e3dd",
+            "--ink": "#1c1917", "--ink-2": "#57534e", "--ink-3": "#a8a29e",
+            "--line": "#e7e5e4", "--line-2": "#d6d3d1",
+            "--font-sans": SYSTEM_SANS, "--font-head": SERIF,
+            "--head-spacing": "-.02em",
+            "--r-sm": "0px", "--r-md": "0px", "--r-lg": "0px",
+            "--r-xl": "0px", "--r-full": "0px",
         },
     ),
 }
 
-DEFAULT_THEME = "zamonaviy"
+# Eski kalitlar yangilariga bog'lanadi.
+#
+# Uslublar qayta yozilganda kalitlar ham o'zgardi. Bazadagi eski qiymat
+# `themes.get()` da standartga tushib ketardi va restoran menyusi bir
+# kechada boshqa ko'rinishga o'tib qolardi. Bu jadval shuni to'sadi:
+# har eski uslub o'ziga eng yaqin yangisiga o'tadi.
+LEGACY_KEYS = {
+    "zamonaviy": "material",   # toza oq, yumshoq soya
+    "klassik": "skeyo",        # iliq qog'oz va serif
+    "issiq": "neomorf",        # yumshoq, juda yumaloq
+    "tungi": "glass",          # qorong'i fon
+    "bogh": "yassi",           # soyasiz, tekis
+    "dengiz": "yassi",
+    "qirol": "tipografik",     # serif, bezakli
+}
+
+DEFAULT_THEME = "material"
 
 # Urg'u rangi uchun tayyor tanlov. Egasi rang tanlagichni ochib o'ylab
 # o'tirmasin: bu ranglar oq fonda ham, qorong'i fonda ham o'qiladigan
@@ -270,7 +231,16 @@ HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 
 def get(key: str | None) -> Theme:
-    return THEMES.get(key or "", THEMES[DEFAULT_THEME])
+    """Kalit bo'yicha uslub. Eski nomlar ham tushuniladi.
+
+    Eski kalit uchraganda u yangisiga o'giriladi. Busiz bazadagi
+    "zamonaviy" standartga tushib ketardi va restoran menyusi bir
+    kechada boshqa ko'rinishga o'tib qolardi — egasi hech narsaga
+    tegmagan bo'lsa ham.
+    """
+    key = key or ""
+    key = LEGACY_KEYS.get(key, key)
+    return THEMES.get(key, THEMES[DEFAULT_THEME])
 
 
 def safe_accent(theme: Theme, accent: str | None) -> str:

@@ -832,7 +832,7 @@ UI: dict[str, dict[str, str]] = {
     "dash_menu_state": {
         "uz": "Menyu holati", "ru": "Состояние меню", "en": "Menu at a glance",
     },
-    "nav_combos": {"uz": "Kombolar", "ru": "Комбо", "en": "Combos"},
+    "nav_combos": {"uz": "Setlar", "ru": "Сеты", "en": "Sets"},
     "dash_print_menu": {"uz": "Chop etish uchun menyu", "ru": "Меню для печати", "en": "Printable menu"},
 
     # --- kategoriyalar ---
@@ -857,14 +857,31 @@ UI: dict[str, dict[str, str]] = {
         "en": "List the ingredients separated by commas. No prices needed — "
               "the names appear as a list in the guest menu.",
     },
-    "combo_title": {"uz": "Kombo to'plamlar", "ru": "Комбо-наборы", "en": "Combo sets"},
-    "combo_sub": {
-        "uz": "Bir necha taom birga — alohida olgandan arzonroq.",
-        "ru": "Несколько блюд вместе — дешевле, чем по отдельности.",
-        "en": "Several dishes together — cheaper than buying them separately.",
+    # Egasi buni "SET" deb ataydi ("gap set", "tug'ilgan kun seti").
+    # Nom faqat "Kombo" bo'lganda uni bo'limdan topa olmasdi va
+    # "bizda setlar ham bor" deb aytardi — holbuki aynan shu bo'lim
+    # o'sha ish uchun.
+    "combo_title": {
+        "uz": "Setlar va kombolar",
+        "ru": "Сеты и комбо",
+        "en": "Sets and combos",
     },
-    "combo_new": {"uz": "Yangi kombo", "ru": "Новое комбо", "en": "New combo"},
-    "combo_example": {"uz": "Masalan: Tushlik to'plami", "ru": "Например: Обеденный набор", "en": "For example: Lunch set"},
+    "combo_sub": {
+        "uz": "Bir necha taomni bitta to'plamga yig'asiz — gap seti, tushlik "
+              "seti, tug'ilgan kun to'plami. Sonini o'zingiz belgilaysiz: "
+              "1 ta assorti, 6 ta lahmajun, 6 ta chechevitsa.",
+        "ru": "Собираете несколько блюд в один набор — сет для компании, "
+              "обеденный, праздничный. Количество задаёте сами: "
+              "1 ассорти, 6 лахмаджун, 6 чечевичных.",
+        "en": "Bundle several dishes into one set — for a group, for lunch, "
+              "for a party. You set the quantities: 1 platter, 6 lahmajun, "
+              "6 lentil soups.",
+    },
+    "combo_new": {"uz": "Yangi set", "ru": "Новый сет", "en": "New set"},
+    "combo_example": {
+        "uz": "Masalan: Gap seti", "ru": "Например: Сет для компании",
+        "en": "For example: Sharing set",
+    },
     "combo_extra": {"uz": "O'z qo'shimchalaringiz", "ru": "Ваши дополнения", "en": "Your own extras"},
     "combo_extra_example": {
         "uz": "Masalan: cheksiz choy",
@@ -1202,6 +1219,17 @@ UI: dict[str, dict[str, str]] = {
         "en": "Ordering is on but there are no tables yet, so guests cannot order.",
     },
     "field_orders_enabled": {"uz": "Menyudan buyurtma qabul qilish", "ru": "Принимать заказы из меню", "en": "Accept orders from the menu"},
+    "field_service": {"uz": "Xizmat haqi, %", "ru": "Сервисный сбор, %", "en": "Service charge, %"},
+    "field_service_hint": {
+        "uz": "Hisobga qo'shiladigan foiz. 0 bo'lsa olinmaydi. Mijoz buni "
+              "buyurtma bergandan keyin alohida qator bo'lib ko'radi.",
+        "ru": "Процент, добавляемый к счёту. 0 — не взимается. Гость видит его "
+              "отдельной строкой после заказа.",
+        "en": "Percentage added to the bill. 0 means none. The guest sees it as a "
+              "separate line after ordering.",
+    },
+    "order_subtotal": {"uz": "Taomlar", "ru": "Блюда", "en": "Items"},
+    "order_service": {"uz": "Xizmat haqi", "ru": "Сервисный сбор", "en": "Service charge"},
     "field_order_window": {"uz": "Buyurtma oynasi (daqiqa)", "ru": "Окно заказа (минут)", "en": "Ordering window (minutes)"},
     "field_order_window_hint": {
         "uz": "QR skanerlangandan keyin shuncha daqiqa buyurtma berish mumkin. 0 — cheksiz. "

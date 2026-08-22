@@ -133,6 +133,12 @@ class Restaurant(Base):
     orders_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     # QR skanerlangandan keyin necha daqiqa buyurtma berish mumkin. 0 = cheksiz.
     order_window_minutes: Mapped[int] = mapped_column(Integer, default=30)
+    # Xizmat haqi, foizda. 0 = olinmaydi.
+    #
+    # Ko'p restoran hisobga 10-15% qo'shadi. Buni menyuda ko'rsatmaslik
+    # mijoz uchun yoqimsiz kutilmagan bo'ladi: u 100 000 deb hisoblab
+    # o'tiradi, chek esa 115 000 bo'lib keladi.
+    service_percent: Mapped[int] = mapped_column(Integer, default=0)
 
     plan: Mapped[Plan] = mapped_column(Enum(Plan, native_enum=False), default=Plan.free)
     subscription_status: Mapped[SubscriptionStatus] = mapped_column(
@@ -459,6 +465,11 @@ class Order(Base):
     )
     note: Mapped[str | None] = mapped_column(String(280))
     total: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"))
+    # Xizmat haqi buyurtma paytidagi holicha NUSXA bo'lib saqlanadi.
+    #
+    # Sabab narx nusxasi bilan bir xil: egasi ertaga foizni 10 dan 15 ga
+    # ko'tarsa, kechagi buyurtmaning hisobi o'zgarib ketmasligi kerak.
+    service_percent: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow_naive, index=True
     )
@@ -477,6 +488,23 @@ class Order(Base):
     lines: Mapped[list[OrderLine]] = relationship(
         back_populates="order", cascade="all, delete-orphan", order_by="OrderLine.id"
     )
+
+    @property
+    def subtotal(self) -> Decimal:
+        """Xizmat haqisiz summa — taomlarning o'zi."""
+        return sum(
+            (line.unit_price * line.quantity for line in self.lines), Decimal("0")
+        )
+
+    @property
+    def service_amount(self) -> Decimal:
+        """Xizmat haqi. `total` va `subtotal` FARQI sifatida olinadi.
+
+        Qaytadan hisoblanmaydi: `total` buyurtma paytida yozilgan va
+        yagona haqiqat shu. Foizdan qayta hisoblash yaxlitlash tufayli
+        bir-ikki so'mga farq qilib, chekdagi raqamni nom'aqul qilardi.
+        """
+        return max(self.total - self.subtotal, Decimal("0"))
 
 
 class OrderLine(Base):

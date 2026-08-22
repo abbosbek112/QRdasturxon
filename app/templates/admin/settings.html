@@ -82,6 +82,18 @@
              min="0" max="240" value="{{ restaurant.order_window_minutes }}">
     </div>
     <p class="hint">{{ t('field_order_window_hint', ui_lang) }}</p>
+
+    {#
+      Xizmat haqi. Ko'p restoran hisobga 10-15% qo'shadi va buni menyuda
+      ko'rsatmaslik mijoz uchun yoqimsiz kutilmagan bo'ladi: u 100 000 deb
+      hisoblab o'tiradi, chek esa 115 000 bo'lib keladi.
+    #}
+    <div class="field" style="max-width:220px">
+      <label for="service_percent">{{ t('field_service', ui_lang) }}</label>
+      <input id="service_percent" name="service_percent" type="number"
+             min="0" max="{{ MAX_SERVICE }}" value="{{ restaurant.service_percent }}">
+    </div>
+    <p class="hint">{{ t('field_service_hint', ui_lang) }}</p>
     {% if restaurant.orders_enabled %}
       <div class="row">
         <a class="btn btn-sm" href="/admin/tables">{{ t('nav_tables', ui_lang) }}</a>
